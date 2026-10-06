@@ -24,6 +24,7 @@ const SPELLINGS = {
   ail: /ail/,
   eil: /eil/,
   eau: /eau|au/,
+  yod: /i[aeou]|^y/,   // le [j] écrit sans « ill » : « lion », « chien », « yeux »
 };
 
 /** Mots où les lettres du son sont présentes mais où l'on n'entend pas ce son. */
@@ -101,10 +102,27 @@ test('chaque son a de quoi faire des questions, avec et sans image', () => {
 });
 
 test('les sons qui s\'entendent pareil ne peuvent pas servir d\'intrus l\'un pour l\'autre', () => {
-  for (const id of ['ill', 'ail', 'eil']) assert.deepEqual([...conflictsOf(id)].sort(), ['ail', 'eil', 'ill']);
+  const glide = ['ail', 'eil', 'ill', 'yod'];
+  for (const id of glide) assert.deepEqual([...conflictsOf(id)].sort(), glide);
   assert.deepEqual([...conflictsOf('eu')].sort(), ['e', 'eu']);
   assert.deepEqual(conflictsOf('ou'), ['ou']);
-  assert.deepEqual([...blockedSounds(['ou', 'ail'])].sort(), ['ail', 'eil', 'ill', 'ou']);
+  assert.deepEqual([...blockedSounds(['ou', 'ail'])].sort(), ['ail', 'eil', 'ill', 'ou', 'yod']);
+});
+
+// « lion » et « chien » s'écrivent sans « ill » mais on y entend le même [j] que dans « fille » :
+// les proposer comme mauvaise réponse à une question sur [ill] donnerait deux bonnes réponses.
+test('les mots en [j] sans « ill » ne servent jamais d\'intrus aux sons de cette famille', () => {
+  for (const word of ['lion', 'chien', 'avion', 'camion', 'yeux']) {
+    assert.ok(findWord(word).sounds.includes('yod'), `${word} devrait porter le son yod`);
+  }
+  for (const id of ['ill', 'ail', 'eil']) {
+    const safe = wordsWithout(blockedSounds([id])).map((w) => w.word);
+    for (const word of ['lion', 'chien', 'avion', 'camion', 'yeux']) {
+      assert.ok(!safe.includes(word), `${word} ne peut pas être intrus de ${id}`);
+    }
+  }
+  // Mais ils restent de bons intrus pour les sons d'une autre famille.
+  assert.ok(wordsWithout(blockedSounds(['ou'])).some((w) => w.word === 'lion'));
 });
 
 test('un intrus ne contient jamais le son visé ni un son voisin', () => {
@@ -137,7 +155,7 @@ test('wordsOnlyWith borne la banque aux sons autorisés', () => {
 test('les pièges connus sont bien notés', () => {
   const sounds = (word) => [...findWord(word).sounds].sort();
   assert.deepEqual(sounds('oiseau'), ['eau', 'oi']);
-  assert.deepEqual(sounds('chien'), ['ch', 'in']);
+  assert.deepEqual(sounds('chien'), ['ch', 'in', 'yod']);
   assert.deepEqual(sounds('montagne'), ['gn', 'on']);
   assert.deepEqual(sounds('feuille'), ['eu', 'ill']);
   assert.deepEqual(sounds('chou'), ['ch', 'ou']);

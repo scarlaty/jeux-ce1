@@ -4,7 +4,7 @@ import game from '../../js/games/sons.js';
 import { checkGameShape, checkGenerator } from '../helpers/game-checks.js';
 import { createRng } from '../../js/core/random.js';
 import { buildQuestions } from '../../js/core/engine.js';
-import { findWord, getSound, blockedSounds, SOUNDS } from '../../js/data/mots-illustres.js';
+import { findWord, getSound, blockedSounds, SOUNDS, EXTRA_SOUNDS } from '../../js/data/mots-illustres.js';
 
 // Les sons attendus à chaque niveau (critères de l'issue #22), écrits ici indépendamment du jeu.
 const LEVEL_SOUNDS = {
@@ -84,7 +84,9 @@ test('chaque niveau travaille ses sons, et seulement les siens', () => {
 });
 
 test('un niveau ne montre que des mots dont les sons sont déjà connus', () => {
-  const known = (level) => new Set([...LEVEL_SOUNDS[level], 'e', 'eau']);
+  // Les sons « en plus » ne sont jamais enseignés : ils servent à écarter les mots dangereux,
+  // et n'empêchent donc pas un mot d'être montré dès le niveau 1 (« avion » porte [on] et [yod]).
+  const known = (level) => new Set([...LEVEL_SOUNDS[level], ...EXTRA_SOUNDS.map((s) => s.id)]);
   for (const [level, q] of all()) {
     for (const word of shownWords(q)) {
       for (const s of findWord(word).sounds) {

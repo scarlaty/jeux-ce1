@@ -32,19 +32,24 @@ export const SOUNDS = [
  * les mots dangereux :
  *  - `e` : le « e » discret de « cheval », trop proche de [eu] pour servir d'intrus ;
  *  - `eau` : le graphème complexe « eau »/« au » (« chapeau », « chaussure »). Ce code repère
- *    ce graphème, pas toutes les façons d'écrire le son [o].
+ *    ce graphème, pas toutes les façons d'écrire le son [o] ;
+ *  - `yod` : la semi-voyelle [j] écrite autrement qu'avec « ill » — « lion », « chien »,
+ *    « yeux ». On l'entend comme le [j] de « fille » : ces mots ne peuvent donc pas servir
+ *    d'intrus pour [ill], [ail] ou [eil].
  */
 export const EXTRA_SOUNDS = [
   { id: 'e', label: '[e]', say: 'e' },
   { id: 'eau', label: '[eau]', say: 'o' },
+  { id: 'yod', label: '[yod]', say: 'ye' },
 ];
 
 const ALL_SOUNDS = [...SOUNDS, ...EXTRA_SOUNDS];
 const BY_ID = new Map(ALL_SOUNDS.map((s) => [s.id, s]));
 
-// Les trois sons de la famille du « y » ([j]) s'entendent pareil : l'un ne peut pas servir
-// d'intrus pour l'autre. Idem pour [eu] et le « e » discret.
-const GLIDE = ['ill', 'ail', 'eil'];
+// Les sons de la famille du « y » ([j]) s'entendent pareil : l'un ne peut pas servir d'intrus
+// pour l'autre. `yod` en fait partie, sinon « lion » ou « chien » deviendrait un mauvais choix
+// pour une question sur [ill] alors qu'on y entend le même [j]. Idem pour [eu] et le « e » discret.
+const GLIDE = ['ill', 'ail', 'eil', 'yod'];
 const CONFLICTS = new Map([
   ...GLIDE.map((id) => [id, GLIDE]),
   ['eu', ['eu', 'e']],
@@ -57,7 +62,7 @@ const RAW = [
   ['agneau', null, 'gn eau'],
   ['ail', '🧄', 'ail'],
   ['araignée', '🕷️', 'gn'],
-  ['avion', '✈️', 'on'],
+  ['avion', '✈️', 'on yod'],
   ['baignoire', '🛁', 'gn oi'],
   ['balance', '⚖️', 'an'],
   ['ballon', '⚽', 'on'],
@@ -72,7 +77,7 @@ const RAW = [
   ['bouquet', '💐', 'ou'],
   ['bouteille', null, 'ou eil'],
   ['caillou', null, 'ail ou'],
-  ['camion', '🚚', 'on'],
+  ['camion', '🚚', 'on yod'],
   ['chameau', '🐫', 'ch eau'],
   ['champignon', '🍄', 'ch an gn on'],
   ['chapeau', '🎩', 'ch eau'],
@@ -86,7 +91,7 @@ const RAW = [
   ['cheval', '🐴', 'ch e'],
   ['cheveux', null, 'ch e eu'],
   ['chèvre', '🐐', 'ch'],
-  ['chien', '🐶', 'ch in'],
+  ['chien', '🐶', 'ch in yod'],
   ['chocolat', '🍫', 'ch'],
   ['chou', null, 'ch ou'],
   ['citron', '🍋', 'on'],
@@ -130,7 +135,7 @@ const RAW = [
   ['kangourou', '🦘', 'an ou'],
   ['lampe', null, 'an'],
   ['lapin', '🐰', 'in'],
-  ['lion', '🦁', 'on'],
+  ['lion', '🦁', 'on yod'],
   ['loup', '🐺', 'ou'],
   ['maillot', '🩱', 'ail'],
   ['main', '✋', 'in'],
@@ -192,7 +197,7 @@ const RAW = [
   ['vent', '🌬️', 'an'],
   ['vitrail', null, 'ail'],
   ['voiture', '🚗', 'oi'],
-  ['yeux', '👀', 'eu'],
+  ['yeux', '👀', 'eu yod'],
 ];
 
 /** Un mot illustré : { word, emoji, sounds }. `emoji` vaut null si l'image serait ambiguë. */
