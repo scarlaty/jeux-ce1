@@ -1,0 +1,9 @@
+{
+  "name": "jeux-ce1",
+  "private": true,
+  "type": "module",
+  "description": "Mini-jeux éducatifs pour le CE1 (HTML + CSS + modules ES, sans build).",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\""
+  }
+}
