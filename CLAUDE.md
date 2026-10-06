@@ -167,9 +167,10 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 ## Design
 
 - Univers « cahier d'école » : fond à réglure Seyès, gommettes, tampons de maîtresse. Thème sombre = ardoise.
-- Polices Google Fonts avec repli : **Andika** (conçue pour l'apprentissage de la lecture) pour le texte,
-  une cursive scolaire (Playwrite FR Moderne si disponible, sinon repli `cursive`) pour les mots en
-  français à lire, et une police ronde lisible pour les titres. Chiffres en `tabular-nums`.
+- Polices **hébergées dans le dépôt** (`fonts/*.woff2`, déclarées dans `css/fonts.css`, licences dans
+  `fonts/LICENCES.md`) — jamais de lien vers Google Fonts ni aucun autre CDN : **Andika** (conçue pour
+  l'apprentissage de la lecture) pour le texte, **Playwrite FR Moderne** (cursive scolaire) pour les mots
+  en français à lire, **Fredoka** pour les titres. Toujours avec replis. Chiffres en `tabular-nums`.
 - Toutes les couleurs sont des variables de `tokens.css`, redéfinies pour le thème sombre
   (`prefers-color-scheme` + `[data-theme]`). Aucune couleur en dur dans les composants.
 - Zones tactiles ≥ 56 px, espacement généreux, texte de consigne ≥ 22 px sur tablette.
