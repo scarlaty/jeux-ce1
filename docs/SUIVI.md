@@ -15,14 +15,14 @@ https://github.com/users/scarlaty/projects/1.
 - Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
   de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
 
-## État au 06/10, 22 h : 6 jeux jouables, 246 tests
+## État au 06/10, 22 h : 7 jeux jouables, 257 tests
 
 | Epic | Issues | État |
 |---|---|---|
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22, #23 | **terminés** ; #24 🔒 en cours ; #25, #26, #86 libres |
+| E3 lecture | #22 – #24 | **terminés** ; #25, #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -34,7 +34,7 @@ https://github.com/users/scarlaty/projects/1.
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
 | E15 plaisir de jouer | #88 – #91 | #88 🔒 en cours ; puis #89 écrans kawaii, #90 compagnon, #91 coffre surprise |
 
-Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
+Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
 ### En cours (06/10, 21 h) — un seul jeu à la fois
@@ -42,7 +42,6 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul men
 | Qui | Issue | Branche |
 |---|---|---|
 | Agent « Kawaii » (orchestration Claude) | #88 E15-T1 Univers kawaii | `feat/88-kawaii` |
-| Agent « Lettres sœurs » (orchestration Claude) | #24 Lettres sœurs | `feat/24-lettres-soeurs` |
 
 Règle d'orchestration : Claude lance **au plus 2 agents à la fois, une issue chacun**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
