@@ -15,14 +15,14 @@ https://github.com/users/scarlaty/projects/1.
 - Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
   de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
 
-## État au 06/10, 21 h : 5 jeux jouables, 227 tests
+## État au 06/10, 22 h : 6 jeux jouables, 246 tests
 
 | Epic | Issues | État |
 |---|---|---|
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22 | **terminé** — #23 🔒 en cours ; #24 – #26, #86 libres |
+| E3 lecture | #22, #23 | **terminés** ; #24 – #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -33,14 +33,14 @@ https://github.com/users/scarlaty/projects/1.
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85 | en continu |
 
-Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
+Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
 ### En cours (06/10, 21 h) — un seul jeu à la fois
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Agent « Lecture » (orchestration Claude) | #23 Syllabes en folie | `feat/23-syllabes` |
+| — | aucun jeu en cours côté Claude (06/10, 22 h) | — |
 
 Règle d'orchestration : Claude ne lance **qu'un agent et qu'un jeu à la fois**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
@@ -108,7 +108,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 ## Prochaines étapes
 
-1. Relire et fusionner #23, puis lancer le jeu suivant (un seul à la fois côté Claude).
+1. En attente de l'utilisateur : choix des idées « Plaisir de jouer » (compagnon, coffre surprise, cabane, bons des parents…), future epic E15, avant de relancer un jeu.
 2. Faire tester par l'enfant les jeux déjà en ligne, et remonter ses retours dans des issues.
 3. Vague suivante, une fois ces 4 agents terminés : compréhension #27 – #29, orthographe #42 – #46,
    calcul #55 – #57, puis E9/E10 (#58 démarre sur `art/clock.js`), puis E11 – E13.
