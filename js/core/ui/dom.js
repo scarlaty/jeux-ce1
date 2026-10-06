@@ -30,8 +30,8 @@ function append(el, children) {
 
 /**
  * Contenu d'un choix, d'un élément à ranger ou d'une illustration :
- * { emoji?, text?, cursive?, lang? }. L'émoji est une image de contenu : on lui donne un nom
- * accessible (`label` ou `text`).
+ * { emoji?, text?, cursive?, lang?, math? }. L'émoji est une image de contenu : on lui donne un nom
+ * accessible (`label` ou `text`). `math: true` affiche `text` comme un calcul (voir mathText).
  */
 export function content(item, { cursive = false } = {}) {
   const parts = [];
@@ -39,7 +39,9 @@ export function content(item, { cursive = false } = {}) {
     const label = item.label || item.text || '';
     parts.push(h('span', { class: 'emoji', role: 'img', 'aria-label': label || null, 'aria-hidden': label ? null : 'true', text: item.emoji }));
   }
-  if (item.text !== undefined && item.text !== null && item.text !== '') {
+  if (item.math && item.text) {
+    parts.push(mathText(String(item.text)));
+  } else if (item.text !== undefined && item.text !== null && item.text !== '') {
     parts.push(h('span', {
       class: `content-text${(item.cursive ?? cursive) ? ' cursive' : ''}`,
       lang: item.lang || null,
@@ -47,4 +49,32 @@ export function content(item, { cursive = false } = {}) {
     }));
   }
   return parts;
+}
+
+// Largeur approximative (en em, police des titres) de chaque morceau d'un calcul : la feuille
+// de style s'en sert pour réduire le calcul jusqu'à ce qu'il tienne sur une ligne.
+const MATH_EM = { digit: 0.53, sign: 0.56, hole: 1.2, gap: 0.3 };
+const MATH_SIGNS = new Set(['+', '−', '×', ':', '=', '<', '>']);
+
+/**
+ * Un calcul dont les morceaux sont séparés par des espaces : « 45 + 8 = ? », « 7 + ? = 15 ».
+ * Chiffres de même largeur, signes aérés et colorés, « ? » dans une case pointillée
+ * (le nombre à trouver).
+ */
+export function mathText(text) {
+  const tokens = text.trim().split(/\s+/);
+  let em = MATH_EM.gap * (tokens.length - 1);
+  const children = tokens.map((token) => {
+    if (token === '?') {
+      em += MATH_EM.hole;
+      return h('span', { class: 'math__hole', text: '?' });
+    }
+    if (MATH_SIGNS.has(token)) {
+      em += MATH_EM.sign;
+      return h('span', { class: 'math__sign', text: token });
+    }
+    em += MATH_EM.digit * token.length;
+    return h('span', { class: 'math__number', text: token });
+  });
+  return h('span', { class: 'content-text math', style: `--math-em: ${em.toFixed(2)}` }, children);
 }

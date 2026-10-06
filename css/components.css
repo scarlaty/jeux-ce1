@@ -445,6 +445,30 @@
   border-radius: var(--radius-m);
 }
 
+/* Calcul (display.show.math, voir mathText dans ui/dom.js) : toujours sur une ligne, la taille
+   diminue avec la place disponible (--math-em = largeur du calcul en em). */
+.show:has(.math) { container-type: inline-size; }
+.content-text.math {
+  display: inline-flex;
+  align-items: center;
+  gap: .3em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.show__content .content-text.math {
+  font-size: min(var(--text-show), calc((100cqi - 2 * var(--space-5) - 8px) / var(--math-em, 8)));
+}
+.math__sign { color: var(--primary); }
+.math__hole {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.15em;
+  padding: .02em .05em;
+  border: max(2px, .05em) dashed var(--border-strong);
+  border-radius: var(--radius-s);
+  color: var(--ink-faint);
+}
+
 .answer { display: grid; justify-items: center; }
 
 /* Sur grand écran, l'illustration se place à gauche des réponses courtes (QCM, pavé)
@@ -455,6 +479,8 @@
   .stage--with-show:is(.stage--choice, .stage--keypad) .feedback { grid-column: 1 / -1; }
   .stage--with-show:is(.stage--choice, .stage--keypad) .show { min-height: 240px; align-self: center; }
   .stage--with-show.stage--choice .choices:not(.choices--images) { grid-template-columns: 1fr; max-width: 380px; }
+  /* Un calcul a besoin de largeur : le pavé (330 px au plus) lui laisse le reste. */
+  .stage--with-show.stage--keypad:has(.math) { grid-template-columns: minmax(0, 1fr) 340px; }
 }
 
 /* ---------- Correction ---------- */

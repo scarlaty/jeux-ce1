@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { pickVoice, canSpeak, speak, playSound, setMuted, isMuted, onMutedChange } from '../js/core/audio.js';
+import {
+  pickVoice, canSpeak, speak, playSound, setMuted, isMuted, onMutedChange, speakableText,
+} from '../js/core/audio.js';
 
 const voices = [
   { name: 'US', lang: 'en-US', localService: true },
@@ -32,4 +34,13 @@ test('son coupé : réglage et notification', () => {
   setMuted(true);
   assert.deepEqual(seen, [true, false]);
   setMuted(false);
+});
+
+test('les signes de calcul sont lus avec des mots', () => {
+  assert.equal(speakableText('38 + 7 : 38 + 2 = 40, puis 40 + 5 = 45.'),
+    '38 plus 7 : 38 plus 2 égale 40, puis 40 plus 5 égale 45.');
+  assert.equal(speakableText('15 − 8 = ?'), '15 moins 8 égale combien ?');
+  assert.equal(speakableText('3 × 4 = 12'), '3 fois 4 égale 12');
+  // Le trait d'union et les signes collés ne sont pas touchés.
+  assert.equal(speakableText('quarante-cinq, c\'est-à-dire 45'), 'quarante-cinq, c\'est-à-dire 45');
 });

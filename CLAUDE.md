@@ -107,8 +107,10 @@ Le moteur (`engine.js`) vérifie la réponse, applique les points, enregistre l'
 Un jeu ne touche jamais au stockage ni aux récompenses directement.
 
 Le format de `display` de chaque type est documenté en tête de `js/core/ui/<type>.js`. Commun à tous :
-`display.show = { emoji?, text?, cursive?, speak?, lang? }` (illustration au-dessus des réponses ;
-`speak` ajoute un bouton « écouter » dédié, `lang: 'en-GB'` pour l'anglais). Les réponses sont comparées
+`display.show = { emoji?, text?, cursive?, speak?, lang?, math? }` (illustration au-dessus des réponses ;
+`speak` ajoute un bouton « écouter » dédié, `lang: 'en-GB'` pour l'anglais ; `math: true` affiche `text`
+comme un calcul : morceaux séparés par des espaces, vrais signes `+ − × =`, « ? » = case du nombre à
+trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`). Les réponses sont comparées
 par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).
 Les éléments à ranger (`order`, `drag`) sont fournis **déjà mélangés** par le jeu (avec `rng`).
 Un jeu marqué `demo: true` (dans le fichier et dans le registre) a tous ses niveaux ouverts et disparaît
@@ -145,7 +147,8 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
   Changer de format : incrémenter `SCHEMA_VERSION` et ajouter l'étape dans `metaMigrations` /
   `profileMigrations` (+ un test). Profil v1 : `{ id, name, avatar, createdAt, progress, history, weekly }`.
 - **Audio** (`audio.js`) : `playSound('tap' | 'success' | 'retry' | 'star' | 'finish')`,
-  `speak(texte, { lang })`, `canSpeak()`. Couper le son coupe les effets ; la voix ne parle que sur un
+  `speak(texte, { lang })`, `canSpeak()`. En français, les signes de calcul entourés d'espaces sont lus
+  avec des mots (`speakableText` : « 15 − 8 = ? » → « 15 moins 8 égale combien ? »). Couper le son coupe les effets ; la voix ne parle que sur un
   appui volontaire sur « écouter » et reste donc disponible. Sans synthèse vocale, pas de bouton « écouter ».
 
 Exigences par jeu (critères des issues) : 3 niveaux progressifs, **au moins 30 questions distinctes

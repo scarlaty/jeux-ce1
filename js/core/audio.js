@@ -120,6 +120,21 @@ export function pickVoice(voices, lang) {
   return best;
 }
 
+// Signes de calcul entourés d'espaces (« 38 + 2 = 40 », « 15 − 8 ») : les voix les lisent
+// mal ou pas du tout (« − » n'est pas le trait d'union), on les remplace par des mots.
+const SPOKEN_SIGNS_FR = [
+  [/ = \?/g, ' égale combien ?'],
+  [/ \+ /g, ' plus '],
+  [/ − /g, ' moins '],
+  [/ × /g, ' fois '],
+  [/ = /g, ' égale '],
+];
+
+/** Texte à lire en français : les signes de calcul deviennent des mots. Fonction pure. */
+export function speakableText(text) {
+  return SPOKEN_SIGNS_FR.reduce((s, [sign, word]) => s.replace(sign, word), String(text));
+}
+
 /** Lit un texte. Renvoie une promesse résolue à la fin de la lecture (true si lu). */
 export function speak(text, { lang = 'fr-FR', rate } = {}) {
   const s = synth();
@@ -127,7 +142,7 @@ export function speak(text, { lang = 'fr-FR', rate } = {}) {
   return new Promise((resolve) => {
     try {
       s.cancel();   // on ne laisse jamais deux phrases se chevaucher
-      const u = new globalThis.SpeechSynthesisUtterance(text);
+      const u = new globalThis.SpeechSynthesisUtterance(lang.startsWith('fr') ? speakableText(text) : text);
       u.lang = lang;
       u.rate = rate ?? (lang.startsWith('fr') ? 0.9 : 0.85);
       const voice = pickVoice(s.getVoices(), lang);

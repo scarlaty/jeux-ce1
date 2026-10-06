@@ -20,6 +20,13 @@ export const GAMES = [
     demo: true,   // jeu de démonstration des composants : hors accueil, accessible par #/jeu/demo
     load: () => import('./demo.js'),
   },
+  {
+    id: 'calcul-mental',
+    title: 'Calcul mental',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./calcul-mental.js'),
+  },
 ];
 
 export function getIsland(id) {
