@@ -45,6 +45,7 @@ const PRECACHE = [
   'js/app.js',
   'js/core/alphabet.js',
   'js/core/audio.js',
+  'js/core/backup.js',
   'js/core/engine.js',
   'js/core/gate.js',
   'js/core/history.js',
