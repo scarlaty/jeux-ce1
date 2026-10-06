@@ -23,9 +23,15 @@ Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : is
 
 ```
 index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/album , #/parents …
-manifest.webmanifest    PWA (E0-T8)
-sw.js                   service worker hors ligne (E0-T8)
+manifest.webmanifest    PWA : nom, icônes, start_url et scope relatifs, standalone (E0-T8)
+sw.js                   service worker hors ligne : liste de pré-cache + stratégies (E0-T8)
 package.json            uniquement pour `npm test` (aucune dépendance)
+icons/
+  icon.svg              source des icônes (maskable) ; les PNG en sont la copie pixel
+  icon-192.png, icon-512.png, icon-maskable-512.png, apple-touch-icon.png
+tools/                  outils ponctuels hors application (jamais servis au navigateur)
+  make-icons.mjs        régénère les PNG d'icônes : `node tools/make-icons.mjs`
+  precache.mjs          logique pure du pré-cache, utilisée par tests/offline.test.js
 css/
   tokens.css            variables de design (couleurs, polices, espacements, rayons) — clair + sombre
   base.css              reset, typographie, fond Seyès
@@ -45,6 +51,7 @@ js/
     validate.js         vérification de la forme d'une question (utilisée par les tests des jeux)
     alphabet.js         touches du clavier de lettres
     router.js           routeur par hash
+    offline.js          enregistrement du service worker + avis discret de mise à jour
     rewards.js          points, séries, grades, gommettes
     audio.js            sons (Web Audio) + voix (speechSynthesis fr-FR / en-GB)
     random.js           RNG avec graine (mulberry32), shuffle, pick, sample sans remise
@@ -166,6 +173,21 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 - Historique : une entrée par partie `{ t, game, level, score, total, durationMs, missed:[skill] }`,
   plafonné (les plus anciennes au-delà de 5000 sont agrégées par semaine).
 - Export/import : JSON versionné, validé avant import.
+
+## Hors ligne (PWA)
+
+- `sw.js` pré-cache toute la coquille **et tous les écrans et jeux**, bien qu'ils soient chargés
+  paresseusement : un jeu jamais ouvert doit rester jouable sans connexion. Navigation en
+  réseau d'abord (repli sur l'index en cache), reste en cache d'abord.
+- **Après toute modification d'un fichier servi : incrémenter `VERSION` dans `sw.js`** (le cache
+  s'appelle `jeux-ce1-<VERSION>` ; les anciens sont supprimés à l'activation). Sans cela, les
+  tablettes déjà installées gardent l'ancienne version.
+- La liste `PRECACHE` doit rester exactement celle des fichiers servis : `tests/offline.test.js`
+  échoue dès qu'un fichier est ajouté, renommé ou supprimé sans mise à jour de la liste.
+- Le nouveau service worker **attend** : `js/core/offline.js` affiche un bandeau sobre
+  (« Une nouvelle version des jeux est prête »), jamais pendant une partie, et c'est l'enfant qui
+  déclenche le rechargement. Jamais de rechargement automatique.
+- Icônes : `icons/icon.svg` est la source ; régénérer les PNG avec `node tools/make-icons.mjs`.
 
 ## Design
 

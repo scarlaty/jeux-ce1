@@ -64,6 +64,30 @@
 
 .noscript { padding: var(--space-6); font-size: var(--text-l); }
 
+/* Avis de nouvelle version (hors ligne) : sobre, jamais pendant une partie, jamais bloquant. */
+.update-note {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: var(--space-3);
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2) var(--space-3);
+  width: min(560px, calc(100% - 2 * var(--gutter)));
+  padding: var(--space-3);
+  padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  background: var(--surface-raised);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 12px 26px -14px var(--shadow);
+}
+
+.update-note__text { flex: 1 1 100%; text-align: center; color: var(--ink); }
+.update-note__btn { flex: 1 1 auto; padding: var(--space-2) var(--space-4); font-size: 1.05rem; }
+
 /* ---------- Cartes « étiquettes » ---------- */
 
 .card {
