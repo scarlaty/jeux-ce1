@@ -143,7 +143,11 @@ minutes: 30 } }`). Ajouter un genre = un fichier `js/core/ui/art/<kind>.js` expo
 (nom accessible, **fonction pure**), `draw(spec)` (le SVG) et `check(spec, errors)` facultatif, puis une
 ligne dans `js/core/ui/art/index.js`. `validateQuestion` s'en sert : un dessin inconnu ou mal formé fait
 échouer les tests du jeu, et deux dessins de même `label` comptent comme deux choix identiques.
-Le `label` ne doit jamais donner la réponse : un cadran décrit la position des aiguilles, pas l'heure.
+Le `label` ne doit jamais donner la réponse : un cadran décrit la position des aiguilles, pas l'heure,
+et le matériel de numération décrit les pièces posées, pas le nombre.
+Genres existants : `clock` (cadran à aiguilles) et `base-ten` (matériel de numération :
+`{ kind: 'base-ten', hundreds, tens, units }`, de 0 à 9 pièces par sorte — plaques de cent,
+barres de dix, cubes ; partagé par les jeux de numération et de calcul).
 
 Les réponses sont comparées
 par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).

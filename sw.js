@@ -60,6 +60,7 @@ const PRECACHE = [
   'js/core/stats.js',
   'js/core/storage.js',
   'js/core/validate.js',
+  'js/core/ui/art/base-ten.js',
   'js/core/ui/art/clock.js',
   'js/core/ui/art/index.js',
   'js/core/ui/avatar.js',
@@ -93,6 +94,7 @@ const PRECACHE = [
 
   'js/games/registry.js',
   'js/games/calcul-mental.js',
+  'js/games/cdu.js',
   'js/games/demo.js',
   'js/games/ecrire-nombres.js',
   'js/games/sons.js',

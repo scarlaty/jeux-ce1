@@ -35,6 +35,13 @@ export const GAMES = [
     load: () => import('./calcul-mental.js'),
   },
   {
+    id: 'cdu',
+    title: 'Centaines, dizaines, unités',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./cdu.js'),
+  },
+  {
     id: 'ecrire-nombres',
     title: 'Écrire les nombres',
     island: 'nombres',
