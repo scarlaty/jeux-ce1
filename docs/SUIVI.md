@@ -32,7 +32,7 @@ https://github.com/users/scarlaty/projects/1.
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
-| E15 plaisir de jouer | #88 – #91 | #88 **terminé** (kit kawaii, démo #/kawaii) ; #89 🔒 en cours ; puis #90 compagnon, #91 coffre surprise |
+| E15 plaisir de jouer | #88 – #91 | #88 **terminé** (kit kawaii, démo #/kawaii) ; #89 libre (voir le commentaire ⏸️) ; puis #90 compagnon, #91 coffre surprise |
 
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
@@ -41,7 +41,7 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres s�
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Agent « Écrans kawaii » (orchestration Claude) | #89 E15-T2 Appliquer l'univers kawaii aux écrans | `feat/89-ecrans-kawaii` |
+| — | #89 libéré (interrompu sans code, voir le commentaire ⏸️ de l'issue) | — |
 | Agent « Lecture éclair » (orchestration Claude) | #26 Lecture éclair | `feat/26-lecture-eclair` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
