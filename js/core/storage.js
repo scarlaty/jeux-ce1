@@ -8,7 +8,7 @@
 //  - createStore() : documents typés (meta, profils) avec numéro de schéma et migrations.
 
 export const PREFIX = 'jeux-ce1:';
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Petit localStorage en mémoire (repli, et faux stockage pour les tests). */
 export function createMemoryBackend(initial = {}) {
@@ -119,7 +119,7 @@ export function migrate(doc, migrations, target = SCHEMA_VERSION) {
   return current;
 }
 
-// --- Schéma v1 -------------------------------------------------------------
+// --- Schéma (v2 : + profile.rewards) ---------------------------------------
 
 export function defaultSettings() {
   return { muted: false, theme: 'auto' };   // theme : 'auto' | 'light' | 'dark'
@@ -139,7 +139,13 @@ export function defaultProfile({ id, name = '', avatar = null, createdAt = Date.
     progress: {},   // par jeu : { unlocked, best: { [niveau]: { score, total, stars } }, plays }
     history: [],    // une entrée par partie (voir history.js)
     weekly: [],     // agrégats hebdomadaires des parties les plus anciennes
+    rewards: defaultRewards(),   // points, gommettes, défi du jour (voir rewards.js)
   };
+}
+
+/** Récompenses d'un nouveau profil (le détail est décrit dans rewards.js). */
+export function defaultRewards() {
+  return { points: 0, stickers: [], unseen: [], daily: { last: null, count: 0 } };
 }
 
 const isObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -157,6 +163,7 @@ export const metaMigrations = {
       settings: { ...base.settings, ...(isObject(src.settings) ? src.settings : {}) },
     };
   },
+  1: (doc) => doc,   // v1 → v2 : rien ne change dans meta
 };
 
 export const profileMigrations = {
@@ -171,6 +178,8 @@ export const profileMigrations = {
       weekly: Array.isArray(src.weekly) ? src.weekly : [],
     };
   },
+  // v1 → v2 : récompenses (points, grades, gommettes, défi du jour).
+  1: (doc) => ({ ...doc, rewards: isObject(doc.rewards) ? doc.rewards : defaultRewards() }),
 };
 
 const META_KEY = 'meta';
