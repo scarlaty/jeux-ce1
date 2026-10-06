@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Jeux CE1</title>
+  <meta name="description" content="Mini-jeux pour réviser le programme de CE1 : français, mathématiques, questionner le monde, anglais.">
+  <meta name="theme-color" content="#fbf8f1">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232f58cf'/%3E%3Cpath d='m32 12 6 12.4 13.6 1.7-10 9.4 2.6 13.5L32 42.3l-12.2 6.7 2.6-13.5-10-9.4L26 24.4z' fill='%23f5b700'/%3E%3C/svg%3E">
+  <script>
+    // Applique le thème choisi avant l'affichage, pour éviter un éclair de la mauvaise couleur.
+    try {
+      var meta = JSON.parse(localStorage.getItem('jeux-ce1:meta') || 'null');
+      var theme = meta && meta.settings && meta.settings.theme;
+      if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+    } catch (e) { /* stockage indisponible : thème automatique */ }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Fredoka:wght@500;600&family=Playwrite+FR+Moderne:wght@300;400&display=swap">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <noscript>
+    <p class="noscript">Ces jeux ont besoin de JavaScript. Active-le dans ton navigateur, puis recharge la page.</p>
+  </noscript>
+</body>
+</html>
