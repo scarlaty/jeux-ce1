@@ -508,6 +508,17 @@
 .clock__hand--minute { stroke: var(--primary); stroke-width: 3.2; }
 .clock__pin { fill: var(--primary); }
 
+/* Matériel de numération (ui/art/base-ten.js) : un cube vaut 1/10 d'une barre et 1/100 d'une
+   plaque, donc il est forcément minuscule — ce dessin prend toute la largeur disponible, et les
+   cubes isolés sont pleins pour rester visibles. */
+.base-ten__block { fill: var(--primary-soft); stroke: var(--primary); stroke-width: 1.1; }
+.base-ten__grid { fill: none; stroke: var(--primary); stroke-width: .5; stroke-opacity: .55; }
+.base-ten__piece--cube .base-ten__block { fill: var(--primary); stroke-width: .8; }
+.show:has(.art--base-ten) .show__content { width: 100%; }
+.show__content .art--base-ten { width: min(100%, 30rem); }
+.choice .art--base-ten { width: 100%; }
+.choices:has(.art--base-ten) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); max-width: 720px; }
+
 .answer { display: grid; justify-items: center; }
 
 /* Sur grand écran, l'illustration se place à gauche des réponses courtes (QCM, pavé)
@@ -520,6 +531,14 @@
   .stage--with-show.stage--choice .choices:not(.choices--images) { grid-template-columns: 1fr; max-width: 380px; }
   /* Un calcul a besoin de largeur : le pavé (330 px au plus) lui laisse le reste. */
   .stage--with-show.stage--keypad:has(.math) { grid-template-columns: minmax(0, 1fr) 340px; }
+}
+
+/* Le matériel de numération (base-ten) est le dessin le plus gourmand en largeur : face au pavé
+   il prend tout le reste, et en QCM les choix restent côte à côte sur toute la largeur. */
+@media (min-width: 900px) {
+  .stage--with-show.stage--keypad:has(.art--base-ten) { grid-template-columns: minmax(0, 1fr) 340px; }
+  .stage--with-show.stage--choice:has(.art--base-ten) { grid-template-columns: 1fr; }
+  .stage--with-show.stage--choice:has(.art--base-ten) .choices { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); max-width: 720px; }
 }
 
 /* ---------- Correction ---------- */

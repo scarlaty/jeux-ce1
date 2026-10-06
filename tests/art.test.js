@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { artErrors, artKinds, artLabel, registerArt } from '../js/core/ui/art/index.js';
 import { handAngles, label } from '../js/core/ui/art/clock.js';
+import { label as baseTenLabel, layout, pieceWords } from '../js/core/ui/art/base-ten.js';
 import { validateQuestion } from '../js/core/validate.js';
 
 // Les dessins sont décrits par les jeux et dessinés par le socle : la partie « description »
@@ -24,6 +25,59 @@ test('le nom accessible décrit les aiguilles sans donner l\'heure', () => {
   assert.doesNotMatch(spoken, /3 h 30|trois heures/i);
   assert.match(label({ hours: 12, minutes: 0 }), /petite aiguille sur le 12, la grande aiguille sur le 12/);
   assert.match(label({ hours: 1, minutes: 45 }), /grande aiguille sur le 9/);
+});
+
+// --- Matériel de numération (base-ten) ---------------------------------------------------------
+
+test('le nom accessible compte les pièces, sans jamais donner le nombre', () => {
+  assert.equal(baseTenLabel({ hundreds: 2, tens: 3, units: 4 }),
+    'Matériel : 2 plaques de cent, 3 barres de dix et 4 cubes.');
+  // 234 n'apparaît nulle part : l'enfant doit compter.
+  assert.doesNotMatch(baseTenLabel({ hundreds: 2, tens: 3, units: 4 }), /234/);
+  // Singulier, et les tas vides ne sont pas annoncés (c'est tout l'intérêt de 405).
+  assert.equal(pieceWords({ hundreds: 1, tens: 1, units: 1 }), '1 plaque de cent, 1 barre de dix et 1 cube');
+  assert.equal(pieceWords({ hundreds: 4, tens: 0, units: 5 }), '4 plaques de cent et 5 cubes');
+  assert.equal(pieceWords({ tens: 3 }), '3 barres de dix');
+  assert.equal(pieceWords({}), '');
+  assert.equal(baseTenLabel({}), 'Matériel : rien du tout.');
+});
+
+test('le matériel est posé sur une ligne, les tas côte à côte', () => {
+  const { width, height, pieces } = layout({ hundreds: 2, tens: 3, units: 4 });
+  assert.equal(pieces.length, 9);
+  assert.deepEqual(pieces.map((p) => p.kind),
+    ['plate', 'plate', 'bar', 'bar', 'bar', 'cube', 'cube', 'cube', 'cube']);
+  // Une plaque fait 10 × 10 cubes : elle donne sa hauteur au dessin.
+  assert.equal(height, 50);
+  // Les tas se suivent de la gauche vers la droite, sans se chevaucher.
+  const lefts = ['plate', 'bar', 'cube'].map((k) => Math.min(...pieces.filter((p) => p.kind === k).map((p) => p.x)));
+  assert.deepEqual(lefts, [...lefts].sort((a, b) => a - b));
+  assert.ok(width > 0 && pieces.every((p) => p.x >= 0 && p.y >= 0));
+  // Tout est posé sur la même ligne du bas.
+  assert.equal(Math.max(...pieces.map((p) => p.y + (p.kind === 'cube' ? 5 : 50))), height);
+});
+
+test('un tas trop grand passe à la rangée du dessus', () => {
+  const { pieces, height } = layout({ hundreds: 7 });
+  assert.equal(pieces.length, 7);
+  assert.equal(new Set(pieces.map((p) => p.y)).size, 3, '7 plaques tiennent sur 3 rangées');
+  assert.equal(height, 3 * 50 + 2 * 4);
+});
+
+test('un matériel impossible est refusé', () => {
+  assert.deepEqual(artErrors({ kind: 'base-ten', hundreds: 2, tens: 3, units: 4 }), []);
+  assert.deepEqual(artErrors({ kind: 'base-ten', tens: 3 }), []);
+  assert.deepEqual(artErrors({ kind: 'base-ten' }), ['base-ten : au moins une pièce']);
+  assert.deepEqual(artErrors({ kind: 'base-ten', hundreds: 0, tens: 0, units: 0 }), ['base-ten : au moins une pièce']);
+  assert.deepEqual(artErrors({ kind: 'base-ten', units: 10 }), ['base-ten.units : entier de 0 à 9']);
+  assert.deepEqual(artErrors({ kind: 'base-ten', tens: -1, units: 2 }), ['base-ten.tens : entier de 0 à 9']);
+  assert.deepEqual(artErrors({ kind: 'base-ten', hundreds: 1.5 }), ['base-ten.hundreds : entier de 0 à 9']);
+  assert.deepEqual(artErrors({ kind: 'base-ten', tens: '3' }), ['base-ten.tens : entier de 0 à 9']);
+});
+
+test('deux matériels différents ne portent pas le même nom', () => {
+  assert.notEqual(artLabel({ kind: 'base-ten', tens: 4, units: 0 }), artLabel({ kind: 'base-ten', tens: 0, units: 4 }));
+  assert.ok(artKinds().includes('base-ten'));
 });
 
 test('un dessin inconnu ou mal formé est signalé', () => {
