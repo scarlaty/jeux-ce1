@@ -49,6 +49,13 @@ export const GAMES = [
     load: () => import('./lettres-qui-changent.js'),
   },
   {
+    id: 'lecture-eclair',
+    title: 'Lecture éclair',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./lecture-eclair.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
