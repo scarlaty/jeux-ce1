@@ -31,7 +31,8 @@ https://github.com/users/scarlaty/projects/1.
 | E8 calcul | #52, #54 | **terminés** ; #53, #55 – #57 libres |
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
-| E14 qualité | #82 – #85 | en continu |
+| E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
+| E15 plaisir de jouer | #88 – #91 | #88 🔒 en cours ; puis #89 écrans kawaii, #90 compagnon, #91 coffre surprise |
 
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
@@ -40,7 +41,7 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul men
 
 | Qui | Issue | Branche |
 |---|---|---|
-| — | aucun jeu en cours côté Claude (06/10, 22 h) | — |
+| Agent « Kawaii » (orchestration Claude) | #88 E15-T1 Univers kawaii | `feat/88-kawaii` |
 
 Règle d'orchestration : Claude ne lance **qu'un agent et qu'un jeu à la fois**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
@@ -108,7 +109,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 ## Prochaines étapes
 
-1. En attente de l'utilisateur : choix des idées « Plaisir de jouer » (compagnon, coffre surprise, cabane, bons des parents…), future epic E15, avant de relancer un jeu.
+1. E15 « Plaisir de jouer » (choix de l'utilisateur : univers kawaii, compagnon, coffre surprise), dans l'ordre #88 → #89 → #90 → #91, un à la fois.
 2. Faire tester par l'enfant les jeux déjà en ligne, et remonter ses retours dans des issues.
 3. Vague suivante, une fois ces 4 agents terminés : compréhension #27 – #29, orthographe #42 – #46,
    calcul #55 – #57, puis E9/E10 (#58 démarre sur `art/clock.js`), puis E11 – E13.
