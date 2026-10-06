@@ -73,6 +73,7 @@ const PRECACHE = [
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
   'js/screens/index.js',
   'js/screens/home.js',
+  'js/screens/parents.js',
   'js/screens/play.js',
   'js/screens/profiles.js',
   'js/screens/soon.js',
