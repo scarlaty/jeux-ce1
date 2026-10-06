@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Jeux CE1">
+  <title>Jeux CE1</title>
+  <!-- Maskable : fond à bord perdu, étoile dans le cercle de sûreté (80 % de la largeur).
+       Même forme que les PNG produits par tools/make-icons.mjs.
+       Couleurs : --primary et --star de css/tokens.css. -->
+  <rect width="512" height="512" fill="#2f58cf"/>
+  <path fill="#f5b700" d="M256 122.9 285.9 214.9 382.6 214.9 304.4 271.7 334.2 363.7 256 306.9 177.8 363.7 207.6 271.7 129.4 214.9 226.1 214.9Z"/>
+</svg>
