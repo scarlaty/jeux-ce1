@@ -68,6 +68,8 @@ const PRECACHE = [
   /* Écrans et jeux : chargés paresseusement par le navigateur, donc jamais demandés tant que
      l'enfant n'a pas ouvert l'écran. On les pré-cache tous (fichiers de quelques kilo-octets,
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
+  'js/data/mots-illustres.js',
+
   'js/screens/index.js',
   'js/screens/home.js',
   'js/screens/play.js',
@@ -76,6 +78,7 @@ const PRECACHE = [
   'js/games/registry.js',
   'js/games/calcul-mental.js',
   'js/games/demo.js',
+  'js/games/sons.js',
 ];
 
 self.addEventListener('install', (event) => {
