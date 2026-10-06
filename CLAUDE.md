@@ -25,31 +25,43 @@ Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : is
 index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/album , #/parents …
 manifest.webmanifest    PWA (E0-T8)
 sw.js                   service worker hors ligne (E0-T8)
+package.json            uniquement pour `npm test` (aucune dépendance)
 css/
   tokens.css            variables de design (couleurs, polices, espacements, rayons) — clair + sombre
   base.css              reset, typographie, fond Seyès
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
 js/
-  app.js                démarrage, routeur, écrans
+  app.js                démarrage : stockage, profil actif, réglages, barre du haut, routeur
+  screens/
+    index.js            TABLE DES ÉCRANS (point d'extension) : chemin → module d'écran
+    home.js             accueil provisoire (liste des jeux) → carte des îles (#19)
+    play.js             choix du niveau, partie, fin de partie
+    soon.js             écran « Bientôt » des rubriques à venir (album, parents, profil)
   core/
     storage.js          lecture/écriture localStorage versionnée (préfixe « jeux-ce1: »), migrations
     profile.js          profils, prénom, avatar, profil actif
-    history.js          historique des parties, agrégats pour les courbes
-    engine.js           déroulé d'une partie (10 questions, score, étoiles, niveau suivant)
+    history.js          historique des parties, progression par jeu, agrégats pour les courbes
+    engine.js           déroulé d'une partie (10 questions, score, étoiles, niveau suivant) + gameEvents
+    validate.js         vérification de la forme d'une question (utilisée par les tests des jeux)
+    alphabet.js         touches du clavier de lettres
+    router.js           routeur par hash
     rewards.js          points, séries, grades, gommettes
     audio.js            sons (Web Audio) + voix (speechSynthesis fr-FR / en-GB)
     random.js           RNG avec graine (mulberry32), shuffle, pick, sample sans remise
     ui/                 composants d'affichage réutilisables (un fichier par type de question)
+      index.js          registre des composants (registerQuestionUI pour un type nouveau)
+      dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
       choice.js         QCM texte / image
       keypad.js         pavé numérique
       order.js          remettre dans l'ordre
       drag.js           glisser-déposer (pointer events)
       letters.js        clavier de lettres
   games/
-    registry.js         liste des jeux : métadonnées + chemin d'import (chargement paresseux)
+    registry.js         îles + liste des jeux : métadonnées + chemin d'import (chargement paresseux)
+    demo.js             jeu de démonstration des 5 types de questions (#/jeu/demo)
     <id>.js             un fichier par jeu (logique pure, sans DOM)
   data/                 banques de contenu partagées (mots illustrés, conjugaisons, nombres en lettres…)
-tests/                  tests node --test (*.test.js)
+tests/                  tests node --test (*.test.js) ; tests/helpers/game-checks.js pour les jeux
 docs/                   notes de conception si nécessaire
 ```
 
@@ -94,6 +106,48 @@ export default {
 Le moteur (`engine.js`) vérifie la réponse, applique les points, enregistre l'historique.
 Un jeu ne touche jamais au stockage ni aux récompenses directement.
 
+Le format de `display` de chaque type est documenté en tête de `js/core/ui/<type>.js`. Commun à tous :
+`display.show = { emoji?, text?, cursive?, speak?, lang? }` (illustration au-dessus des réponses ;
+`speak` ajoute un bouton « écouter » dédié, `lang: 'en-GB'` pour l'anglais). Les réponses sont comparées
+par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).
+Les éléments à ranger (`order`, `drag`) sont fournis **déjà mélangés** par le jeu (avec `rng`).
+Un jeu marqué `demo: true` (dans le fichier et dans le registre) a tous ses niveaux ouverts et disparaît
+de l'accueil dès qu'un vrai jeu existe.
+
+Test d'un jeu, en quelques lignes :
+
+```js
+import game from '../../js/games/sons.js';
+import { checkGameShape, checkGenerator } from '../helpers/game-checks.js';
+test('contrat', () => checkGameShape(game));
+test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDistinct: 30 }));
+```
+
+## API du socle (pour les écrans et les modules à venir)
+
+- **Écrans** : `js/screens/index.js` associe un chemin (`/jeu/:id`) à un module
+  `{ title?, render(view, { params, app, route }) → nettoyage? }`. `app` fournit `store`, `profileId`,
+  `switchProfile(id)`, `navigate(path)`, `setTitle(texte)`, `record(result)`.
+- **Moteur** : `createSession(game, level, { seed?, record?, now? })` → `session.current`,
+  `session.answer(valeur) → { correct, answer, explain }`, `session.next() → question | null` ;
+  à la fin `session.result = { t, game, level, score, total, stars, durationMs, missed, bestStreak,
+  unlocksNext, progress, extras }`. `starsFor(score, total)` : 3 si ≥ 90 %, 2 si ≥ 70 %, 1 si ≥ 50 %.
+- **Récompenses et autres modules** : s'abonner à `gameEvents` (engine.js) sans modifier le moteur :
+  `'start'`, `'question'`, `'answer'` (`{ session, question, given, correct, streak, index }`),
+  `'end'` (`{ session, result, extras }`). Pousser `{ icon?, text }` dans `extras` pendant `'end'`
+  l'affiche sur l'écran de fin. Un auditeur qui lève une exception ne casse pas la partie.
+- **Historique / progression** (`history.js`) : `recordResult(store, profileId, result)` →
+  `{ progress, newBest, newlyUnlocked }` ; `getGameProgress(profile, gameId)` →
+  `{ unlocked, best: { [niveau]: { score, total, stars } }, plays }`.
+- **Stockage** (`storage.js`) : `createStore(createStorage())` → `getMeta/setMeta/updateMeta`,
+  `getProfile/setProfile/updateProfile/removeProfile`, `getSettings/setSetting` (réglages de l'appareil
+  dans `meta.settings` : `muted`, `theme`). `store.storage.status()` : `'ok' | 'unavailable' | 'error'`.
+  Changer de format : incrémenter `SCHEMA_VERSION` et ajouter l'étape dans `metaMigrations` /
+  `profileMigrations` (+ un test). Profil v1 : `{ id, name, avatar, createdAt, progress, history, weekly }`.
+- **Audio** (`audio.js`) : `playSound('tap' | 'success' | 'retry' | 'star' | 'finish')`,
+  `speak(texte, { lang })`, `canSpeak()`. Couper le son coupe les effets ; la voix ne parle que sur un
+  appui volontaire sur « écouter » et reste donc disponible. Sans synthèse vocale, pas de bouton « écouter ».
+
 Exigences par jeu (critères des issues) : 3 niveaux progressifs, **au moins 30 questions distinctes
 par niveau** (générées ou en banque), correction expliquée, jouable au doigt et à la souris,
 tests unitaires du générateur (`tests/games/<id>.test.js` : 500 tirages par niveau → question valide,
@@ -119,6 +173,8 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 - Toutes les couleurs sont des variables de `tokens.css`, redéfinies pour le thème sombre
   (`prefers-color-scheme` + `[data-theme]`). Aucune couleur en dur dans les composants.
 - Zones tactiles ≥ 56 px, espacement généreux, texte de consigne ≥ 22 px sur tablette.
+  Seule exception : sur téléphone (< 520 px), les touches du clavier de lettres font 56 px de haut
+  mais ~50 px de large, pour tenir 6 colonnes.
 - Doit fonctionner de 360 px (téléphone) à 1366 px (tablette paysage / PC), sans défilement horizontal.
 - Pointer events (pas de `click` seul pour le glisser-déposer), `touch-action` réglé, pas de survol requis.
 - `prefers-reduced-motion` respecté. Focus clavier visible. Contrastes AA. Info jamais portée par la
@@ -127,9 +183,11 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 
 ## Tests et vérification
 
-- `node --test tests/` doit passer avant chaque commit (aucune dépendance à installer).
+- `npm test` (= `node --test "tests/**/*.test.js"`) doit passer avant chaque commit (aucune dépendance
+  à installer). NB : `node --test tests/` échoue avec Node ≥ 22 (un dossier n'est pas accepté).
 - Vérifier visuellement dans un navigateur (serveur statique : `python -m http.server 8000` à la racine,
-  ou `npx serve`) en largeur tablette ET téléphone, thème clair ET sombre.
+  ou `npx serve`) en largeur tablette ET téléphone, thème clair ET sombre (bouton de thème de la barre
+  du haut : automatique → clair → sombre).
 - Aucune erreur dans la console.
 
 ## Git
