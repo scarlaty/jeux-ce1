@@ -27,6 +27,13 @@ export const GAMES = [
     subject: 'maths',
     load: () => import('./calcul-mental.js'),
   },
+  {
+    id: 'cdu',
+    title: 'Centaines, dizaines, unités',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./cdu.js'),
+  },
 ];
 
 export function getIsland(id) {

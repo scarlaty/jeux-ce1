@@ -53,6 +53,7 @@ const PRECACHE = [
   'js/core/router.js',
   'js/core/storage.js',
   'js/core/validate.js',
+  'js/core/ui/art/base-ten.js',
   'js/core/ui/art/clock.js',
   'js/core/ui/art/index.js',
   'js/core/ui/choice.js',
@@ -75,6 +76,7 @@ const PRECACHE = [
 
   'js/games/registry.js',
   'js/games/calcul-mental.js',
+  'js/games/cdu.js',
   'js/games/demo.js',
 ];
 
