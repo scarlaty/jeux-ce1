@@ -64,7 +64,7 @@ const RAW = [
   ['araignée', '🕷️', 'gn'],
   ['avion', '✈️', 'on yod'],
   ['baignoire', '🛁', 'gn oi'],
-  ['balance', '⚖️', 'an'],
+  ['balance', null, 'an'],   // ⚖️ se lit « justice » plutôt que « balance »
   ['ballon', '⚽', 'on'],
   ['beignet', null, 'gn'],
   ['beurre', '🧈', 'eu'],
@@ -74,7 +74,7 @@ const RAW = [
   ['boîte', null, 'oi'],
   ['bonbon', '🍬', 'on'],
   ['bouche', '👄', 'ou ch'],
-  ['bouquet', '💐', 'ou'],
+  ['bouquet', null, 'ou'],   // 💐 se dit d'abord « fleurs », et « fleur » est déjà dans la banque
   ['bouteille', null, 'ou eil'],
   ['caillou', null, 'ail ou'],
   ['camion', '🚚', 'on yod'],
@@ -194,7 +194,7 @@ const RAW = [
   ['train', '🚂', 'in'],
   ['travail', null, 'ail'],
   ['vache', '🐮', 'ch'],
-  ['vent', '🌬️', 'an'],
+  ['vent', null, 'an'],   // 🌬️ montre un visage qui souffle : l'image ne dit pas « vent »
   ['vitrail', null, 'ail'],
   ['voiture', '🚗', 'oi'],
   ['yeux', '👀', 'eu yod'],
