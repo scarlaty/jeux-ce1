@@ -457,11 +457,24 @@
   gap: var(--space-4);
   min-height: 110px;
   padding: var(--space-3);
+  /* Image + mot long + bouton « écouter » : on passe à la ligne plutôt que de déborder sur les réponses. */
+  flex-wrap: wrap;
+  min-width: 0;
 }
-.show__content { display: flex; align-items: center; gap: var(--space-3); }
+.show__content { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-3); }
 .show__content .emoji { font-size: clamp(4rem, 3rem + 5vw, 6rem); filter: drop-shadow(0 6px 6px var(--shadow)); }
-.show__content .content-text { font-family: var(--font-title); font-weight: 600; font-size: var(--text-show); line-height: 1.1; white-space: nowrap; }
-.show__content .content-text.cursive { font-family: var(--font-cursive); font-weight: 400; font-size: clamp(2.2rem, 1.8rem + 3vw, 3.6rem); line-height: 2; }
+/* Un mot long (« rhinocéros ») ne passe jamais à la ligne : sa taille diminue pour tenir dans la
+   largeur de l'illustration (--text-len = nombre de caractères, posé par content() dans ui/dom.js ;
+   0.62 em ≈ la largeur moyenne d'une lettre, cursive comprise). */
+.show { container-type: inline-size; }
+.show__content .content-text {
+  font-family: var(--font-title); font-weight: 600; line-height: 1.1; white-space: nowrap;
+  font-size: min(var(--text-show), calc((100cqi - 2 * var(--space-3) - 8px) / (var(--text-len, 1) * 0.62)));
+}
+.show__content .content-text.cursive {
+  font-family: var(--font-cursive); font-weight: 400; line-height: 2;
+  font-size: min(clamp(2.2rem, 1.8rem + 3vw, 3.6rem), calc((100cqi - 2 * var(--space-3) - 8px) / (var(--text-len, 1) * 0.62)));
+}
 .show__content--text {
   padding: var(--space-2) var(--space-5);
   background: var(--surface);
@@ -637,6 +650,13 @@
 .choice .cursive { font-family: var(--font-cursive); font-weight: 400; font-size: 1.7rem; line-height: 2.1; }
 .choices--images .choice { min-height: 120px; }
 .choices--images .emoji { font-size: 3.6rem; }
+/* Image + mot écrit : le mot sous l'image, réduit s'il le faut pour tenir sur une ligne (--text-len, voir dom.js). */
+.choices--images .choice:has(.content-text) { flex-direction: column; gap: 0; container-type: inline-size; }
+.choices--images .choice .content-text {
+  white-space: nowrap;
+  line-height: 1.8;
+  font-size: min(1.7rem, calc((100cqi - 4px) / (var(--text-len, 1) * 0.62)));
+}
 
 .choice.is-picked { border-color: var(--primary); }
 .choice.is-right { background: var(--success-soft); border-color: var(--success); box-shadow: 0 4px 0 var(--success); opacity: 1; }

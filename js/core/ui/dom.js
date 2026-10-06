@@ -51,6 +51,8 @@ export function content(item, { cursive = false } = {}) {
     parts.push(h('span', {
       class: `content-text${(item.cursive ?? cursive) ? ' cursive' : ''}`,
       lang: item.lang || null,
+      // Longueur du texte : la feuille de style s'en sert pour qu'un mot long tienne sur sa ligne.
+      style: `--text-len: ${[...String(item.text)].length}`,
       text: String(item.text),
     }));
   }

@@ -103,6 +103,7 @@ js/
     <id>.js             un fichier par jeu (logique pure, sans DOM)
   data/                 banques de contenu partagées (mots illustrés, conjugaisons…)
     nombres-en-lettres.js  enLettres(n), enChiffres(mots), morceaux(n) — orthographe rectifiée de 1990
+    syllabes.js         découpage en syllabes écrites (convention des manuels : to-ma-te), isTransparent, onsetSound
 tests/                  tests node --test (*.test.js) ; tests/helpers/game-checks.js pour les jeux
 docs/                   notes de conception si nécessaire
 ```
@@ -152,7 +153,9 @@ Le format de `display` de chaque type est documenté en tête de `js/core/ui/<ty
 `display.show = { emoji?, text?, cursive?, speak?, lang?, math? }` (illustration au-dessus des réponses ;
 `speak` ajoute un bouton « écouter » dédié, `lang: 'en-GB'` pour l'anglais ; `math: true` affiche `text`
 comme un calcul : morceaux séparés par des espaces, vrais signes `+ − × =`, « ? » = case du nombre à
-trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`).
+trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`). Un mot long dans
+`show.text` (ou sous l'image d'un choix illustré) rapetisse pour tenir sur sa ligne (`--text-len`, posé par
+`content()`), et l'image, le mot et le bouton « écouter » passent à la ligne plutôt que de déborder.
 
 **Dessins** : une illustration autre qu'un émoji se demande par `art: { kind, … }`, utilisable dans
 `display.show` **et** dans un choix ou un élément à ranger (`{ value, art: { kind: 'clock', hours: 3,
