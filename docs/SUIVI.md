@@ -44,6 +44,8 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres s�
 | Agent « Écrans kawaii » (orchestration Claude) | #89 E15-T2 Appliquer l'univers kawaii aux écrans | `feat/89-ecrans-kawaii` |
 | Agent « Lecture éclair » (orchestration Claude) | #26 Lecture éclair | `feat/26-lecture-eclair` |
 
+⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
+
 Règle d'orchestration : Claude lance **au plus 2 agents à la fois, une issue chacun**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
 annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à réserver avant de commencer.
