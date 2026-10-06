@@ -3,6 +3,7 @@ import { createStorage, createStore } from './core/storage.js';
 import { ensureActiveProfile } from './core/profile.js';
 import { recordResult } from './core/history.js';
 import { createRouter } from './core/router.js';
+import { setupOffline } from './core/offline.js';
 import * as audio from './core/audio.js';
 import { h } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
@@ -148,6 +149,7 @@ function start() {
   // Les navigateurs n'autorisent le son qu'après un premier geste.
   addEventListener('pointerdown', audio.unlockAudio, { once: true });
   addEventListener('keydown', audio.unlockAudio, { once: true });
+  setupOffline();   // hors ligne : sans effet si le navigateur ne sait pas faire
   router.start();
 }
 
