@@ -109,6 +109,38 @@
   --island-ailleurs: #7a45c9;
   --island-ailleurs-soft: #ece3fa;
   --island-ailleurs-ink: #55299a;
+
+  /* --- Univers kawaii (#88) : autocollants pastel posés sur la page ---
+     Chaque couleur : la teinte (remplissage), son contour « -deep » et une encre « -ink » lisible
+     SUR la teinte (texte AA ≥ 4,5:1, vérifié par tests/kawaii.test.js). Les visages utilisent
+     --kawaii-ink, lisible sur toutes les teintes. Voir « Univers kawaii » dans CLAUDE.md. */
+  --kawaii-rose: #ffc9dc;
+  --kawaii-rose-deep: #e58aac;
+  --kawaii-rose-ink: #8f2652;
+  --kawaii-peche: #ffd5b8;
+  --kawaii-peche-deep: #e99c6c;
+  --kawaii-peche-ink: #873a10;
+  --kawaii-citron: #fff0a3;
+  --kawaii-citron-deep: #dfbc45;
+  --kawaii-citron-ink: #6a5000;
+  --kawaii-menthe: #c4efd5;
+  --kawaii-menthe-deep: #6fc193;
+  --kawaii-menthe-ink: #1b5f3d;
+  --kawaii-ciel: #c7e1ff;
+  --kawaii-ciel-deep: #79aee6;
+  --kawaii-ciel-ink: #1c4c86;
+  --kawaii-lavande: #e1d4ff;
+  --kawaii-lavande-deep: #a68fe3;
+  --kawaii-lavande-ink: #52309c;
+  --kawaii-creme: #fff4e0;
+  --kawaii-creme-deep: #dcbf8f;
+  --kawaii-creme-ink: #6b4819;
+  --kawaii-ink: #4a2c3d;        /* yeux, bouche : prune très sombre, plus doux qu'un noir */
+  --kawaii-shine: #ffffff;      /* reflets des yeux et lumière sur le corps */
+  --kawaii-blush: #ff8fb3;      /* joues (posées en transparence) */
+  --kawaii-tongue: #ff7f9f;
+  --kawaii-shadow: #3b2f1a38;   /* ombre portée de l'autocollant */
+  --radius-xl: 32px;            /* arrondis généreux des cartes kawaii */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -171,6 +203,15 @@
     --island-ailleurs: #c4a2ff;
     --island-ailleurs-soft: #3b3152;
     --island-ailleurs-ink: #e0d0ff;
+    /* Kawaii sur l'ardoise : les autocollants restent pastel, un ton plus doux pour ne pas éblouir. */
+    --kawaii-rose: #f5b8ce;
+    --kawaii-peche: #f4c4a3;
+    --kawaii-citron: #f0df8c;
+    --kawaii-menthe: #acdfc1;
+    --kawaii-ciel: #b0d0f3;
+    --kawaii-lavande: #cebef3;
+    --kawaii-creme: #f0e4cd;
+    --kawaii-shadow: #00000066;
   }
 }
 
@@ -233,6 +274,15 @@
   --island-ailleurs: #c4a2ff;
   --island-ailleurs-soft: #3b3152;
   --island-ailleurs-ink: #e0d0ff;
+  /* Kawaii sur l'ardoise : les autocollants restent pastel, un ton plus doux pour ne pas éblouir. */
+  --kawaii-rose: #f5b8ce;
+  --kawaii-peche: #f4c4a3;
+  --kawaii-citron: #f0df8c;
+  --kawaii-menthe: #acdfc1;
+  --kawaii-ciel: #b0d0f3;
+  --kawaii-lavande: #cebef3;
+  --kawaii-creme: #f0e4cd;
+  --kawaii-shadow: #00000066;
 }
 
 /* Couleur de l'île courante : un conteneur porte data-island="…" et ses enfants utilisent --island*. */

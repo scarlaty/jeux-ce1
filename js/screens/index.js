@@ -25,4 +25,6 @@ export const SCREENS = [
   { path: '/profil', load: () => import('./profiles.js'), title: 'Qui joue ?' },
   { path: '/profil/nouveau', load: () => import('./welcome.js'), title: 'Nouveau profil' },
   { path: '/profil/:id', load: () => import('./welcome.js'), title: 'Mon profil' },
+  // Démonstration du kit kawaii (#88) : pour les développeurs, non listée sur la carte.
+  { path: '/kawaii', load: () => import('./kawaii.js'), title: 'Univers kawaii' },
 ];
