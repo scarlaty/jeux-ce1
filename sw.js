@@ -27,6 +27,7 @@ const PRECACHE = [
   'css/tokens.css',
   'css/base.css',
   'css/components.css',
+  'css/profile.css',
 
   'fonts/andika-400-latin.woff2',
   'fonts/andika-400-latin-ext.woff2',
@@ -73,7 +74,9 @@ const PRECACHE = [
   'js/screens/index.js',
   'js/screens/home.js',
   'js/screens/play.js',
+  'js/screens/profiles.js',
   'js/screens/soon.js',
+  'js/screens/welcome.js',
 
   'js/games/registry.js',
   'js/games/calcul-mental.js',

@@ -1,12 +1,13 @@
 // Démarrage de l'application : stockage, profil actif, réglages, barre du haut, routeur.
 import { createStorage, createStore } from './core/storage.js';
-import { ensureActiveProfile } from './core/profile.js';
+import { ensureActiveProfile, needsWelcome } from './core/profile.js';
 import { recordResult } from './core/history.js';
 import { createRouter } from './core/router.js';
 import { setupOffline } from './core/offline.js';
 import * as audio from './core/audio.js';
 import { h } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
+import { avatarBubble } from './core/ui/avatar.js';
 import { SCREENS } from './screens/index.js';
 
 const APP_TITLE = 'Jeux CE1';
@@ -52,10 +53,20 @@ function buildShell(store) {
   };
   renderTheme(store.getSettings().theme);
 
+  // Pastille de profil (#10) : qui joue en ce moment ; un appui permet d'en changer.
+  const profilePill = h('a', { class: 'profile-pill', href: '#/profil' });
+  const renderProfile = (profile) => {
+    const name = profile?.name || '';
+    profilePill.replaceChildren(
+      avatarBubble(profile?.avatar, { size: 's', decorative: true }),
+      h('span', { class: 'profile-pill__name', text: name || 'Profil' }));
+    profilePill.setAttribute('aria-label', name ? `Profil de ${name} : changer de profil` : 'Choisir un profil');
+  };
+
   const header = h('header', { class: 'appbar' },
     h('a', { class: 'icon-btn appbar__home', href: '#/', 'aria-label': 'Accueil' }, icon('home', { size: 28 })),
     title,
-    h('div', { class: 'appbar__tools' }, soundButton, themeButton));
+    h('div', { class: 'appbar__tools' }, profilePill, soundButton, themeButton));
 
   const view = h('main', { id: 'view', class: 'view', tabindex: '-1' });
   const note = h('p', { class: 'storage-note', role: 'status', hidden: true });
@@ -65,6 +76,7 @@ function buildShell(store) {
 
   return {
     view,
+    renderProfile,
     setTitle: (text) => {
       title.textContent = text || APP_TITLE;
       document.title = text ? `${text} · ${APP_TITLE}` : APP_TITLE;
@@ -81,13 +93,17 @@ function buildShell(store) {
 /** Contexte passé à chaque écran. */
 function createAppContext(store, shell, getRouter) {
   let profileId = ensureActiveProfile(store);
+  const showProfile = () => shell.renderProfile(store.getProfile(profileId));
+  showProfile();
   return {
     store,
     get profileId() { return profileId; },
-    /** À appeler par l'écran de profils (#10) après un changement de profil. */
+    showProfile,
+    /** À appeler par les écrans de profil (#9, #10, #14) après un changement de profil. */
     switchProfile(id) {
-      store.updateMeta((meta) => ({ ...meta, activeProfileId: id }));
+      if (id) store.updateMeta((meta) => ({ ...meta, activeProfileId: id }));
       profileId = ensureActiveProfile(store);
+      showProfile();
     },
     navigate: (path, options) => getRouter().navigate(path, options),
     setTitle: shell.setTitle,
@@ -122,8 +138,16 @@ function start() {
 
   router = createRouter({
     routes: SCREENS,
-    async onRoute({ route, params }) {
+    async onRoute({ route, params, path }) {
+      // Premier lancement : on demande le prénom avant tout le reste (#9). Seul l'espace
+      // parents reste joignable : c'est par là qu'on restaure une sauvegarde sur une
+      // tablette neuve (#14), avant même d'avoir créé un profil.
+      if (path !== '/bienvenue' && path !== '/parents' && needsWelcome(store)) {
+        router.navigate('/bienvenue', { replace: true });
+        return;
+      }
       const id = ++renderId;
+      app.showProfile();
       audio.stopSpeaking();
       try { cleanup?.(); } catch (err) { console.error(err); }
       cleanup = null;

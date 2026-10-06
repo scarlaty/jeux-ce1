@@ -78,6 +78,11 @@
   --retry-edge: #8a3807;
   --on-retry: #ffffff;
   --on-island: #ffffff;
+  /* Actions destructives de l'espace parents (supprimer, remettre à zéro) : jamais côté enfant. */
+  --danger: #b3243f;
+  --danger-edge: #8a1830;
+  --danger-soft: #fbe4e8;
+  --on-danger: #ffffff;
   --focus: #e0306b;
   --stamp: #c92e4f;            /* tampon de la maîtresse */
   --stamp-ok: #237a42;
@@ -138,6 +143,10 @@
     --retry-edge: #c4743f;
   --on-retry: #2a1608;
   --on-island: #1b2220;
+    --danger: #ff93a9;
+    --danger-edge: #c46376;
+    --danger-soft: #4a2730;
+    --on-danger: #2a0c13;
     --focus: #ff8fb8;
     --stamp: #ff9fb3;
     --stamp-ok: #8fe0ab;
@@ -196,6 +205,10 @@
   --retry-edge: #c4743f;
   --on-retry: #2a1608;
   --on-island: #1b2220;
+  --danger: #ff93a9;
+  --danger-edge: #c46376;
+  --danger-soft: #4a2730;
+  --on-danger: #2a0c13;
   --focus: #ff8fb8;
   --stamp: #ff9fb3;
   --stamp-ok: #8fe0ab;

@@ -11,15 +11,19 @@
 //   }
 // `app` : voir createAppContext dans js/app.js (store, profileId, navigate, setTitle…).
 //
+// L'ordre compte : la première route dont le motif correspond gagne. '/profil/nouveau' est donc
+// déclarée avant '/profil/:id'.
+//
 // Écrans encore provisoires (à remplacer) :
 //   '/'        accueil provisoire (liste des jeux) → carte des îles (#19)
 //   '/album'   album de gommettes (#18)
-//   '/parents' espace parents (#15)
-//   '/profil'  prénom, avatar, profils (#9, #10)
 export const SCREENS = [
   { path: '/', load: () => import('./home.js') },
   { path: '/jeu/:id', load: () => import('./play.js') },
   { path: '/album', load: () => import('./soon.js'), title: 'Mon album' },
   { path: '/parents', load: () => import('./soon.js'), title: 'Espace parents' },
-  { path: '/profil', load: () => import('./soon.js'), title: 'Mon profil' },
+  { path: '/bienvenue', load: () => import('./welcome.js'), title: 'Bienvenue !' },
+  { path: '/profil', load: () => import('./profiles.js'), title: 'Qui joue ?' },
+  { path: '/profil/nouveau', load: () => import('./welcome.js'), title: 'Nouveau profil' },
+  { path: '/profil/:id', load: () => import('./welcome.js'), title: 'Mon profil' },
 ];
