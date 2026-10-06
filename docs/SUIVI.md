@@ -22,7 +22,7 @@ https://github.com/users/scarlaty/projects/1.
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22, #23 | **terminés** ; #24 – #26, #86 libres |
+| E3 lecture | #22, #23 | **terminés** ; #24 🔒 en cours ; #25, #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -42,8 +42,9 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Calcul men
 | Qui | Issue | Branche |
 |---|---|---|
 | Agent « Kawaii » (orchestration Claude) | #88 E15-T1 Univers kawaii | `feat/88-kawaii` |
+| Agent « Lettres sœurs » (orchestration Claude) | #24 Lettres sœurs | `feat/24-lettres-soeurs` |
 
-Règle d'orchestration : Claude ne lance **qu'un agent et qu'un jeu à la fois**, pour pouvoir toujours le terminer
+Règle d'orchestration : Claude lance **au plus 2 agents à la fois, une issue chacun**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
 annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à réserver avant de commencer.
 
