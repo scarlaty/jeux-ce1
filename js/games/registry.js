@@ -21,6 +21,13 @@ export const GAMES = [
     load: () => import('./demo.js'),
   },
   {
+    id: 'sons',
+    title: 'Les sons',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./sons.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
