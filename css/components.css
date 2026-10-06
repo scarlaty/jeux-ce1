@@ -483,6 +483,7 @@
   font-size: min(var(--text-show), calc((100cqi - 2 * var(--space-5) - 8px) / var(--math-em, 8)));
 }
 .math__sign { color: var(--primary); }
+.math__word { font-size: .62em; color: var(--ink-soft); }
 .math__hole {
   display: inline-grid;
   place-items: center;

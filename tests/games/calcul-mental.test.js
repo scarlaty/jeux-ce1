@@ -48,15 +48,14 @@ test('bien plus de 30 calculs distincts par niveau', () => {
 test('la réponse attendue est exacte (recalculée)', () => {
   for (const [, q] of all()) {
     assert.equal(q.type, 'keypad');
-    const { a, op, b, c } = parseShow(q.display.show.text);
-    const holes = [a, b, c].filter((x) => x === '?').length;
-    if (holes === 2) {
-      // Moitié : « ? + ? = 46 ».
-      assert.equal(q.key, `calcul-mental:moitié:${c}`);
-      assert.equal(op, '+');
-      assert.equal(2 * q.answer, Number(c), q.key);
+    const half = q.display.show.text.match(/^la moitié de (\d+) = \?$/);
+    if (half) {
+      assert.equal(q.key, `calcul-mental:moitié:${half[1]}`);
+      assert.equal(2 * q.answer, Number(half[1]), q.key);
       continue;
     }
+    const { a, op, b, c } = parseShow(q.display.show.text);
+    const holes = [a, b, c].filter((x) => x === '?').length;
     assert.equal(holes, 1, q.key);
     const [x, y, z] = [a, b, c].map((v) => (v === '?' ? q.answer : Number(v)));
     assert.equal(compute(x, op, y), z, q.key);

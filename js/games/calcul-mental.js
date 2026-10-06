@@ -286,13 +286,12 @@ const HALVES = [
 function half(rng) {
   const n = rng.pick(HALVES);
   const h = n / 2;
-  // « ? + ? = 46 » : la moitié, c'est le nombre qui, ajouté à lui-même, donne 46.
   return {
     key: `calcul-mental:moitié:${n}`,
     type: 'keypad',
     prompt: `Trouve la moitié de ${n}.`,
     speak: `Quelle est la moitié de ${n} ?`,
-    display: { show: { text: `? + ? = ${n}`, math: true }, maxLength: 4 },
+    display: { show: { text: `la moitié de ${n} = ?`, math: true }, maxLength: 4 },
     answer: h,
     explain: explainHalf(n),
     skill: SKILL.halves,

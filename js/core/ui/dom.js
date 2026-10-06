@@ -59,7 +59,7 @@ export function content(item, { cursive = false } = {}) {
 
 // Largeur approximative (en em, police des titres) de chaque morceau d'un calcul : la feuille
 // de style s'en sert pour réduire le calcul jusqu'à ce qu'il tienne sur une ligne.
-const MATH_EM = { digit: 0.53, sign: 0.56, hole: 1.2, gap: 0.3 };
+const MATH_EM = { digit: 0.53, sign: 0.56, hole: 1.2, gap: 0.3, letter: 0.36 };
 const MATH_SIGNS = new Set(['+', '−', '×', ':', '=', '<', '>']);
 
 /**
@@ -78,6 +78,11 @@ export function mathText(text) {
     if (MATH_SIGNS.has(token)) {
       em += MATH_EM.sign;
       return h('span', { class: 'math__sign', text: token });
+    }
+    if (/^\p{L}/u.test(token)) {
+      // Mot dans un calcul (« la moitié de 46 = ? ») : plus petit, pour que les nombres dominent.
+      em += MATH_EM.letter * token.length;
+      return h('span', { class: 'math__word', text: token });
     }
     em += MATH_EM.digit * token.length;
     return h('span', { class: 'math__number', text: token });
