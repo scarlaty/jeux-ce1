@@ -35,6 +35,13 @@ export const GAMES = [
     load: () => import('./syllabes.js'),
   },
   {
+    id: 'lettres-soeurs',
+    title: 'Lettres sœurs',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./lettres-soeurs.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
