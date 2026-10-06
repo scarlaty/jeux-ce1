@@ -17,16 +17,23 @@ et tableau https://github.com/users/scarlaty/projects/1 (colonnes Todo / In Prog
 - Polices hébergées dans `fonts/` (plus aucune requête vers Google) (décision validée).
 - Décision validée : « son coupé » coupe les bruitages, pas la voix (lue seulement sur demande).
 
-## En cours (lancé le 06/10, statut « In Progress » sur le tableau)
-| Branche attendue | Issues | Contenu |
-|---|---|---|
-| `feat/e1-profil` | #9, #10, #12–#15 | bienvenue (prénom, avatar), profils, historique, courbes, export/import, espace parents |
-| `feat/e2-recompenses` | #16–#21 | points, grades, gommettes/album, carte des îles (nouvel accueil), défi du jour, tampons |
-| `feat/jeu-sons` | #22 | jeu Les sons + banque partagée `js/data/mots-illustres.js` |
-| ~~`feat/jeu-calcul-mental`~~ | #52 | FUSIONNÉ le 06/10 (62 tests OK) |
+## En cours — interrompu le 06/10 (limite d'utilisation), tout est poussé sur GitHub
+Les agents ont été coupés avant la fin. Leur travail est sauvegardé tel quel sur les branches suivantes ;
+les tests passent sur chacune, mais **rien n'a été relu ni vérifié dans le navigateur par l'orchestrateur**.
 
-Vérifier sur GitHub si ces branches ont été poussées (`git fetch && git branch -r`). Si une branche manque
-ou est incomplète, relancer un agent sur les issues correspondantes avec le même cahier des charges.
+| Branche | Issues | État | Ce qu'il reste à faire |
+|---|---|---|---|
+| `feat/jeu-calcul-mental` | #52 | **Fusionné** dans main, issue fermée | — |
+| `feat/jeu-sons` | #22 | 2 commits propres, 67 tests OK. L'agent en était à la vérification visuelle (tablette, niveau 1) | Finir la vérification navigateur (3 niveaux, tablette/téléphone, clair/sombre), relire la banque `js/data/mots-illustres.js` mot par mot, fusionner |
+| `feat/e1-profil` | #9, #10, #12–#15 | 1 commit « WIP » regroupant tout, 80 tests OK. Bug en cours de correction : un `null` s'affiche (`replaceChildren` reçoit `null`) + mise en page téléphone à resserrer | Corriger ce bug, finir la vérification navigateur du parcours complet, éventuellement redécouper les commits, fusionner |
+| `feat/e2-recompenses` | #16–#21 | 2 commits propres (logique pure) + 1 commit « WIP » (écrans : carte des îles, album, défi, fin de partie), 73 tests OK. L'agent en était à la vérification en largeur tablette | Finir la vérification navigateur, relire le design de la carte des îles, fusionner |
+
+Ordre de fusion conseillé : `feat/jeu-sons`, puis `feat/e1-profil`, puis `feat/e2-recompenses` (conflits attendus
+dans `index.html`, `js/app.js`, `js/screens/index.js`, `css/tokens.css`, `js/games/registry.js`). Relancer `npm test`
+après chaque fusion.
+
+Question en attente pour l'utilisateur (calcul mental) : la moitié est présentée « ? + ? = 46 » avec la consigne
+« Trouve la moitié de 46 » — à confirmer ou remplacer par « la moitié de 46 = ? ».
 
 ## Points d'attention à la fusion
 - Ces branches partent d'avant le commit des polices locales : en cas de conflit dans `index.html`,
