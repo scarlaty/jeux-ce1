@@ -27,6 +27,13 @@ export const GAMES = [
     subject: 'maths',
     load: () => import('./calcul-mental.js'),
   },
+  {
+    id: 'tables',
+    title: 'Les tables',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./tables.js'),
+  },
 ];
 
 export function getIsland(id) {
