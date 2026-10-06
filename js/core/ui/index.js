@@ -12,7 +12,8 @@
 // son `display` en tête de fichier, comme les composants ci-dessous).
 //
 // Commun à tous les types : `display.show` = illustration au-dessus des réponses
-//   { emoji?, text?, cursive?, speak?, lang? } — `speak` ajoute un bouton « écouter » propre.
+//   { emoji?, text?, cursive?, speak?, lang?, math? } — `speak` ajoute un bouton « écouter » propre,
+//   `math: true` affiche `text` comme un calcul (« 7 + ? = 15 », voir mathText dans dom.js).
 import * as choice from './choice.js';
 import * as keypad from './keypad.js';
 import * as order from './order.js';
