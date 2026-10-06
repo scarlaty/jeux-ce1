@@ -17,6 +17,7 @@
 export const SCREENS = [
   { path: '/', load: () => import('./home.js') },
   { path: '/jeu/:id', load: () => import('./play.js') },
+  { path: '/defi', load: () => import('./daily.js'), title: 'Défi du jour' },
   { path: '/album', load: () => import('./album.js'), title: 'Mon album' },
   { path: '/parents', load: () => import('./soon.js'), title: 'Espace parents' },
   { path: '/profil', load: () => import('./soon.js'), title: 'Mon profil' },
