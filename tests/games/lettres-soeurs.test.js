@@ -130,10 +130,10 @@ test('la correction donne une astuce de mémorisation', () => {
   assert.ok(sample.explain.includes('ventre'));
 });
 
-test('une partie de 10 questions est sans doublon', () => {
+test('une partie de 10 questions ne repose jamais deux fois le même mot', () => {
   for (let seed = 1; seed <= 50; seed++) {
     for (const level of [1, 2, 3]) {
-      const keys = buildQuestions(game, level, createRng(seed), 10).map((q) => q.key);
+      const keys = buildQuestions(game, level, createRng(seed), 10).map((q) => q.key.split(':').at(-1));
       assert.equal(new Set(keys).size, 10, `niveau ${level}, graine ${seed}`);
     }
   }

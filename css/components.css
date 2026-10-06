@@ -648,6 +648,8 @@
 }
 .choice:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); }
 .choice .cursive { font-family: var(--font-cursive); font-weight: 400; font-size: 1.7rem; line-height: 2.1; }
+.choices--large .choice { min-height: 96px; font-size: 3rem; }
+.choices--large .choice .cursive { font-size: 3.2rem; line-height: 1.8; }
 .choices--images .choice { min-height: 120px; }
 .choices--images .emoji { font-size: 3.6rem; }
 /* Image + mot écrit : le mot sous l'image, réduit s'il le faut pour tenir sur une ligne (--text-len, voir dom.js). */

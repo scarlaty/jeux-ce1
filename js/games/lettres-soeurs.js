@@ -39,7 +39,7 @@ const TIPS = {
   q: 'q : le rond est derrière, et q est toujours avec u : « qu ».',
   m: 'm : trois jambes et deux ponts, comme dans « maman ».',
   n: 'n : deux jambes et un seul pont.',
-  f: 'f : un grand bâton avec un petit crochet, comme un fanion.',
+  f: 'f : une grande barre qui monte haut, comme le mât d\'un drapeau.',
   v: 'v : la pointe est en bas, comme un verre.',
   ch: 'ch : comme dans « chut ! », on souffle.',
   j: 'j : comme dans « je », la queue descend sous la ligne.',
@@ -119,6 +119,13 @@ const imageOf = (word) => findSyllableWord(word)?.emoji ?? null;
 
 const byPair = (pairs) => ENTRIES.filter((e) => pairs.includes(e.pair) && imageOf(e.word));
 
+/** Les entrées dont le mot n'a pas encore été posé dans la partie (s'il en reste). */
+function unseen(entries, seen) {
+  const asked = [...(seen || [])].map((key) => key.split(':').at(-1));
+  const fresh = entries.filter((e) => !asked.includes(e.word));
+  return fresh.length ? fresh : entries;
+}
+
 // --- Les deux formes de questions ----------------------------------------------------------------
 
 const quote = (word) => `« ${word} »`;
@@ -128,9 +135,9 @@ const tipsFor = (entries, { contrast = false } = {}) => entries.flatMap((e) => (
   contrast ? [TIPS[e.right], TIPS[e.wrong]] : [TIPS[e.right]]
 )).join(' ');
 
-function gapQuestion(level, rng) {
+function gapQuestion(level, rng, seen) {
   const pair = rng.pick(LEVEL_PAIRS[level]);
-  const e = rng.pick(byPair([pair]));
+  const e = rng.pick(unseen(byPair([pair]), seen));
   const cursive = level > 1 && rng.chance(0.5);
   return {
     key: `lettres-soeurs:trou:${pair}:${e.word}`,
@@ -141,6 +148,7 @@ function gapQuestion(level, rng) {
       show: { emoji: imageOf(e.word), text: e.gap, cursive, speak: e.word },
       choices: rng.shuffle([e.right, e.wrong]),
       cursive,
+      large: true,
     },
     answer: e.right,
     explain: `${quote(e.word)} s'écrit avec ${e.right}. ${tipsFor([e], { contrast: true })}`,
@@ -156,9 +164,9 @@ function spellingChoices(e, level, rng) {
   return [e, ...others];
 }
 
-function spellingQuestion(level, rng) {
+function spellingQuestion(level, rng, seen) {
   const pair = rng.pick(LEVEL_PAIRS[level]);
-  const e = rng.pick(byPair([pair]));
+  const e = rng.pick(unseen(byPair([pair]), seen));
   const used = spellingChoices(e, level, rng);
   const cursive = rng.chance(0.5);
   const spoken = level === 3;
@@ -215,8 +223,8 @@ export default {
     { label: 'Niveau 3', hint: '+ ch ou j, t ou d' },
   ],
   makeQuestion(level, rng, seen) {
-    if (!seen) return MAKERS[rng.pick(FORMS[level])](level, rng);
+    if (!seen) return MAKERS[rng.pick(FORMS[level])](level, rng, seen);
     const deck = deckFor(level, rng, seen);
-    return MAKERS[deck[seen.size % deck.length]](level, rng);
+    return MAKERS[deck[seen.size % deck.length]](level, rng, seen);
   },
 };
