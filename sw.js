@@ -28,6 +28,7 @@ const PRECACHE = [
   'css/base.css',
   'css/components.css',
   'css/profile.css',
+  'css/rewards.css',
 
   'fonts/andika-400-latin.woff2',
   'fonts/andika-400-latin-ext.woff2',
@@ -53,6 +54,8 @@ const PRECACHE = [
   'js/core/offline.js',
   'js/core/profile.js',
   'js/core/random.js',
+  'js/core/rewards-live.js',
+  'js/core/rewards.js',
   'js/core/router.js',
   'js/core/stats.js',
   'js/core/storage.js',
@@ -62,6 +65,7 @@ const PRECACHE = [
   'js/core/ui/avatar.js',
   'js/core/ui/chart.js',
   'js/core/ui/choice.js',
+  'js/core/ui/confetti.js',
   'js/core/ui/dom.js',
   'js/core/ui/drag.js',
   'js/core/ui/icons.js',
@@ -77,6 +81,8 @@ const PRECACHE = [
   'js/data/mots-illustres.js',
 
   'js/screens/index.js',
+  'js/screens/album.js',
+  'js/screens/daily.js',
   'js/screens/home.js',
   'js/screens/parents.js',
   'js/screens/play.js',

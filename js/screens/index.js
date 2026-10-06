@@ -14,13 +14,12 @@
 // L'ordre compte : la première route dont le motif correspond gagne. '/profil/nouveau' est donc
 // déclarée avant '/profil/:id'.
 //
-// Écrans encore provisoires (à remplacer) :
-//   '/'        accueil provisoire (liste des jeux) → carte des îles (#19)
-//   '/album'   album de gommettes (#18)
+// Plus aucun écran provisoire : `soon.js` reste disponible pour les rubriques à venir.
 export const SCREENS = [
   { path: '/', load: () => import('./home.js') },
   { path: '/jeu/:id', load: () => import('./play.js') },
-  { path: '/album', load: () => import('./soon.js'), title: 'Mon album' },
+  { path: '/defi', load: () => import('./daily.js'), title: 'Défi du jour' },
+  { path: '/album', load: () => import('./album.js'), title: 'Mon album' },
   { path: '/parents', load: () => import('./parents.js'), title: 'Espace parents' },
   { path: '/bienvenue', load: () => import('./welcome.js'), title: 'Bienvenue !' },
   { path: '/profil', load: () => import('./profiles.js'), title: 'Qui joue ?' },

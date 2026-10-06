@@ -22,8 +22,8 @@ Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : is
 ## Arborescence
 
 ```
-index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/bienvenue ,
-                        #/profil , #/profil/nouveau , #/profil/<id> , #/parents , #/album …
+index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/defi , #/album ,
+                        #/bienvenue , #/profil , #/profil/nouveau , #/profil/<id> , #/parents
 manifest.webmanifest    PWA : nom, icônes, start_url et scope relatifs, standalone (E0-T8)
 sw.js                   service worker hors ligne : liste de pré-cache + stratégies (E0-T8)
 package.json            uniquement pour `npm test` (aucune dépendance)
@@ -38,16 +38,19 @@ css/
   base.css              reset, typographie, fond Seyès
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
   profile.css           profils, avatars, courbes, espace parents (E1)
+  rewards.css           récompenses : compteur de points, grades, album, carte des îles, confettis
 js/
   app.js                démarrage : stockage, profil actif, réglages, barre du haut, routeur
   screens/
     index.js            TABLE DES ÉCRANS (point d'extension) : chemin → module d'écran
-    home.js             accueil provisoire (liste des jeux) → carte des îles (#19)
-    play.js             choix du niveau, partie, fin de partie
+    home.js             accueil : carte au trésor des îles (avancement, défi du jour, grade)
+    play.js             choix du niveau, partie, fin de partie ; exporte createGameView (réutilisé)
+    album.js            album de gommettes et échelle des grades (#/album)
+    daily.js            défi du jour : 5 questions tirées des jeux déjà joués (#/defi)
     welcome.js          prénom + avatar : premier lancement, nouveau profil, modification (#9, #10)
     profiles.js         « Qui joue ? » : choisir, ajouter, supprimer un profil (#10)
     parents.js          espace parents : progrès, historique, courbes, sauvegarde (#12…#15)
-    soon.js             écran « Bientôt » des rubriques à venir (album)
+    soon.js             écran « Bientôt » : disponible pour les rubriques à venir
   core/
     storage.js          lecture/écriture localStorage versionnée (préfixe « jeux-ce1: »), migrations
     profile.js          profils, prénom, avatar, profil actif
@@ -60,13 +63,15 @@ js/
     alphabet.js         touches du clavier de lettres
     router.js           routeur par hash
     offline.js          enregistrement du service worker + avis discret de mise à jour
-    rewards.js          points, séries, grades, gommettes
+    rewards.js          points, séries, grades, gommettes, défi du jour (FONCTIONS PURES)
+    rewards-live.js     branchement des récompenses sur gameEvents + écriture dans le profil
     audio.js            sons (Web Audio) + voix (speechSynthesis fr-FR / en-GB)
     random.js           RNG avec graine (mulberry32), shuffle, pick, sample sans remise
     ui/                 composants d'affichage réutilisables (un fichier par type de question)
       index.js          registre des composants (registerQuestionUI pour un type nouveau)
       dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
       svg.js            s() et figure() pour construire un SVG (aucun import : pas de cycle)
+      confetti.js       confettis de fin de partie (sans effet si « réduire les animations »)
       art/              dessins demandés par les jeux (index.js = registre, un fichier par genre)
       avatar.js         pastille d'avatar (barre du haut, listes de profils)
       chart.js          courbe SVG + tableau des valeurs (aucune bibliothèque)
@@ -202,7 +207,19 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
   `getProfile/setProfile/updateProfile/removeProfile`, `getSettings/setSetting` (réglages de l'appareil
   dans `meta.settings` : `muted`, `theme`). `store.storage.status()` : `'ok' | 'unavailable' | 'error'`.
   Changer de format : incrémenter `SCHEMA_VERSION` et ajouter l'étape dans `metaMigrations` /
-  `profileMigrations` (+ un test). Profil v1 : `{ id, name, avatar, createdAt, progress, history, weekly }`.
+  `profileMigrations` (+ un test). Profil v2 :
+  `{ id, name, avatar, createdAt, progress, history, weekly, rewards }`, avec
+  `rewards = { points, stickers: { [île]: [id de gommette] }, daily: { key, stars, points } | null }`.
+- **Récompenses** (`rewards.js`, tout est pur) : `answerPoints({ correct, streak })` et `runPoints(résultats)`
+  (10 points par bonne réponse, bonus aux séries de 3, 5, 7 et 10, +5 pour avoir terminé — une partie
+  ne rapporte jamais 0) ; `GRADES` et `gradeFor/gradeProgress/gradeGained(avant, après)` ;
+  `STICKERS` (10 gommettes par île, gagnées dans l'ordre : 1 par partie réussie, 2 avec 3 étoiles) ;
+  `applyGameRewards(rewards, { island, stars, points, daily })` → `{ rewards, gained }` ;
+  `dailyKey/dailySeed(date)` (date **locale** : le défi change à minuit pour l'enfant) ;
+  `totalStars(progress)` et `islandUnlocked/islandStarsLeft(île, étoiles)` pour la carte.
+  `rewards-live.js` fait le lien avec le moteur et le profil : `installRewards(app)` une fois au
+  démarrage, `rewardEvents.on('points', …)` pour le compteur en direct, `rewardSummary(session)`
+  pour l'écran de fin. Un jeu ou un écran ne calcule jamais de points lui-même.
 - **Audio** (`audio.js`) : `playSound('tap' | 'success' | 'retry' | 'star' | 'finish')`,
   `speak(texte, { lang })`, `canSpeak()`. En français, les signes de calcul entourés d'espaces sont lus
   avec des mots (`speakableText` : « 15 − 8 = ? » → « 15 moins 8 égale combien ? »). Couper le son coupe les effets ; la voix ne parle que sur un
@@ -255,8 +272,9 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
   mais ~50 px de large, pour tenir 6 colonnes.
 - Doit fonctionner de 360 px (téléphone) à 1366 px (tablette paysage / PC), sans défilement horizontal.
 - Pointer events (pas de `click` seul pour le glisser-déposer), `touch-action` réglé, pas de survol requis.
-- `prefers-reduced-motion` respecté. Focus clavier visible. Contrastes AA. Info jamais portée par la
-  seule couleur (✓/✗ en plus du vert/rouge).
+- `prefers-reduced-motion` respecté : confettis, « +10 » qui s'envole et animation de grade
+  disparaissent, mais **aucune information ne disparaît** (tampon, bandeau de grade et points restent).
+  Focus clavier visible. Contrastes AA. Info jamais portée par la seule couleur (✓/✗ en plus du vert/rouge).
 - Les émojis sont acceptés comme **images de contenu** (animaux, objets, gommettes), pas comme décoration d'UI.
 
 ## Tests et vérification

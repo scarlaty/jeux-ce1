@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createMemoryBackend, createStorage, createStore, SCHEMA_VERSION } from '../js/core/storage.js';
 import { createProfile, ensureActiveProfile, updateIdentity, listProfiles } from '../js/core/profile.js';
 import { recordResult } from '../js/core/history.js';
+import { normalizeRewards } from '../js/core/rewards.js';
 import {
   BACKUP_APP, BACKUP_FORMAT, buildBackup, serializeBackup, backupFilename, parseBackup,
   validateBackup, describeBackup, applyBackup, normalizeProfile,
@@ -25,6 +26,34 @@ function seeded() {
   recordResult(store, tom, result({ score: 4, stars: 0, unlocksNext: false }));
   return { store, lea, tom };
 }
+
+// Garde-fou structurel : `normalizeProfile` repart de `defaultProfile` et doit reprendre
+// explicitement CHAQUE champ. Un champ ajouté au profil sans être ajouté ici serait
+// silencieusement remis à zéro à l'import — l'enfant perdrait ses points ou ses gommettes.
+test('un aller-retour export/import conserve tous les champs du profil', () => {
+  const store = newStore();
+  const id = ensureActiveProfile(store);
+  const rich = {
+    name: 'Léa',
+    avatar: 'licorne',
+    progress: { sons: { unlocked: 3, best: { 1: { score: 9, total: 10, stars: 3 } }, plays: 4 } },
+    history: [{ t: Date.UTC(2026, 9, 5), game: 'sons', level: 1, score: 9, total: 10, durationMs: 60000, missed: ['son [ou]'] }],
+    weekly: [{ week: Date.UTC(2026, 8, 28), game: 'sons', level: 1, games: 3, score: 24, total: 30, durationMs: 180000 }],
+    rewards: normalizeRewards({ points: 1234, stickers: { nombres: ['de'] } }),
+  };
+  store.updateProfile(id, (p) => ({ ...p, ...rich }));
+  const before = store.getProfile(id);
+
+  const check = validateBackup(JSON.parse(serializeBackup(buildBackup(store))));
+  assert.equal(check.ok, true, check.error);
+  const other = newStore();
+  applyBackup(other, check.backup, { mode: 'replace' });
+  const after = other.getProfile(id);
+
+  for (const field of Object.keys(before)) {
+    assert.deepEqual(after[field], before[field], `champ « ${field} » perdu à l'import`);
+  }
+});
 
 // Le fichier importé vient de l'extérieur de l'application : il est traité comme non fiable.
 test('une clé piégée du fichier ne touche pas le prototype du profil importé', () => {

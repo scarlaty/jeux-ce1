@@ -4,6 +4,7 @@ import { ensureActiveProfile, needsWelcome } from './core/profile.js';
 import { recordResult } from './core/history.js';
 import { createRouter } from './core/router.js';
 import { setupOffline } from './core/offline.js';
+import { installRewards } from './core/rewards-live.js';
 import * as audio from './core/audio.js';
 import { h } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
@@ -133,6 +134,7 @@ function start() {
 
   let router = null;
   const app = createAppContext(store, shell, () => router);
+  installRewards(app);   // points, grades et gommettes : branchés sur gameEvents, une fois pour toutes
   let cleanup = null;
   let renderId = 0;
 

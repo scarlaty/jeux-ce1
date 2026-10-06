@@ -10,6 +10,7 @@
 // pas à l'enfant.
 import { SCHEMA_VERSION, defaultProfile, migrate, profileMigrations } from './storage.js';
 import { cleanName } from './profile.js';
+import { normalizeRewards } from './rewards.js';
 
 export const BACKUP_APP = 'jeux-ce1';
 export const BACKUP_FORMAT = 1;
@@ -114,11 +115,14 @@ export function normalizeProfile(raw, { now = Date.now() } = {}) {
     avatar: typeof doc.avatar === 'string' ? doc.avatar : null,
     createdAt: num(doc.createdAt, now),
   });
+  // Tout champ du profil doit être repris explicitement ici : `defaultProfile` ne sert que de
+  // socle, donc un champ oublié serait silencieusement remis à zéro à l'import.
   return {
     ...base,
     progress: sanitizeProgress(doc.progress),
     history: sanitizeHistory(doc.history),
     weekly: sanitizeWeekly(doc.weekly),
+    rewards: normalizeRewards(doc.rewards),
   };
 }
 
