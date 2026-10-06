@@ -4,6 +4,7 @@ import {
   PREFIX, SCHEMA_VERSION, createMemoryBackend, createStorage, createStore, migrate, defaultMeta,
 } from '../js/core/storage.js';
 import { ensureActiveProfile, createProfile } from '../js/core/profile.js';
+import { defaultRewards, STICKERS } from '../js/core/rewards.js';
 
 /** Faux localStorage qui lève une exception à chaque accès (stockage bloqué). */
 const throwingBackend = () => ({
@@ -84,6 +85,51 @@ test('le store migre un ancien document à la lecture et le réécrit', () => {
   assert.equal(profile.name, 'Léa');
   assert.deepEqual(profile.history, []);
   assert.deepEqual(profile.progress, {});
+});
+
+// Migration réelle du schéma : un profil v1 (avant les récompenses) ne doit RIEN perdre.
+test('migration v1 → v2 : la progression est conservée, les récompenses sont ajoutées', () => {
+  const v1 = {
+    schemaVersion: 1,
+    id: 'p1',
+    name: 'Léa',
+    avatar: 'chat',
+    createdAt: 1700000000000,
+    progress: { 'calcul-mental': { unlocked: 2, best: { 1: { score: 9, total: 10, stars: 3 } }, plays: 4 } },
+    history: [{ t: 1700000000000, game: 'calcul-mental', level: 1, score: 9, total: 10, durationMs: 60000, missed: [] }],
+    weekly: [{ week: 1699833600000, game: 'calcul-mental', level: 1, games: 1, score: 9, total: 10, durationMs: 60000 }],
+  };
+  const backend = createMemoryBackend({ [`${PREFIX}profile:p1`]: JSON.stringify(v1) });
+  const store = createStore(createStorage({ backend }));
+  const profile = store.getProfile('p1');
+  assert.equal(profile.schemaVersion, SCHEMA_VERSION);
+  for (const key of ['id', 'name', 'avatar', 'createdAt']) assert.deepEqual(profile[key], v1[key]);
+  assert.deepEqual(profile.progress, v1.progress);
+  assert.deepEqual(profile.history, v1.history);
+  assert.deepEqual(profile.weekly, v1.weekly);
+  assert.equal(profile.rewards.points, 0);
+  assert.deepEqual(profile.rewards.stickers.mots, []);
+  assert.equal(profile.rewards.daily, null);
+  // Le document migré est réécrit : la migration ne se rejoue pas à chaque lecture.
+  assert.equal(JSON.parse(backend.getItem(`${PREFIX}profile:p1`)).schemaVersion, SCHEMA_VERSION);
+});
+
+test('migration v1 → v2 : un champ rewards déjà présent est repris, pas écrasé', () => {
+  const kept = STICKERS.monde[0].id;
+  const backend = createMemoryBackend({
+    [`${PREFIX}profile:p1`]: JSON.stringify({
+      schemaVersion: 1, id: 'p1', rewards: { points: 420, stickers: { monde: [kept, 'fantôme'] } },
+    }),
+  });
+  const profile = createStore(createStorage({ backend })).getProfile('p1');
+  assert.equal(profile.rewards.points, 420);
+  assert.deepEqual(profile.rewards.stickers.monde, [kept]);
+});
+
+test('un nouveau profil part avec des récompenses vides', () => {
+  const store = createStore(createStorage({ backend: createMemoryBackend() }));
+  const profile = store.getProfile(ensureActiveProfile(store));
+  assert.deepEqual(profile.rewards, defaultRewards());
 });
 
 test('le store suit une future migration v1 → v2', () => {

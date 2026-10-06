@@ -7,8 +7,10 @@
 //    l'appli marche, mais rien n'est conservé (`status()` permet de l'indiquer discrètement).
 //  - createStore() : documents typés (meta, profils) avec numéro de schéma et migrations.
 
+import { defaultRewards, normalizeRewards } from './rewards.js';
+
 export const PREFIX = 'jeux-ce1:';
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /** Petit localStorage en mémoire (repli, et faux stockage pour les tests). */
 export function createMemoryBackend(initial = {}) {
@@ -119,7 +121,7 @@ export function migrate(doc, migrations, target = SCHEMA_VERSION) {
   return current;
 }
 
-// --- Schéma v1 -------------------------------------------------------------
+// --- Schéma v2 -------------------------------------------------------------
 
 export function defaultSettings() {
   return { muted: false, theme: 'auto' };   // theme : 'auto' | 'light' | 'dark'
@@ -139,6 +141,7 @@ export function defaultProfile({ id, name = '', avatar = null, createdAt = Date.
     progress: {},   // par jeu : { unlocked, best: { [niveau]: { score, total, stars } }, plays }
     history: [],    // une entrée par partie (voir history.js)
     weekly: [],     // agrégats hebdomadaires des parties les plus anciennes
+    rewards: defaultRewards(),   // v2 : points, gommettes par île, défi du jour (voir rewards.js)
   };
 }
 
@@ -157,6 +160,8 @@ export const metaMigrations = {
       settings: { ...base.settings, ...(isObject(src.settings) ? src.settings : {}) },
     };
   },
+  // v1 → v2 : seuls les profils changent (champ `rewards`), le document meta est inchangé.
+  1: (doc) => doc,
 };
 
 export const profileMigrations = {
@@ -171,6 +176,8 @@ export const profileMigrations = {
       weekly: Array.isArray(src.weekly) ? src.weekly : [],
     };
   },
+  // v1 → v2 : ajout des récompenses (#16 → #21). La progression existante n'est pas touchée.
+  1: (doc) => ({ ...doc, rewards: normalizeRewards(doc?.rewards) }),
 };
 
 const META_KEY = 'meta';
