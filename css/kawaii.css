@@ -1,0 +1,324 @@
+/* Univers kawaii (#88) : couleurs des personnages et décorations du kit (js/core/ui/art/kawaii*.js)
+   et animations douces réutilisables. Aucune couleur en dur : variables --kawaii-* de tokens.css.
+   Le dessin porte ses couleurs dans --kw-fill / --kw-deep / --kw-accent (posées par le kit). */
+
+/* ---------- Peinture des dessins ---------- */
+
+.kw { overflow: visible; }
+
+.kw__fill { fill: var(--kw-fill); }
+.kw__shade { fill: var(--kw-deep); opacity: .38; }
+.kw__gloss { fill: var(--kawaii-shine); opacity: .75; }
+.kw__line {
+  fill: none;
+  stroke: var(--kw-deep);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.kw-deco .kw__line { stroke-width: 2; }
+
+/* Oreilles, pattes, queue : même matière que le corps. */
+.kw__part {
+  fill: var(--kw-fill);
+  stroke: var(--kw-deep);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+.kw__inner { fill: var(--kawaii-blush); opacity: .5; }
+.kw__tail-edge, .kw__tail { fill: none; stroke-linecap: round; }
+.kw__tail-edge { stroke: var(--kw-deep); stroke-width: 10.2; }
+.kw__tail { stroke: var(--kw-fill); stroke-width: 5; }
+
+/* Œuf : taches de la couleur du futur compagnon, fêlure, coquille. */
+.kw__spot { fill: var(--kw-accent); stroke: var(--kw-accent-deep); stroke-width: 1.2; stroke-opacity: .6; }
+.kw__crack {
+  fill: none;
+  stroke: var(--kw-deep);
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.kw__shell {
+  fill: var(--kawaii-creme);
+  stroke: var(--kawaii-creme-deep);
+  stroke-width: 2.6;
+  stroke-linejoin: round;
+}
+
+/* Visage */
+.kw__ink { fill: var(--kawaii-ink); }
+.kw__shine { fill: var(--kawaii-shine); }
+.kw__stroke-ink {
+  fill: none;
+  stroke: var(--kawaii-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.kw__brow { stroke-width: 1.8; }
+.kw__blush { fill: var(--kawaii-blush); opacity: .55; }
+.kw__blush-line {
+  fill: none;
+  stroke: var(--kawaii-blush);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+.kw__tongue { fill: var(--kawaii-tongue); }
+.kw__lens { fill: var(--kawaii-shine); fill-opacity: .25; stroke: var(--kawaii-ink); stroke-width: 2; }
+.kw__frame { fill: none; stroke: var(--kawaii-ink); stroke-width: 2; stroke-linecap: round; }
+
+/* Les « z » du sommeil sont hors du corps : ils prennent l'encre de la page. */
+.kw__zz-letter {
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.kw__zz-letter--small { stroke-width: 1.8; }
+
+/* Accessoires */
+.kw__acc, .kw__gold, .kw__leaf {
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.kw__acc { fill: var(--kw-accent); stroke: var(--kw-accent-deep); }
+.kw__acc-line { fill: none; stroke: var(--kw-accent-deep); stroke-width: 1.4; stroke-linecap: round; }
+.kw__gold { fill: var(--kawaii-citron); stroke: var(--kawaii-citron-deep); }
+.kw__leaf { fill: var(--kawaii-menthe); stroke: var(--kawaii-menthe-deep); }
+.kw__stem { fill: none; stroke: var(--kawaii-menthe-deep); stroke-width: 2.6; stroke-linecap: round; }
+
+/* Filtre « autocollant » : liseré de la couleur des gommettes, ombre douce. */
+.kw__rim-color { flood-color: var(--sticker-rim); }
+.kw__shadow-color { flood-color: var(--kawaii-shadow); }
+
+/* ---------- Animations douces ----------
+   Boucles : .kw-bounce (rebond), .kw-float (flottement), .kw-wobble (l'œuf qui va éclore),
+   .kw-twinkle (étincelle). Ponctuelles, à rejouer avec play(el, 'jump') : .kw-jump (saut de joie),
+   .kw-wiggle (petit balancement d'encouragement), .kw-pop (apparition).
+   Le clignement des yeux est automatique (.kw--blink, posé par le kit). */
+
+.kw-bounce, .kw-jump, .kw-wiggle, .kw-wobble, .kw-pop {
+  transform-origin: 50% 90%;   /* les pieds restent au sol */
+}
+
+.kw-bounce { animation: kw-bounce 2.4s ease-in-out infinite; }
+.kw-float { animation: kw-float 3.6s ease-in-out infinite; }
+.kw-wobble { animation: kw-wobble 2.2s ease-in-out infinite; }
+.kw-twinkle { animation: kw-twinkle 2.6s ease-in-out infinite; transform-origin: center; }
+.kw-jump { animation: kw-jump 760ms cubic-bezier(.3, .7, .4, 1) both; }
+.kw-wiggle { animation: kw-wiggle 900ms ease-in-out both; }
+.kw-pop { animation: kw-pop 520ms var(--ease-pop) both; }
+
+@keyframes kw-bounce {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  12% { transform: translateY(0) scale(1.05, .95); }
+  40% { transform: translateY(-7%) scale(.97, 1.03); }
+  62% { transform: translateY(0) scale(1.04, .96); }
+  76% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes kw-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6%) rotate(2deg); }
+}
+
+@keyframes kw-wobble {
+  0%, 60%, 100% { transform: rotate(0); }
+  66% { transform: rotate(-6deg); }
+  74% { transform: rotate(5deg); }
+  82% { transform: rotate(-3deg); }
+  90% { transform: rotate(1.5deg); }
+}
+
+@keyframes kw-twinkle {
+  0%, 100% { transform: scale(1) rotate(0); opacity: 1; }
+  50% { transform: scale(.72) rotate(18deg); opacity: .8; }
+}
+
+@keyframes kw-jump {
+  0% { transform: translateY(0) scale(1, 1); }
+  15% { transform: translateY(0) scale(1.12, .86); }
+  45% { transform: translateY(-24%) scale(.94, 1.08) rotate(-4deg); }
+  70% { transform: translateY(0) scale(1.08, .92); }
+  85% { transform: translateY(-4%) scale(.98, 1.02); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes kw-wiggle {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-7deg); }
+  45% { transform: rotate(6deg); }
+  70% { transform: rotate(-3deg); }
+}
+
+@keyframes kw-pop {
+  from { opacity: 0; transform: scale(.4) rotate(-8deg); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Clignement : une paupière très brève toutes les ~5 s, décalée d'un dessin à l'autre. */
+.kw--blink .kw__eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kw-blink 5.2s ease-in-out infinite;
+  animation-delay: var(--kw-blink-delay, 0s);
+}
+
+@keyframes kw-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(.1); }
+}
+
+/* Les « z » montent doucement. */
+.kw__zz { animation: kw-zz 3s ease-in-out infinite; }
+@keyframes kw-zz {
+  0%, 100% { opacity: .55; translate: 0 2px; }
+  50% { opacity: 1; translate: 0 -2px; }
+}
+
+/* Réduire les animations : tout s'immobilise, rien ne disparaît (base.css raccourcit déjà les
+   durées ; ici on coupe aussi les boucles pour qu'aucun personnage ne reste figé à mi-saut). */
+@media (prefers-reduced-motion: reduce) {
+  .kw-bounce, .kw-float, .kw-wobble, .kw-twinkle, .kw-jump, .kw-wiggle, .kw-pop,
+  .kw--blink .kw__eye, .kw__zz {
+    animation: none !important;
+  }
+}
+
+/* ---------- Page de démonstration du kit (#/kawaii) ---------- */
+
+.kw-demo { display: grid; gap: var(--space-5); }
+
+.kw-hero {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+.kw-hero__text { display: grid; gap: var(--space-2); text-align: center; }
+.kw-hero__lead { color: var(--ink-soft); }
+.kw-hero__deco { display: grid; gap: var(--space-1); justify-items: center; }
+.kw-hero__deco .kw { width: 52px; }
+.kw-hero__deco .kw:nth-child(2) { width: 32px; }
+.kw-hero__deco--left .kw:first-child { rotate: -12deg; }
+.kw-hero__deco--right .kw:first-child { rotate: 10deg; }
+
+.kw-section { display: grid; gap: var(--space-4); border-radius: var(--radius-xl); }
+.kw-section__title { font-size: var(--text-l); color: var(--ink); }
+.kw-section__intro { color: var(--ink-soft); font-size: var(--text-s); }
+
+.kw-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  justify-items: center;
+  align-items: end;
+  gap: var(--space-4) var(--space-3);
+}
+
+.kw-item { margin: 0; width: 100%; display: grid; justify-items: center; gap: var(--space-1); }
+.kw-item__art { width: min(104px, 100%); }
+.kw-item__art .kw { width: 100%; }
+.kw-item--deco .kw-item__art { width: 64px; }
+.kw-item__caption { font-size: var(--text-s); color: var(--ink-soft); text-align: center; }
+
+/* Mascottes : une carte par île, couleur de l'île. */
+.kw-mascots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: var(--space-4);
+}
+.kw-mascot {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap);
+  padding: var(--space-4) var(--space-2) var(--space-3);
+  color: var(--island-ink);
+  background: var(--island-soft);
+  border: 3px solid var(--sticker-rim);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 0 0 2px var(--island), 0 8px 18px -12px var(--shadow);
+}
+.kw-mascot__art { width: 112px; }
+.kw-mascot__art .kw { width: 100%; }
+.kw-mascot__name { font-family: var(--font-title); font-weight: 600; font-size: 1.3rem; }
+.kw-mascot__island { font-size: var(--text-s); }
+
+/* Palette : chaque pastille écrit son nom avec l'encre de sa teinte (contraste AA). */
+.kw-palette {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-3);
+}
+.kw-swatch {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  color: var(--kw-ink);
+  background: var(--kw-fill);
+  border: 3px solid var(--sticker-rim);
+  border-radius: var(--radius-l);
+  box-shadow: 0 0 0 2px var(--kw-deep), 0 6px 14px -10px var(--kawaii-shadow);
+}
+.kw-swatch__name { font-family: var(--font-title); font-weight: 600; font-size: 1.15rem; }
+.kw-swatch__token { font-size: .8rem; }
+
+/* Pastilles de choix (atelier, compagnon). */
+.kw-chips { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: center; }
+.kw-chip {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-round);
+}
+.kw-chip[aria-checked="true"] {
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary-edge);
+}
+
+.kw-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); }
+
+.kw-workshop {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  align-items: center;
+  gap: var(--space-5);
+}
+.kw-workshop__art .kw { width: 100%; }
+.kw-workshop__controls { display: grid; gap: var(--space-3); }
+
+.kw-code {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: .9rem;
+  color: var(--ink);
+  background: var(--surface-sunk);
+  border-radius: var(--radius-m);
+}
+
+@media (max-width: 520px) {
+  .kw-hero__deco .kw { width: 36px; }
+  .kw-hero__deco .kw:nth-child(2) { width: 24px; }
+  .kw-item__art { width: min(84px, 100%); }
+  .kw-item--deco .kw-item__art { width: 52px; }
+  .kw-row { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: var(--space-3) var(--space-2); }
+  .kw-mascots { grid-template-columns: repeat(2, 1fr); }
+  .kw-mascot__art { width: 96px; }
+  .kw-workshop { grid-template-columns: 1fr; justify-items: center; }
+  .kw-workshop__art { width: 160px; }
+}
+
+.kw-field { display: grid; gap: var(--space-1); justify-items: center; }
+.kw-field__label { font-family: var(--font-title); font-weight: 600; color: var(--ink-soft); }

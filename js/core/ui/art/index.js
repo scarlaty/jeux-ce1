@@ -15,8 +15,10 @@
 // le prennent alors en compte partout — illustration, choix de QCM, éléments à ranger.
 import * as baseTen from './base-ten.js';
 import * as clock from './clock.js';
+import * as kawaii from './kawaii.js';
+import * as kawaiiDeco from './kawaii-deco.js';
 
-const registry = new Map(Object.entries({ 'base-ten': baseTen, clock }));
+const registry = new Map(Object.entries({ 'base-ten': baseTen, clock, kawaii, 'kawaii-deco': kawaiiDeco }));
 
 export function registerArt(kind, module) {
   registry.set(kind, module);

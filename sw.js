@@ -29,6 +29,7 @@ const PRECACHE = [
   'css/components.css',
   'css/profile.css',
   'css/rewards.css',
+  'css/kawaii.css',
 
   'fonts/andika-400-latin.woff2',
   'fonts/andika-400-latin-ext.woff2',
@@ -63,6 +64,9 @@ const PRECACHE = [
   'js/core/ui/art/base-ten.js',
   'js/core/ui/art/clock.js',
   'js/core/ui/art/index.js',
+  'js/core/ui/art/kawaii-deco.js',
+  'js/core/ui/art/kawaii-parts.js',
+  'js/core/ui/art/kawaii.js',
   'js/core/ui/avatar.js',
   'js/core/ui/chart.js',
   'js/core/ui/choice.js',
