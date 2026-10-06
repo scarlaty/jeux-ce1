@@ -4,11 +4,11 @@
 
 /** Les cinq îles de la carte. La couleur vient du token CSS --island-<id>. */
 export const ISLANDS = [
-  { id: 'mots', name: 'L\'île aux Mots', subject: 'Français' },
-  { id: 'nombres', name: 'L\'île aux Nombres', subject: 'Nombres et calcul' },
-  { id: 'mesures', name: 'L\'île des Mesures', subject: 'Grandeurs, mesures et géométrie' },
-  { id: 'monde', name: 'L\'île du Monde', subject: 'Questionner le monde' },
-  { id: 'ailleurs', name: 'L\'île d\'Ailleurs', subject: 'Anglais et vivre ensemble' },
+  { id: 'mots', name: 'Île des Mots', subject: 'Français' },
+  { id: 'nombres', name: 'Île des Nombres', subject: 'Nombres et calcul' },
+  { id: 'mesures', name: 'Île des Mesures et des Formes', subject: 'Grandeurs, mesures et géométrie' },
+  { id: 'monde', name: 'Île du Monde', subject: 'Questionner le monde' },
+  { id: 'ailleurs', name: 'Île des Voyages', subject: 'Anglais et vivre ensemble' },
 ];
 
 export const GAMES = [

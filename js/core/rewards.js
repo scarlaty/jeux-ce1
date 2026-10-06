@@ -187,6 +187,7 @@ export function applyGame(rewards, { answers, stars, island = null, daily = null
     rewards: next,
     gained: {
       points,
+      total: next.points,
       base: score.base,
       streak: score.streak,
       stars: bonus,
@@ -228,7 +229,7 @@ export function extrasFor(gained) {
     icon: grade.emoji,
     text: gained.promoted ? `Nouveau grade : ${grade.name} !` : `Grade : ${grade.name}`,
     promoted: gained.promoted,
-    grade: { ...grade, index, ratio, toNext, next },
+    grade: { ...grade, index, ratio, toNext, next, points: gained.total },
   });
   return out;
 }

@@ -104,6 +104,19 @@
   --island-ailleurs: #7a45c9;
   --island-ailleurs-soft: #ece3fa;
   --island-ailleurs-ink: #55299a;
+
+  /* Carte au trésor, coffre, gommettes brillantes (récompenses, css/rewards.css) */
+  --map-sea: #bfe3ea;
+  --map-sea-deep: #a6d6e1;
+  --map-wave: #ffffffc0;
+  --map-shallow: #d8f0ef;
+  --map-sand: #f3dfae;
+  --map-sand-edge: #d7b977;
+  --map-path: #c92e4f;
+  --map-tape: #f1df9ab3;
+  --chest-wood: #a8632a;
+  --chest-wood-dark: #74401a;
+  --shine: #ffffffd9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -162,6 +175,17 @@
     --island-ailleurs: #c4a2ff;
     --island-ailleurs-soft: #3b3152;
     --island-ailleurs-ink: #e0d0ff;
+    --map-sea: #20404a;
+    --map-sea-deep: #1b3640;
+    --map-wave: #a6d8e266;
+    --map-shallow: #2b515a;
+    --map-sand: #8f7f58;
+    --map-sand-edge: #6d6043;
+    --map-path: #ff9fb3;
+    --map-tape: #c9b97a59;
+    --chest-wood: #b8773e;
+    --chest-wood-dark: #6a3c19;
+    --shine: #ffffffa6;
   }
 }
 
@@ -220,6 +244,17 @@
   --island-ailleurs: #c4a2ff;
   --island-ailleurs-soft: #3b3152;
   --island-ailleurs-ink: #e0d0ff;
+  --map-sea: #20404a;
+  --map-sea-deep: #1b3640;
+  --map-wave: #a6d8e266;
+  --map-shallow: #2b515a;
+  --map-sand: #8f7f58;
+  --map-sand-edge: #6d6043;
+  --map-path: #ff9fb3;
+  --map-tape: #c9b97a59;
+  --chest-wood: #b8773e;
+  --chest-wood-dark: #6a3c19;
+  --shine: #ffffffa6;
 }
 
 /* Couleur de l'île courante : un conteneur porte data-island="…" et ses enfants utilisent --island*. */

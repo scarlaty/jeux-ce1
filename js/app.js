@@ -2,6 +2,7 @@
 import { createStorage, createStore } from './core/storage.js';
 import { ensureActiveProfile } from './core/profile.js';
 import { recordResult } from './core/history.js';
+import { installRewards } from './core/rewards.js';
 import { createRouter } from './core/router.js';
 import * as audio from './core/audio.js';
 import { h } from './core/ui/dom.js';
@@ -116,6 +117,7 @@ function start() {
 
   let router = null;
   const app = createAppContext(store, shell, () => router);
+  installRewards({ store, getProfileId: () => app.profileId });
   let cleanup = null;
   let renderId = 0;
 

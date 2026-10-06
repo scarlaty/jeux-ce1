@@ -223,18 +223,6 @@
   to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
 }
 
-.stamp--static {
-  display: inline-block;
-  transform: rotate(-3deg);
-  text-transform: none;
-  animation: stamp-static-in 420ms var(--ease-pop) both;
-}
-
-@keyframes stamp-static-in {
-  from { opacity: 0; transform: rotate(-3deg) scale(1.6); }
-  to { opacity: 1; transform: rotate(-3deg) scale(1); }
-}
-
 .chip {
   display: inline-flex;
   align-items: center;
@@ -249,44 +237,7 @@
   white-space: nowrap;
 }
 
-/* ---------- Accueil provisoire ---------- */
-
-.home__hero { text-align: center; margin-bottom: var(--space-6); }
-.home__title { font-size: clamp(2.6rem, 2rem + 4vw, 4rem); color: var(--primary); }
-.home__subtitle { font-size: var(--text-l); color: var(--ink-soft); }
-
-.island-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-5);
-}
-
-.island-card {
-  position: relative;
-  display: grid;
-  gap: var(--space-3);
-  align-content: start;
-  padding: var(--space-5) var(--space-4) var(--space-4);
-  background: var(--surface);
-  border: 2px solid var(--border);
-  border-top: 10px solid var(--island);
-  border-radius: var(--radius-l);
-  box-shadow: 0 10px 24px -16px var(--shadow);
-}
-
-.island-card__head { display: flex; gap: var(--space-3); align-items: center; }
-.island-card__dot {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-round);
-  background: radial-gradient(circle at 35% 35%, var(--sticker-rim) 0 14%, var(--island) 19%);
-  border: 3px solid var(--sticker-rim);
-  box-shadow: 0 2px 6px var(--shadow);
-}
-.island-card__name { font-size: 1.35rem; color: var(--island-ink); }
-.island-card__subject { font-size: var(--text-s); color: var(--ink-soft); }
-.island-card__empty { color: var(--ink-faint); font-size: 1.05rem; }
+/* ---------- Listes de jeux (page d'une île) ---------- */
 
 .game-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
 
@@ -309,10 +260,6 @@
 .game-card__title { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; }
 .game-card__stars { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-soft); }
 .game-card__stars .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
-
-.workshop { margin-top: var(--space-7); }
-.workshop__title { font-size: 1.35rem; color: var(--ink-soft); margin-bottom: var(--space-3); }
-.workshop .game-list { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 
 /* ---------- Choix du niveau ---------- */
 
@@ -495,7 +442,6 @@
   margin: var(--space-4) auto 0;
   text-align: center;
 }
-.end__title { font-size: clamp(1.8rem, 1.4rem + 2vw, 2.6rem); }
 .end__score { font-size: var(--text-l); }
 .end__score strong { font-family: var(--font-title); font-size: 1.4em; color: var(--island-ink); }
 .end__unlocked {
@@ -510,8 +456,6 @@
 }
 .end__unlocked .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
 .end__hint { color: var(--ink-soft); }
-.end__extras { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
-.end__extras li { display: flex; gap: var(--space-2); align-items: center; justify-content: center; font-weight: 700; }
 .end__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-3); margin-top: var(--space-2); width: 100%; }
 .end__actions .btn { flex: 1 1 200px; max-width: 280px; }
 
