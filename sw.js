@@ -98,6 +98,7 @@ const PRECACHE = [
   'js/games/cdu.js',
   'js/games/demo.js',
   'js/games/ecrire-nombres.js',
+  'js/games/lettres-soeurs.js',
   'js/games/sons.js',
   'js/games/syllabes.js',
   'js/games/tables.js',

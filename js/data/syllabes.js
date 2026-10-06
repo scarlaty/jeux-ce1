@@ -48,11 +48,11 @@ travail tra-vail | vache va-che | vent vent | vitrail vi-trail | voiture voi-tu-
 const EXTRA = `
 ananas 🍍 a-na-nas | arbre 🌳 ar-bre | avocat 🥑 a-vo-cat | banane 🍌 ba-na-ne |
 bateau ⛵ ba-teau | brocoli 🥦 bro-co-li | cactus 🌵 cac-tus | cadeau 🎁 ca-deau |
-canard 🦆 ca-nard | couteau 🔪 cou-teau | crocodile 🐊 cro-co-di-le | dauphin 🐬 dau-phin |
+canard 🦆 ca-nard | coq 🐓 coq | couteau 🔪 cou-teau | crocodile 🐊 cro-co-di-le | dauphin 🐬 dau-phin |
 écharpe 🧣 é-char-pe | escargot 🐌 es-car-got | fée 🧚 fée | fraise 🍓 frai-se | fusée 🚀 fu-sée |
 gâteau 🎂 gâ-teau | girafe 🦒 gi-ra-fe | guitare 🎸 gui-ta-re | hélicoptère 🚁 hé-li-cop-tè-re |
 kiwi 🥝 ki-wi | licorne 🦄 li-cor-ne | lune 🌙 lu-ne | marteau 🔨 mar-teau | micro 🎤 mi-cro |
-moto 🏍️ mo-to | parapluie ☂️ pa-ra-pluie | renard 🦊 re-nard | rhinocéros 🦏 rhi-no-cé-ros |
+moto 🏍️ mo-to | parapluie ☂️ pa-ra-pluie | pastèque 🍉 pas-tè-que | renard 🦊 re-nard | rhinocéros 🦏 rhi-no-cé-ros |
 robot 🤖 ro-bot | tigre 🐯 ti-gre | tomate 🍅 to-ma-te | tortue 🐢 tor-tue | valise 🧳 va-li-se |
 vélo 🚲 vé-lo | zèbre 🦓 zè-bre
 `;
