@@ -20,6 +20,13 @@ export const GAMES = [
     demo: true,   // jeu de démonstration des composants : hors accueil, accessible par #/jeu/demo
     load: () => import('./demo.js'),
   },
+  {
+    id: 'sons',
+    title: 'Les sons',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./sons.js'),
+  },
 ];
 
 export function getIsland(id) {
