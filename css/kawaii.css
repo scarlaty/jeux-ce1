@@ -68,10 +68,10 @@
 .kw__lens { fill: var(--kawaii-shine); fill-opacity: .25; stroke: var(--kawaii-ink); stroke-width: 2; }
 .kw__frame { fill: none; stroke: var(--kawaii-ink); stroke-width: 2; stroke-linecap: round; }
 
-/* Les « z » du sommeil sont hors du corps : ils prennent l'encre de la page. */
+/* Les « z » du sommeil : autocollants eux aussi (liseré clair), donc d'une teinte soutenue fixe. */
 .kw__zz-letter {
   fill: none;
-  stroke: var(--ink-soft);
+  stroke: var(--kawaii-lavande-deep);
   stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -214,7 +214,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   justify-items: center;
-  align-items: end;
+  align-items: start;
   gap: var(--space-4) var(--space-3);
 }
 
@@ -231,6 +231,7 @@
   gap: var(--space-4);
 }
 .kw-mascot {
+  align-content: start;
   display: grid;
   justify-items: center;
   gap: var(--space-1);
@@ -315,6 +316,7 @@
   .kw-item--deco .kw-item__art { width: 52px; }
   .kw-row { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: var(--space-3) var(--space-2); }
   .kw-mascots { grid-template-columns: repeat(2, 1fr); }
+  .kw-mascot:last-child:nth-child(odd) { grid-column: 1 / -1; justify-self: center; width: calc(50% - var(--space-2)); }
   .kw-mascot__art { width: 96px; }
   .kw-workshop { grid-template-columns: 1fr; justify-items: center; }
   .kw-workshop__art { width: 160px; }

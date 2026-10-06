@@ -91,6 +91,7 @@ const PRECACHE = [
   'js/screens/album.js',
   'js/screens/daily.js',
   'js/screens/home.js',
+  'js/screens/kawaii.js',
   'js/screens/parents.js',
   'js/screens/play.js',
   'js/screens/profiles.js',
