@@ -32,6 +32,23 @@ Tout le **lot 1** est terminé et fusionné, plus trois jeux de maths du lot 3.
 Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
+### Branches distantes de la session interrompue du 06/10 — remplacées, conservées
+
+Une session précédente avait été coupée par une limite d'utilisation et avait poussé sur GitHub le
+travail inachevé de ses agents (`feat/jeu-sons`, `feat/e1-profil`, `feat/e2-recompenses`), explicitement
+**non relu et non vérifié**. Ces mêmes issues ont été **refaites intégralement** depuis, relues, corrigées
+et vérifiées dans le navigateur : c'est cette version qui est dans `main`.
+
+Les branches distantes sont **laissées en place** (rien n'est perdu) mais ne doivent plus être fusionnées :
+elles diverge(nt) de `main` et réintroduiraient les défauts corrigés. Elles contiennent toutefois des idées
+qui n'ont pas été reprises — notamment des formes de questions différentes pour « Les sons » (mot à
+compléter, comptage). À supprimer une fois qu'on les aura regardées, ou à garder pour mémoire.
+
+### Question en attente pour l'utilisateur
+
+Jeu **Calcul mental** : la moitié est présentée « ? + ? = 46 » avec la consigne « Trouve la moitié de 46 ».
+À confirmer, ou à remplacer par « la moitié de 46 = ? ».
+
 ## Ce que le socle offre maintenant (à réutiliser, pas à réécrire)
 
 - **Dessins SVG** (`js/core/ui/art/`) : un jeu demande `art: { kind, … }` dans `display.show` ou dans
