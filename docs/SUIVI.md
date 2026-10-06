@@ -22,7 +22,7 @@ https://github.com/users/scarlaty/projects/1.
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22 – #25 | **terminés** ; #26 🔒 en cours ; #86 libre |
+| E3 lecture | #22 – #25 | **terminés** ; #26 partiel sur sa branche (libre) ; #86 libre |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -42,7 +42,7 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres s�
 | Qui | Issue | Branche |
 |---|---|---|
 | — | #89 libéré (interrompu sans code, voir le commentaire ⏸️ de l'issue) | — |
-| Agent « Lecture éclair » (orchestration Claude) | #26 Lecture éclair | `feat/26-lecture-eclair` |
+| — | #26 libéré : travail partiel sur `feat/26-lecture-eclair` (voir commentaire ⏸️) | — |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
