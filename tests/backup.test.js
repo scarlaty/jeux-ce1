@@ -26,6 +26,23 @@ function seeded() {
   return { store, lea, tom };
 }
 
+// Le fichier importé vient de l'extérieur de l'application : il est traité comme non fiable.
+test('une clé piégée du fichier ne touche pas le prototype du profil importé', () => {
+  const hostile = JSON.parse(`{
+    "schemaVersion": ${SCHEMA_VERSION},
+    "id": "p1", "name": "Léa", "avatar": "chat", "createdAt": 0,
+    "progress": { "__proto__": { "pirate": true }, "sons": { "unlocked": 2, "best": { "__proto__": { "x": 1 } }, "plays": 3 } },
+    "history": [], "weekly": []
+  }`);
+  const clean = normalizeProfile(hostile);
+  assert.equal(Object.getPrototypeOf(clean.progress), Object.prototype);
+  assert.equal(clean.progress.pirate, undefined);
+  assert.equal(Object.getPrototypeOf(clean.progress.sons.best), Object.prototype);
+  assert.equal({}.pirate, undefined, 'Object.prototype ne doit jamais être touché');
+  // Les entrées légitimes passent quand même.
+  assert.deepEqual(clean.progress.sons, { unlocked: 2, best: {}, plays: 3 });
+});
+
 test('la sauvegarde contient tous les profils et aucune donnée d\'appareil', () => {
   const { store, tom } = seeded();
   store.setSetting('theme', 'dark');

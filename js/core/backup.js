@@ -47,15 +47,19 @@ export function backupFilename(backup) {
 
 // --- Validation ------------------------------------------------------------------------------
 
+// Le fichier importé vient de l'extérieur : une clé « __proto__ » recopiée telle quelle
+// redéfinirait le prototype de l'objet construit au lieu d'y ajouter une entrée.
+const safeKey = (key) => key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+
 function sanitizeProgress(raw) {
   if (!isObject(raw)) return {};
   const out = {};
   for (const [gameId, value] of Object.entries(raw)) {
-    if (!isObject(value)) continue;
+    if (!isObject(value) || !safeKey(gameId)) continue;
     const best = {};
     if (isObject(value.best)) {
       for (const [level, b] of Object.entries(value.best)) {
-        if (!isObject(b)) continue;
+        if (!isObject(b) || !safeKey(level)) continue;
         best[level] = { score: num(b.score), total: num(b.total), stars: num(b.stars) };
       }
     }
