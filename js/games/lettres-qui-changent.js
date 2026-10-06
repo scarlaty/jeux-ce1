@@ -161,18 +161,26 @@ function neighbour(entry) {
   return isVowel(after) ? `devant ${after}` : `devant ${after}, une consonne`;
 }
 
+// La règle utile à la correction : seulement celle qui explique la bonne réponse.
 const RULES = {
-  c: 'Devant a, o, u ou une consonne, le c chante comme dans kiwi. Devant e, i, y, il chante comme dans serpent.',
-  g: 'Devant a, o, u ou une consonne, le g chante comme dans gâteau. Devant e, i, y, il chante comme dans girafe.',
-  s: 'Un s au début d\'un mot chante comme dans serpent. Entre deux voyelles, il chante comme dans zèbre.',
-  ss: 'Pour chanter comme dans serpent entre deux voyelles, on écrit deux s. Un seul s chanterait comme dans zèbre.',
+  k: 'Devant a, o, u ou une consonne, le c chante comme dans kiwi.',
+  s: 'Devant e, i, y, le c chante comme dans serpent.',
+  g: 'Devant a, o, u ou une consonne, le g chante comme dans gâteau.',
+  j: 'Devant e, i, y, le g chante comme dans girafe.',
+  start: 'Au début d\'un mot, le s chante comme dans serpent.',
+  z: 'Entre deux voyelles, un seul s chante comme dans zèbre.',
+  ss: 'Entre deux voyelles, il faut deux s pour chanter comme dans serpent.',
 };
 
+function ruleOf(entry) {
+  if (entry.letter === 'ss') return RULES.ss;
+  if (entry.letter === 's') return entry.sound === 'z' ? RULES.z : RULES.start;
+  return RULES[entry.sound];
+}
+
 function explainSound(entry) {
-  const ref = REFS[entry.sound];
-  const where = neighbour(entry);
   const subject = entry.letter === 'ss' ? 'les deux s sont' : `le ${entry.letter} est`;
-  return `Dans ${quote(entry.word)}, ${subject} ${where} : on entend comme dans ${ref.word}. ${RULES[entry.letter]}`;
+  return `Dans ${quote(entry.word)}, ${subject} ${neighbour(entry)}. ${ruleOf(entry)}`;
 }
 
 const skillOf = (entry) => ({
