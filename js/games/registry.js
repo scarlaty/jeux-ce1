@@ -42,6 +42,13 @@ export const GAMES = [
     load: () => import('./lettres-soeurs.js'),
   },
   {
+    id: 'lettres-qui-changent',
+    title: 'Les lettres qui changent de son',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./lettres-qui-changent.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
