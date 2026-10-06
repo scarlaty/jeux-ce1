@@ -22,7 +22,7 @@ https://github.com/users/scarlaty/projects/1.
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22 – #24 | **terminés** ; #25, #26, #86 libres |
+| E3 lecture | #22 – #24 | **terminés** ; #25 🔒 en cours ; #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -42,6 +42,7 @@ Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres s�
 | Qui | Issue | Branche |
 |---|---|---|
 | Agent « Kawaii » (orchestration Claude) | #88 E15-T1 Univers kawaii | `feat/88-kawaii` |
+| Agent « Lettres qui changent » (orchestration Claude) | #25 Les lettres qui changent de son | `feat/25-lettres-qui-changent` |
 
 Règle d'orchestration : Claude lance **au plus 2 agents à la fois, une issue chacun**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
