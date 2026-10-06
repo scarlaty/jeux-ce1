@@ -1,11 +1,12 @@
 // Démarrage de l'application : stockage, profil actif, réglages, barre du haut, routeur.
 import { createStorage, createStore } from './core/storage.js';
-import { ensureActiveProfile } from './core/profile.js';
+import { ensureActiveProfile, profileGate } from './core/profile.js';
 import { recordResult } from './core/history.js';
 import { createRouter } from './core/router.js';
 import * as audio from './core/audio.js';
 import { h } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
+import { profileChip } from './core/ui/avatar.js';
 import { SCREENS } from './screens/index.js';
 
 const APP_TITLE = 'Jeux CE1';
@@ -51,10 +52,13 @@ function buildShell(store) {
   };
   renderTheme(store.getSettings().theme);
 
+  // Pastille du profil actif (avatar + prénom) : masquée tant que le profil n'est pas complet.
+  const profileSlot = h('div', { class: 'appbar__profile' });
+
   const header = h('header', { class: 'appbar' },
     h('a', { class: 'icon-btn appbar__home', href: '#/', 'aria-label': 'Accueil' }, icon('home', { size: 28 })),
     title,
-    h('div', { class: 'appbar__tools' }, soundButton, themeButton));
+    h('div', { class: 'appbar__tools' }, profileSlot, soundButton, themeButton));
 
   const view = h('main', { id: 'view', class: 'view', tabindex: '-1' });
   const note = h('p', { class: 'storage-note', role: 'status', hidden: true });
@@ -64,6 +68,9 @@ function buildShell(store) {
 
   return {
     view,
+    renderProfile: (profile) => {
+      profileSlot.replaceChildren(...(profile?.name && profile?.avatar ? [profileChip(profile)] : []));
+    },
     setTitle: (text) => {
       title.textContent = text || APP_TITLE;
       document.title = text ? `${text} · ${APP_TITLE}` : APP_TITLE;
@@ -80,13 +87,42 @@ function buildShell(store) {
 /** Contexte passé à chaque écran. */
 function createAppContext(store, shell, getRouter) {
   let profileId = ensureActiveProfile(store);
-  return {
+  // À l'ouverture, s'il y a plusieurs profils, on demande « Qui joue ? » une fois.
+  let profileChosen = store.getMeta().profiles.length <= 1;
+  let pendingPath = null;
+  const app = {
     store,
     get profileId() { return profileId; },
-    /** À appeler par l'écran de profils (#10) après un changement de profil. */
+    /** Change le profil actif (null : premier profil restant, ou nouveau profil anonyme). */
     switchProfile(id) {
       store.updateMeta((meta) => ({ ...meta, activeProfileId: id }));
       profileId = ensureActiveProfile(store);
+      profileChosen = true;
+      app.refreshProfile();
+    },
+    /** Met à jour la pastille du profil (après un changement de prénom ou d'avatar). */
+    refreshProfile() {
+      shell.renderProfile(store.getProfile(profileId));
+    },
+    /**
+     * Écran imposé avant `path` (bienvenue, choix du profil) ou null. Mémorise `path` pour
+     * y revenir avec continueAfterGate().
+     */
+    gateFor(path) {
+      const redirect = profileGate({
+        path,
+        profile: store.getProfile(profileId),
+        profileCount: store.getMeta().profiles.length,
+        chosen: profileChosen,
+      });
+      if (redirect && !['/bienvenue', '/profils'].includes(path)) pendingPath = path;
+      return redirect;
+    },
+    /** Après la bienvenue ou le choix du profil : reprend la page demandée au départ. */
+    continueAfterGate() {
+      const path = pendingPath && pendingPath !== '/bienvenue' && pendingPath !== '/profils' ? pendingPath : '/';
+      pendingPath = null;
+      app.navigate(path, { replace: true });
     },
     navigate: (path, options) => getRouter().navigate(path, options),
     setTitle: shell.setTitle,
@@ -97,6 +133,7 @@ function createAppContext(store, shell, getRouter) {
       return summary;
     },
   };
+  return app;
 }
 
 function showLoadError(view, app) {
@@ -121,7 +158,15 @@ function start() {
 
   router = createRouter({
     routes: SCREENS,
-    async onRoute({ route, params }) {
+    async onRoute({ route, params, path }) {
+      const redirect = app.gateFor(path);
+      if (redirect) {
+        router.navigate(redirect, { replace: true });
+        return;
+      }
+      // Pas de pastille sur les écrans où l'on choisit ou crée son profil.
+      if (path === '/bienvenue' || path === '/profils') shell.renderProfile(null);
+      else app.refreshProfile();
       const id = ++renderId;
       audio.stopSpeaking();
       try { cleanup?.(); } catch (err) { console.error(err); }

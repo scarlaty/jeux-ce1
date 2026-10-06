@@ -79,6 +79,10 @@
   --on-retry: #ffffff;
   --on-island: #ffffff;
   --focus: #e0306b;
+  --danger: #b3263f;
+  --danger-edge: #861a2e;
+  --danger-soft: #fbe4e8;
+  --on-danger: #ffffff;
   --stamp: #c92e4f;            /* tampon de la maîtresse */
   --stamp-ok: #237a42;
   --star: #f5b700;
@@ -139,6 +143,10 @@
   --on-retry: #2a1608;
   --on-island: #1b2220;
     --focus: #ff8fb8;
+    --danger: #ff9aa9;
+    --danger-edge: #c45a6b;
+    --danger-soft: #4d2a31;
+    --on-danger: #2b0d13;
     --stamp: #ff9fb3;
     --stamp-ok: #8fe0ab;
     --star: #ffd447;
@@ -197,6 +205,10 @@
   --on-retry: #2a1608;
   --on-island: #1b2220;
   --focus: #ff8fb8;
+  --danger: #ff9aa9;
+  --danger-edge: #c45a6b;
+  --danger-soft: #4d2a31;
+  --on-danger: #2b0d13;
   --stamp: #ff9fb3;
   --stamp-ok: #8fe0ab;
   --star: #ffd447;
