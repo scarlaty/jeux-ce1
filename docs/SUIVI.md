@@ -1,4 +1,4 @@
-# Suivi du projet — point d'étape du 06/10/2026, 20 h 50
+# Suivi du projet — point d'étape du 06/10/2026, 21 h
 
 Document de reprise. Le backlog fait foi : issues + jalons du dépôt et le tableau
 https://github.com/users/scarlaty/projects/1.
@@ -15,20 +15,20 @@ https://github.com/users/scarlaty/projects/1.
 - Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
   de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
 
-## État au 06/10, 20 h 50 : 5 jeux jouables, 227 tests
+## État au 06/10, 21 h : 5 jeux jouables, 227 tests
 
 | Epic | Issues | État |
 |---|---|---|
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22 | **terminé** — #23 – #26 et #86 🔒 en cours |
+| E3 lecture | #22 | **terminé** — #23 🔒 en cours ; #24 – #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
-| E4 vocabulaire | #30 – #34 | 🔒 en cours |
-| E5 grammaire et conjugaison | #35 – #41 | 🔒 en cours |
+| E4 vocabulaire | #30 – #34 | à faire (libre) |
+| E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
 | E6 orthographe | #42 – #46 | à faire (libre) |
-| E7 nombres | #47, #50 | **terminés** — #48, #49, #51 🔒 en cours |
-| E8 calcul | #52, #54 | **terminés** — #53 🔒 en cours ; #55, #56, #57 libres |
+| E7 nombres | #47, #50 | **terminés** ; #48, #49, #51 libres |
+| E8 calcul | #52, #54 | **terminés** ; #53, #55 – #57 libres |
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85 | en continu |
@@ -36,16 +36,15 @@ https://github.com/users/scarlaty/projects/1.
 Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
-### En cours — 4 agents lancés le 06/10 à 20 h 50 (une branche par jeu, depuis `main`)
+### En cours (06/10, 21 h) — un seul jeu à la fois
 
-| Agent | Issues réservées | Branches |
+| Qui | Issue | Branche |
 |---|---|---|
-| Lecture | #23, #24, #25, #26, #86 | `feat/23-syllabes`, `feat/24-lettres-soeurs`, `feat/25-lettres-qui-changent`, `feat/26-lecture-eclair`, `feat/86-sons-formes` |
-| Vocabulaire | #30 – #34 | `feat/30-contraires`, `feat/31-synonymes`, `feat/32-familles-mots`, `feat/33-ordre-alphabetique`, `feat/34-categories` |
-| Grammaire et conjugaison | #35 – #41 | `feat/35-phrase` … `feat/41-passe-compose` |
-| Nombres | #48, #49, #51, #53 | `feat/48-comparer`, `feat/49-droite-graduee`, `feat/51-fractions`, `feat/53-doubles-moities` |
+| Agent « Lecture » (orchestration Claude) | #23 Syllabes en folie | `feat/23-syllabes` |
 
-**Libres pour un autre développeur** (réserver d'abord !) : #27 – #29, #42 – #46, #55 – #57, #58 – #81.
+Règle d'orchestration : Claude ne lance **qu'un agent et qu'un jeu à la fois**, pour pouvoir toujours le terminer
+dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
+annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à réserver avant de commencer.
 
 ### Ce qui s'est passé le 06/10 (pour comprendre l'historique)
 
@@ -53,9 +52,10 @@ Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, diz
 - La session 1 a été coupée par une limite d'utilisation pendant que 3 agents travaillaient sur E1, E2 et
   « Les sons ». Un autre développeur a repris en parallèle et a **refait ces mêmes issues** (version
   relue et vérifiée, celle de `main`), plus le hors ligne (#8) et 3 jeux de maths.
-- Les branches distantes `feat/e1-profil`, `feat/e2-recompenses`, `feat/jeu-sons` (travail non relu de la
-  session 1) et `feat/e0-socle`, `feat/jeu-calcul-mental` (déjà fusionnées) sont **obsolètes : ne jamais
-  les fusionner**. Leur suppression attend l'accord de scarlaty. Seule idée à récupérer : de nouvelles
+- Les branches `feat/e1-profil`, `feat/e2-recompenses`, `feat/jeu-sons` (travail non relu de la session 1)
+  et `feat/e0-socle`, `feat/jeu-calcul-mental` (déjà fusionnées) sont **obsolètes : ne jamais les fusionner**.
+  Elles sont archivées sous les étiquettes `archive/<nom>` (rien n'est perdu) ; leur suppression sur GitHub
+  est à faire par scarlaty (bloquée pour l'agent). Seule idée à récupérer : de nouvelles
   formes de questions pour « Les sons », désormais suivies dans l'issue **#86**.
 
 ### Décisions de l'utilisateur
@@ -108,7 +108,7 @@ Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, diz
 
 ## Prochaines étapes
 
-1. Relire et fusionner les jeux des 4 agents au fil de l'eau (un jeu = une branche = une fusion).
+1. Relire et fusionner #23, puis lancer le jeu suivant (un seul à la fois côté Claude).
 2. Faire tester par l'enfant les jeux déjà en ligne, et remonter ses retours dans des issues.
 3. Vague suivante, une fois ces 4 agents terminés : compréhension #27 – #29, orthographe #42 – #46,
    calcul #55 – #57, puis E9/E10 (#58 démarre sur `art/clock.js`), puis E11 – E13.
