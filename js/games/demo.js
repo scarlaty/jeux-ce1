@@ -30,7 +30,7 @@ const ACCENT_WORDS = [
 const ENGLISH_WORDS = [
   ['cat', 'chat', '🐱'], ['dog', 'chien', '🐶'], ['fish', 'poisson', '🐟'], ['bird', 'oiseau', '🐦'],
   ['sun', 'soleil', '☀️'], ['car', 'voiture', '🚗'], ['book', 'livre', '📕'], ['apple', 'pomme', '🍎'],
-  ['tree', 'arbre', '🌳'], ['bus', 'bus', '🚌'], ['cake', 'gâteau', '🎂'], ['egg', 'œuf', '🥚'],
+  ['tree', 'arbre', '🌳'], ['hat', 'chapeau', '🎩'], ['cake', 'gâteau', '🎂'], ['egg', 'œuf', '🥚'],
   ['pig', 'cochon', '🐷'], ['cow', 'vache', '🐮'], ['duck', 'canard', '🦆'], ['frog', 'grenouille', '🐸'],
 ];
 const DAYS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -151,7 +151,9 @@ function orderNumbers(rng, max, count, decreasing) {
     prompt: `Range les nombres ${way}.`,
     display: { items: shuffledNotSorted(rng, sorted) },
     answer: sorted,
-    explain: `${way[0].toUpperCase()}${way.slice(1)} : ${sorted.join(', ')}.`,
+    explain: decreasing
+      ? 'Commence par le plus grand : compare d’abord les centaines.'
+      : 'Commence par le plus petit : compare d’abord les dizaines.',
     skill: 'ranger des nombres',
   };
 }
@@ -168,7 +170,7 @@ const order = {
       prompt: 'Remets les jours de la semaine dans l\'ordre.',
       display: { items: shuffledNotSorted(rng, days), cursive: true },
       answer: days,
-      explain: `L'ordre des jours : ${days.join(', ')}.`,
+      explain: `La semaine : ${DAYS.join(', ')}.`,
       skill: 'jours de la semaine',
     };
   },
