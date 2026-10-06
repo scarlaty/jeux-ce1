@@ -58,6 +58,8 @@ js/
     ui/                 composants d'affichage réutilisables (un fichier par type de question)
       index.js          registre des composants (registerQuestionUI pour un type nouveau)
       dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
+      svg.js            s() et figure() pour construire un SVG (aucun import : pas de cycle)
+      art/              dessins demandés par les jeux (index.js = registre, un fichier par genre)
       choice.js         QCM texte / image
       keypad.js         pavé numérique
       order.js          remettre dans l'ordre
@@ -117,7 +119,17 @@ Le format de `display` de chaque type est documenté en tête de `js/core/ui/<ty
 `display.show = { emoji?, text?, cursive?, speak?, lang?, math? }` (illustration au-dessus des réponses ;
 `speak` ajoute un bouton « écouter » dédié, `lang: 'en-GB'` pour l'anglais ; `math: true` affiche `text`
 comme un calcul : morceaux séparés par des espaces, vrais signes `+ − × =`, « ? » = case du nombre à
-trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`). Les réponses sont comparées
+trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`).
+
+**Dessins** : une illustration autre qu'un émoji se demande par `art: { kind, … }`, utilisable dans
+`display.show` **et** dans un choix ou un élément à ranger (`{ value, art: { kind: 'clock', hours: 3,
+minutes: 30 } }`). Ajouter un genre = un fichier `js/core/ui/art/<kind>.js` exportant `label(spec)`
+(nom accessible, **fonction pure**), `draw(spec)` (le SVG) et `check(spec, errors)` facultatif, puis une
+ligne dans `js/core/ui/art/index.js`. `validateQuestion` s'en sert : un dessin inconnu ou mal formé fait
+échouer les tests du jeu, et deux dessins de même `label` comptent comme deux choix identiques.
+Le `label` ne doit jamais donner la réponse : un cadran décrit la position des aiguilles, pas l'heure.
+
+Les réponses sont comparées
 par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).
 Les éléments à ranger (`order`, `drag`) sont fournis **déjà mélangés** par le jeu (avec `rng`).
 Un jeu marqué `demo: true` (dans le fichier et dans le registre) a tous ses niveaux ouverts et disparaît

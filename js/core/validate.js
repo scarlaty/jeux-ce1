@@ -2,10 +2,24 @@
 // (500 tirages par niveau) : une question invalide doit être repérée avant d'arriver à l'enfant.
 import { keyboardKeys } from './alphabet.js';
 import { sameAnswer } from './engine.js';
+import { artErrors, artLabel } from './ui/art/index.js';
 
 export const QUESTION_TYPES = ['choice', 'keypad', 'order', 'drag', 'letters'];
 
 const nonEmpty = (s) => typeof s === 'string' && s.trim().length > 0;
+
+/** Un contenu (choix, élément, illustration) montre-t-il quelque chose ? */
+const shows = (c) => nonEmpty(c.text) || nonEmpty(c.emoji) || Boolean(c.art);
+
+/** Ce que l'enfant voit : sert à repérer deux choix impossibles à distinguer. */
+const seenAs = (c) => `${c.emoji || ''}|${c.text || ''}|${c.art ? artLabel(c.art) : ''}`;
+
+/** Les dessins de tous les contenus d'une question doivent être valides. */
+function checkArt(contents, errors) {
+  for (const c of contents) {
+    if (c && c.art) errors.push(...artErrors(c.art));
+  }
+}
 
 /** Normalise un choix de QCM : une chaîne ou un nombre devient { value, text }. */
 export function toChoice(c) {
@@ -16,13 +30,14 @@ const checks = {
   choice(q, errors) {
     const choices = (q.display?.choices || []).map(toChoice);
     if (choices.length < 2) errors.push('au moins 2 choix');
-    if (choices.some((c) => !nonEmpty(c.text) && !nonEmpty(c.emoji))) errors.push('choix sans texte ni image');
+    if (choices.some((c) => !shows(c))) errors.push('choix sans texte ni image');
     const keys = choices.map((c) => JSON.stringify(c.value));
     if (new Set(keys).size !== keys.length) errors.push('choix en double');
     const matching = choices.filter((c) => sameAnswer(q.answer, c.value));
     if (matching.length !== 1) errors.push(`la réponse doit figurer une fois parmi les choix (${matching.length})`);
-    const labels = choices.map((c) => `${c.emoji || ''}|${c.text || ''}`);
+    const labels = choices.map(seenAs);
     if (new Set(labels).size !== labels.length) errors.push('deux choix s\'affichent pareil');
+    checkArt(choices, errors);
   },
 
   keypad(q, errors) {
@@ -52,8 +67,9 @@ const checks = {
     if (new Set(itemIds).size !== itemIds.length) errors.push('identifiants d\'éléments en double');
     if (new Set(targetIds).size !== targetIds.length) errors.push('identifiants de cibles en double');
     if (targetIds.includes('pool')) errors.push('« pool » est réservé');
-    if (items.some((i) => !nonEmpty(i.text) && !nonEmpty(i.emoji))) errors.push('élément sans texte ni image');
+    if (items.some((i) => !shows(i))) errors.push('élément sans texte ni image');
     if (targets.some((t) => !nonEmpty(t.label))) errors.push('cible sans étiquette');
+    checkArt(items, errors);
     const answer = q.answer || {};
     if (Object.keys(answer).sort().join() !== [...itemIds].sort().join()) errors.push('chaque élément doit avoir une cible');
     if (Object.values(answer).some((t) => !targetIds.includes(t))) errors.push('cible inconnue dans la réponse');
@@ -83,6 +99,7 @@ export function validateQuestion(q, { checks: extra = {} } = {}) {
   if (q.answer === undefined || q.answer === null) errors.push('réponse manquante');
   if (q.explain !== undefined && typeof q.explain !== 'string') errors.push('explain doit être un texte');
   const show = q.display?.show;
-  if (show && !nonEmpty(show.text) && !nonEmpty(show.emoji)) errors.push('display.show vide');
+  if (show && !shows(show)) errors.push('display.show vide');
+  if (show) checkArt([show], errors);
   return errors;
 }

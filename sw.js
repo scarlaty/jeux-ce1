@@ -53,6 +53,8 @@ const PRECACHE = [
   'js/core/router.js',
   'js/core/storage.js',
   'js/core/validate.js',
+  'js/core/ui/art/clock.js',
+  'js/core/ui/art/index.js',
   'js/core/ui/choice.js',
   'js/core/ui/dom.js',
   'js/core/ui/drag.js',
@@ -61,6 +63,7 @@ const PRECACHE = [
   'js/core/ui/keypad.js',
   'js/core/ui/letters.js',
   'js/core/ui/order.js',
+  'js/core/ui/svg.js',
 
   /* Écrans et jeux : chargés paresseusement par le navigateur, donc jamais demandés tant que
      l'enfant n'a pas ouvert l'écran. On les pré-cache tous (fichiers de quelques kilo-octets,

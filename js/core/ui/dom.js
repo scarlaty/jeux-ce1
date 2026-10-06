@@ -1,5 +1,6 @@
 // Petits utilitaires DOM partagés par les écrans et les composants.
 // On construit les éléments avec textContent : jamais d'innerHTML avec du contenu variable.
+import { drawArt } from './art/index.js';
 
 /**
  * h('button', { class: 'btn', onclick: fn, 'aria-label': '…' }, enfant1, enfant2…)
@@ -30,11 +31,16 @@ function append(el, children) {
 
 /**
  * Contenu d'un choix, d'un élément à ranger ou d'une illustration :
- * { emoji?, text?, cursive?, lang?, math? }. L'émoji est une image de contenu : on lui donne un nom
- * accessible (`label` ou `text`). `math: true` affiche `text` comme un calcul (voir mathText).
+ * { art?, emoji?, text?, cursive?, lang?, math? }. L'émoji est une image de contenu : on lui donne
+ * un nom accessible (`label` ou `text`). `math: true` affiche `text` comme un calcul (voir mathText).
+ * `art` est un dessin décrit par le jeu (voir ui/art/index.js) : il porte son propre nom accessible.
  */
 export function content(item, { cursive = false } = {}) {
   const parts = [];
+  if (item.art) {
+    const drawing = drawArt(item.art);
+    if (drawing) parts.push(drawing);
+  }
   if (item.emoji) {
     const label = item.label || item.text || '';
     parts.push(h('span', { class: 'emoji', role: 'img', 'aria-label': label || null, 'aria-hidden': label ? null : 'true', text: item.emoji }));

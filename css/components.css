@@ -493,6 +493,21 @@
   color: var(--ink-faint);
 }
 
+/* Dessins (display.show.art / choix illustrés, voir ui/art/index.js). Le SVG est en unités
+   relatives : seule sa taille change selon qu'il illustre la question ou qu'il est un choix. */
+.art { display: block; width: 100%; height: auto; overflow: visible; }
+.show__content .art { width: clamp(9rem, 7rem + 12vw, 14rem); }
+.choice .art { width: clamp(5.5rem, 4rem + 9vw, 8rem); }
+
+.clock__face { fill: var(--surface-raised); stroke: var(--border-strong); stroke-width: 2.5; }
+.clock__tick { stroke: var(--ink-faint); stroke-width: 1; stroke-linecap: round; }
+.clock__tick--hour { stroke: var(--ink); stroke-width: 2.2; }
+.clock__number { fill: var(--ink); font-family: var(--font-title); font-size: 10px; font-weight: 600; }
+.clock__hand { stroke-linecap: round; }
+.clock__hand--hour { stroke: var(--ink); stroke-width: 5; }
+.clock__hand--minute { stroke: var(--primary); stroke-width: 3.2; }
+.clock__pin { fill: var(--primary); }
+
 .answer { display: grid; justify-items: center; }
 
 /* Sur grand écran, l'illustration se place à gauche des réponses courtes (QCM, pavé)
