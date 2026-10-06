@@ -4,6 +4,23 @@ Mini-jeux éducatifs couvrant le programme officiel de CE1 (programmes 2024, BO 
 pour une enfant de 7 ans, sur tablette (tactile) et PC (souris).
 Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : issues + jalons (E0…E14) du dépôt.
 
+## ⚠️ Avant de coder quoi que ce soit : règle anti-doublon
+
+Plusieurs développeurs (humains et agents, sur plusieurs PC) travaillent sur ce dépôt. Le 06/10/2026, faute
+de cette règle, le profil, les récompenses et « Les sons » ont été développés **deux fois**.
+
+1. **Lire l'état réel sur GitHub, jamais seulement un fichier local** : tableau
+   https://github.com/users/scarlaty/projects/1 + `git fetch --prune && git branch -r` + `docs/SUIVI.md` de `origin/main`.
+2. **Une issue en « In Progress » avec un commentaire « 🔒 Pris en charge » est réservée** : ne pas y toucher.
+3. **Réserver avant de commencer**, dans cet ordre :
+   `gh issue comment <n> -R scarlaty/jeux-ce1 -b "🔒 Pris en charge — branche feat/<n>-<slug> — <date>"`,
+   passer la carte en « In Progress », puis créer **et pousser immédiatement** la branche.
+4. **Pousser au moins après chaque jeu terminé** (et en fin de séance) : aucun travail ne reste seulement en local.
+5. **Jeu fini** : commenter « ✅ Prêt à relire sur feat/… ». L'orchestrateur relit, fusionne, ferme l'issue.
+6. **Interruption** : pousser l'état (commit « WIP : … »), commenter « ⏸️ Interrompu : fait X, reste Y ».
+   Une réservation sans aucun push depuis 48 h peut être reprise, après un commentaire sur l'issue.
+7. **Ne jamais fusionner** une branche dont l'issue est déjà fermée : elle est obsolète.
+
 ## Principes non négociables
 
 - **Aucune étape de build.** HTML + CSS + JavaScript (modules ES natifs) servis tels quels par GitHub Pages.
@@ -253,7 +270,8 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 - `sw.js` pré-cache toute la coquille **et tous les écrans et jeux**, bien qu'ils soient chargés
   paresseusement : un jeu jamais ouvert doit rester jouable sans connexion. Navigation en
   réseau d'abord (repli sur l'index en cache), reste en cache d'abord.
-- **Après toute modification d'un fichier servi : incrémenter `VERSION` dans `sw.js`** (le cache
+- **Après toute modification d'un fichier servi fusionnée dans `main` : incrémenter `VERSION` dans `sw.js`**
+  (fait par l'orchestrateur au moment de la fusion, pas dans les branches) (le cache
   s'appelle `jeux-ce1-<VERSION>` ; les anciens sont supprimés à l'activation). Sans cela, les
   tablettes déjà installées gardent l'ancienne version.
 - La liste `PRECACHE` doit rester exactement celle des fichiers servis : `tests/offline.test.js`
@@ -294,8 +312,11 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
 ## Git
 
 - Auteur : `scarlaty` uniquement. **Jamais** de ligne `Co-Authored-By: Claude` ni de mention « Generated with Claude ».
-- Une branche par lot de travail (`feat/e0-socle`, `feat/jeu-sons`…), messages de commit en français,
-  au présent, référençant l'issue : `Ajoute le pavé numérique (#6)`.
+- Une branche par issue ou petit groupe d'issues, nommée `feat/<n>-<slug>` (ex. `feat/23-syllabes`),
+  messages de commit en français, au présent, référençant l'issue : `Ajoute le pavé numérique (#6)`.
+- Fichiers partagés modifiés par presque chaque jeu : `js/games/registry.js` (une entrée) et `sw.js`
+  (ajouter le fichier du jeu à `PRECACHE`). **Ne pas incrémenter `VERSION` dans une branche** :
+  l'orchestrateur le fait à la fusion (évite des conflits en série).
 - Ne jamais pousser directement sur `main` depuis un agent : l'orchestrateur relit et fusionne.
 
 ## Conventions de code

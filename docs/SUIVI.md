@@ -1,4 +1,4 @@
-# Suivi du projet — point d'étape du 06/10/2026 (soir)
+# Suivi du projet — point d'étape du 06/10/2026, 20 h 50
 
 Document de reprise. Le backlog fait foi : issues + jalons du dépôt et le tableau
 https://github.com/users/scarlaty/projects/1.
@@ -6,48 +6,62 @@ https://github.com/users/scarlaty/projects/1.
 ## Organisation
 
 - En ligne : https://scarlaty.github.io/jeux-ce1/ — dépôt : https://github.com/scarlaty/jeux-ce1
-- Issue n°N = tâche dans l'ordre du backlog (E0-T1 = #1 … E14-T4 = #85). Jalons = epics E0…E14.
-- **Contrat d'architecture : [`CLAUDE.md`](../CLAUDE.md), à lire avant tout développement.**
-- Méthode : un agent (ou un développeur) par lot, sur une branche `feat/*` dans un worktree isolé ;
-  l'orchestrateur relit, lance `npm test`, vérifie dans le navigateur, fusionne dans `main`,
-  ferme les issues. Commits signés `scarlaty` uniquement.
+- Issue n°N = tâche dans l'ordre du backlog (E0-T1 = #1 … E14-T4 = #85, puis #86). Jalons = epics E0…E14.
+- **Contrat d'architecture : [`CLAUDE.md`](../CLAUDE.md)** — commencer par sa section
+  **« Règle anti-doublon »** : on réserve une issue (commentaire 🔒 + carte « In Progress » + branche poussée)
+  **avant** d'écrire du code, et on pousse après chaque jeu.
+- **Qui fait quoi = le tableau GitHub** https://github.com/users/scarlaty/projects/1 et les commentaires 🔒
+  des issues. Ce fichier ne fait que résumer ; en cas de désaccord, GitHub a raison.
+- Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
+  de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
 
-## État : 5 jeux jouables, 227 tests
-
-Tout le **lot 1** est terminé et fusionné, plus trois jeux de maths du lot 3.
+## État au 06/10, 20 h 50 : 5 jeux jouables, 227 tests
 
 | Epic | Issues | État |
 |---|---|---|
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 Les sons | #22 | **terminé** |
-| E7 numération | #47, #50 | **terminés** ; reste #48, #49, #51 |
-| E8 calcul | #52, #54 | **terminés** ; reste #53, #55, #56, #57 |
-| E3–E6 reste du français | #23 – #46 | à faire (lot 2) |
-| E9, E10 mesures et géométrie | #58 – #67 | à faire |
-| E11–E13 monde, anglais, EMC | #68 – #81 | à faire |
+| E3 lecture | #22 | **terminé** — #23 – #26 et #86 🔒 en cours |
+| E3 compréhension | #27 – #29 | à faire (libre) |
+| E4 vocabulaire | #30 – #34 | 🔒 en cours |
+| E5 grammaire et conjugaison | #35 – #41 | 🔒 en cours |
+| E6 orthographe | #42 – #46 | à faire (libre) |
+| E7 nombres | #47, #50 | **terminés** — #48, #49, #51 🔒 en cours |
+| E8 calcul | #52, #54 | **terminés** — #53 🔒 en cours ; #55, #56, #57 libres |
+| E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
+| E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85 | en continu |
 
 Jeux disponibles : **Les sons** (#22), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
-### Branches distantes de la session interrompue du 06/10 — remplacées, conservées
+### En cours — 4 agents lancés le 06/10 à 20 h 50 (une branche par jeu, depuis `main`)
 
-Une session précédente avait été coupée par une limite d'utilisation et avait poussé sur GitHub le
-travail inachevé de ses agents (`feat/jeu-sons`, `feat/e1-profil`, `feat/e2-recompenses`), explicitement
-**non relu et non vérifié**. Ces mêmes issues ont été **refaites intégralement** depuis, relues, corrigées
-et vérifiées dans le navigateur : c'est cette version qui est dans `main`.
+| Agent | Issues réservées | Branches |
+|---|---|---|
+| Lecture | #23, #24, #25, #26, #86 | `feat/23-syllabes`, `feat/24-lettres-soeurs`, `feat/25-lettres-qui-changent`, `feat/26-lecture-eclair`, `feat/86-sons-formes` |
+| Vocabulaire | #30 – #34 | `feat/30-contraires`, `feat/31-synonymes`, `feat/32-familles-mots`, `feat/33-ordre-alphabetique`, `feat/34-categories` |
+| Grammaire et conjugaison | #35 – #41 | `feat/35-phrase` … `feat/41-passe-compose` |
+| Nombres | #48, #49, #51, #53 | `feat/48-comparer`, `feat/49-droite-graduee`, `feat/51-fractions`, `feat/53-doubles-moities` |
 
-Les branches distantes sont **laissées en place** (rien n'est perdu) mais ne doivent plus être fusionnées :
-elles diverge(nt) de `main` et réintroduiraient les défauts corrigés. Elles contiennent toutefois des idées
-qui n'ont pas été reprises — notamment des formes de questions différentes pour « Les sons » (mot à
-compléter, comptage). À supprimer une fois qu'on les aura regardées, ou à garder pour mémoire.
+**Libres pour un autre développeur** (réserver d'abord !) : #27 – #29, #42 – #46, #55 – #57, #58 – #81.
 
-### Question en attente pour l'utilisateur
+### Ce qui s'est passé le 06/10 (pour comprendre l'historique)
 
-Jeu **Calcul mental** : la moitié est présentée « ? + ? = 46 » avec la consigne « Trouve la moitié de 46 ».
-À confirmer, ou à remplacer par « la moitié de 46 = ? ».
+- 15 h – 16 h : socle, polices locales, Calcul mental fusionnés (session 1).
+- La session 1 a été coupée par une limite d'utilisation pendant que 3 agents travaillaient sur E1, E2 et
+  « Les sons ». Un autre développeur a repris en parallèle et a **refait ces mêmes issues** (version
+  relue et vérifiée, celle de `main`), plus le hors ligne (#8) et 3 jeux de maths.
+- Les branches distantes `feat/e1-profil`, `feat/e2-recompenses`, `feat/jeu-sons` (travail non relu de la
+  session 1) et `feat/e0-socle`, `feat/jeu-calcul-mental` (déjà fusionnées) sont **obsolètes : ne jamais
+  les fusionner**. Leur suppression attend l'accord de scarlaty. Seule idée à récupérer : de nouvelles
+  formes de questions pour « Les sons », désormais suivies dans l'issue **#86**.
+
+### Décisions de l'utilisateur
+
+- Polices hébergées dans `fonts/` ; « son coupé » = bruitages seulement, la voix reste sur demande.
+- Calcul mental : la moitié s'affiche « la moitié de 46 = ? » (fait le 06/10, `VERSION` v4).
 
 ## Ce que le socle offre maintenant (à réutiliser, pas à réécrire)
 
@@ -92,10 +106,11 @@ Jeu **Calcul mental** : la moitié est présentée « ? + ? = 46 » avec la cons
 - **Suppression d'un profil** possible depuis l'écran enfant « Qui joue ? » (avec confirmation) :
   à réserver à l'espace parents si on préfère.
 
-## Prochaines étapes conseillées
+## Prochaines étapes
 
-1. **Faire tester par l'enfant** le lot 1 complet avant d'ajouter des jeux : c'est le seul retour qui compte.
-2. Lot 2 — français (#23 – #46), en s'appuyant sur `js/data/mots-illustres.js`.
-3. Finir le lot 3 — maths : #48, #49, #51, #53, #55, #56, #57, puis E9/E10 (#58 démarre sur `art/clock.js`).
+1. Relire et fusionner les jeux des 4 agents au fil de l'eau (un jeu = une branche = une fusion).
+2. Faire tester par l'enfant les jeux déjà en ligne, et remonter ses retours dans des issues.
+3. Vague suivante, une fois ces 4 agents terminés : compréhension #27 – #29, orthographe #42 – #46,
+   calcul #55 – #57, puis E9/E10 (#58 démarre sur `art/clock.js`), puis E11 – E13.
 4. E14 en continu : relecture du contenu (#82), banques suffisantes (#83), tests tablette (#84),
    accessibilité (#85).
