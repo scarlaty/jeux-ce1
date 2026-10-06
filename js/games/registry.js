@@ -35,6 +35,13 @@ export const GAMES = [
     load: () => import('./calcul-mental.js'),
   },
   {
+    id: 'ecrire-nombres',
+    title: 'Écrire les nombres',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./ecrire-nombres.js'),
+  },
+  {
     id: 'tables',
     title: 'Les tables',
     island: 'nombres',

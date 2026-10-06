@@ -84,7 +84,8 @@ js/
     registry.js         îles + liste des jeux : métadonnées + chemin d'import (chargement paresseux)
     demo.js             jeu de démonstration des 5 types de questions (#/jeu/demo)
     <id>.js             un fichier par jeu (logique pure, sans DOM)
-  data/                 banques de contenu partagées (mots illustrés, conjugaisons, nombres en lettres…)
+  data/                 banques de contenu partagées (mots illustrés, conjugaisons…)
+    nombres-en-lettres.js  enLettres(n), enChiffres(mots), morceaux(n) — orthographe rectifiée de 1990
 tests/                  tests node --test (*.test.js) ; tests/helpers/game-checks.js pour les jeux
 docs/                   notes de conception si nécessaire
 ```

@@ -79,6 +79,7 @@ const PRECACHE = [
      l'enfant n'a pas ouvert l'écran. On les pré-cache tous (fichiers de quelques kilo-octets,
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
   'js/data/mots-illustres.js',
+  'js/data/nombres-en-lettres.js',
 
   'js/screens/index.js',
   'js/screens/album.js',
@@ -93,6 +94,7 @@ const PRECACHE = [
   'js/games/registry.js',
   'js/games/calcul-mental.js',
   'js/games/demo.js',
+  'js/games/ecrire-nombres.js',
   'js/games/sons.js',
   'js/games/tables.js',
 ];
