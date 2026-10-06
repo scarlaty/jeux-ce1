@@ -15,14 +15,14 @@ https://github.com/users/scarlaty/projects/1.
 - Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
   de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
 
-## État au 06/10, 22 h : 7 jeux jouables, 257 tests
+## État au 06/10, 22 h : 8 jeux jouables, 286 tests
 
 | Epic | Issues | État |
 |---|---|---|
 | E0 socle technique | #1 – #8 | **terminé** (hors ligne compris) |
 | E1 profils, historique, espace parents | #9 – #15 | **terminé** |
 | E2 récompenses | #16 – #21 | **terminé** |
-| E3 lecture | #22 – #24 | **terminés** ; #25 🔒 en cours ; #26, #86 libres |
+| E3 lecture | #22 – #25 | **terminés** ; #26, #86 libres |
 | E3 compréhension | #27 – #29 | à faire (libre) |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
@@ -32,17 +32,16 @@ https://github.com/users/scarlaty/projects/1.
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
-| E15 plaisir de jouer | #88 – #91 | #88 🔒 en cours ; puis #89 écrans kawaii, #90 compagnon, #91 coffre surprise |
+| E15 plaisir de jouer | #88 – #91 | #88 **terminé** (kit kawaii, démo #/kawaii) ; #89 🔒 en cours ; puis #90 compagnon, #91 coffre surprise |
 
-Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
+Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
 ### En cours (06/10, 21 h) — un seul jeu à la fois
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Agent « Kawaii » (orchestration Claude) | #88 E15-T1 Univers kawaii | `feat/88-kawaii` |
-| Agent « Lettres qui changent » (orchestration Claude) | #25 Les lettres qui changent de son | `feat/25-lettres-qui-changent` |
+| Agent « Écrans kawaii » (orchestration Claude) | #89 E15-T2 Appliquer l'univers kawaii aux écrans | `feat/89-ecrans-kawaii` |
 
 Règle d'orchestration : Claude lance **au plus 2 agents à la fois, une issue chacun**, pour pouvoir toujours le terminer
 dans son quota (une réservation laissée en plan bloquerait le projet). Les autres réservations du 06/10 ont été
@@ -64,6 +63,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 - Polices hébergées dans `fonts/` ; « son coupé » = bruitages seulement, la voix reste sur demande.
 - Calcul mental : la moitié s'affiche « la moitié de 46 = ? » (fait le 06/10, `VERSION` v4).
+- Univers kawaii validé (mascottes Perle, Cubi, Étincelle, Pépin, Nuagette ; compagnon œuf → grand).
 
 ## Ce que le socle offre maintenant (à réutiliser, pas à réécrire)
 
