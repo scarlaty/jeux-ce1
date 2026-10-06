@@ -115,7 +115,9 @@ test('le manifeste est valide, relatif, et ses icônes existent', () => {
 test('index.html déclare le manifeste et la couleur de thème', () => {
   const html = readFileSync(join(ROOT, 'index.html'), 'utf8');
   assert.match(html, /<link rel="manifest" href="manifest\.webmanifest">/);
-  assert.match(html, /<meta name="theme-color" content="#fbf8f1">/);
+  // Une couleur par thème : la barre système de la tablette suit le clair et l'ardoise.
+  assert.match(html, /<meta name="theme-color" media="\(prefers-color-scheme: light\)" content="#fbf8f1">/);
+  assert.match(html, /<meta name="theme-color" media="\(prefers-color-scheme: dark\)" content="#27322f">/);
   assert.match(html, /<link rel="stylesheet" href="css\/fonts\.css">/);
   assert.match(html, /<link rel="preload" href="fonts\/andika-400-latin\.woff2"/);
 });
