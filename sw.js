@@ -14,7 +14,7 @@
    service worker attend (pas de skipWaiting automatique) : js/core/offline.js propose la mise à
    jour à l'enfant, qui l'applique quand elle ne joue pas. */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `jeux-ce1-${VERSION}`;
 const INDEX = './index.html';
 
@@ -27,6 +27,7 @@ const PRECACHE = [
   'css/tokens.css',
   'css/base.css',
   'css/components.css',
+  'css/profile.css',
 
   'fonts/andika-400-latin.woff2',
   'fonts/andika-400-latin-ext.woff2',
@@ -45,16 +46,21 @@ const PRECACHE = [
   'js/app.js',
   'js/core/alphabet.js',
   'js/core/audio.js',
+  'js/core/backup.js',
   'js/core/engine.js',
+  'js/core/gate.js',
   'js/core/history.js',
   'js/core/offline.js',
   'js/core/profile.js',
   'js/core/random.js',
   'js/core/router.js',
+  'js/core/stats.js',
   'js/core/storage.js',
   'js/core/validate.js',
   'js/core/ui/art/clock.js',
   'js/core/ui/art/index.js',
+  'js/core/ui/avatar.js',
+  'js/core/ui/chart.js',
   'js/core/ui/choice.js',
   'js/core/ui/dom.js',
   'js/core/ui/drag.js',
@@ -72,8 +78,11 @@ const PRECACHE = [
 
   'js/screens/index.js',
   'js/screens/home.js',
+  'js/screens/parents.js',
   'js/screens/play.js',
+  'js/screens/profiles.js',
   'js/screens/soon.js',
+  'js/screens/welcome.js',
 
   'js/games/registry.js',
   'js/games/calcul-mental.js',

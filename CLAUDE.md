@@ -22,7 +22,8 @@ Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : is
 ## Arborescence
 
 ```
-index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/album , #/parents …
+index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/bienvenue ,
+                        #/profil , #/profil/nouveau , #/profil/<id> , #/parents , #/album …
 manifest.webmanifest    PWA : nom, icônes, start_url et scope relatifs, standalone (E0-T8)
 sw.js                   service worker hors ligne : liste de pré-cache + stratégies (E0-T8)
 package.json            uniquement pour `npm test` (aucune dépendance)
@@ -36,17 +37,24 @@ css/
   tokens.css            variables de design (couleurs, polices, espacements, rayons) — clair + sombre
   base.css              reset, typographie, fond Seyès
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
+  profile.css           profils, avatars, courbes, espace parents (E1)
 js/
   app.js                démarrage : stockage, profil actif, réglages, barre du haut, routeur
   screens/
     index.js            TABLE DES ÉCRANS (point d'extension) : chemin → module d'écran
     home.js             accueil provisoire (liste des jeux) → carte des îles (#19)
     play.js             choix du niveau, partie, fin de partie
-    soon.js             écran « Bientôt » des rubriques à venir (album, parents, profil)
+    welcome.js          prénom + avatar : premier lancement, nouveau profil, modification (#9, #10)
+    profiles.js         « Qui joue ? » : choisir, ajouter, supprimer un profil (#10)
+    parents.js          espace parents : progrès, historique, courbes, sauvegarde (#12…#15)
+    soon.js             écran « Bientôt » des rubriques à venir (album)
   core/
     storage.js          lecture/écriture localStorage versionnée (préfixe « jeux-ce1: »), migrations
     profile.js          profils, prénom, avatar, profil actif
     history.js          historique des parties, progression par jeu, agrégats pour les courbes
+    stats.js            agrégats de l'espace parents (semaines, notions ratées, géométrie des courbes)
+    backup.js           export/import d'une sauvegarde JSON versionnée et validée (#14)
+    gate.js             opération de contrôle à l'entrée de l'espace parents (#15)
     engine.js           déroulé d'une partie (10 questions, score, étoiles, niveau suivant) + gameEvents
     validate.js         vérification de la forme d'une question (utilisée par les tests des jeux)
     alphabet.js         touches du clavier de lettres
@@ -60,6 +68,8 @@ js/
       dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
       svg.js            s() et figure() pour construire un SVG (aucun import : pas de cycle)
       art/              dessins demandés par les jeux (index.js = registre, un fichier par genre)
+      avatar.js         pastille d'avatar (barre du haut, listes de profils)
+      chart.js          courbe SVG + tableau des valeurs (aucune bibliothèque)
       choice.js         QCM texte / image
       keypad.js         pavé numérique
       order.js          remettre dans l'ordre
@@ -148,7 +158,11 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
 
 - **Écrans** : `js/screens/index.js` associe un chemin (`/jeu/:id`) à un module
   `{ title?, render(view, { params, app, route }) → nettoyage? }`. `app` fournit `store`, `profileId`,
-  `switchProfile(id)`, `navigate(path)`, `setTitle(texte)`, `record(result)`.
+  `switchProfile(id)`, `navigate(path)`, `setTitle(texte)`, `record(result)`, `showProfile()`
+  (rafraîchit la pastille de profil de la barre du haut). L'ordre des routes compte : la première
+  qui correspond gagne (`/profil/nouveau` avant `/profil/:id`). Au premier lancement, le routeur
+  renvoie tout vers `#/bienvenue`, sauf `#/parents` — c'est par là qu'on restaure une sauvegarde
+  sur une tablette neuve.
 - **Moteur** : `createSession(game, level, { seed?, record?, now? })` → `session.current`,
   `session.answer(valeur) → { correct, answer, explain }`, `session.next() → question | null` ;
   à la fin `session.result = { t, game, level, score, total, stars, durationMs, missed, bestStreak,
@@ -160,6 +174,30 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
 - **Historique / progression** (`history.js`) : `recordResult(store, profileId, result)` →
   `{ progress, newBest, newlyUnlocked }` ; `getGameProgress(profile, gameId)` →
   `{ unlocked, best: { [niveau]: { score, total, stars } }, plays }`.
+- **Profils** (`profile.js`) : `AVATARS` / `avatarOf(id)`, `cleanName(texte)` et `isValidName`
+  (le prénom est une donnée saisie : nettoyée ici, affichée partout en `textContent`),
+  `ensureActiveProfile(store)`, `needsWelcome(store)` (premier lancement), `createProfile`,
+  `updateIdentity(store, id, { name, avatar })` (met à jour le profil ET la liste du méta),
+  `listProfiles`, `setActiveProfile`, `removeProfile` (jamais le dernier), `resetProgress`.
+- **Statistiques** (`stats.js`, pur) : `totals(profile)`, `playedGames(profile, { limit, match })`,
+  `weeklySeries(profile, { weeks, now, match })` (une ligne par semaine, `rate: null` sur les
+  semaines sans partie — la courbe montre les trous), `topMissed`, `gameSummaries(profile, games)`,
+  `seriesFilters(games)` (tout / par matière / par jeu), `chartGeometry(series, box)` et les
+  libellés `weekLabel`, `dateTimeLabel`, `durationLabel`, `rateOf`. L'historique détaillé **et**
+  les agrégats hebdomadaires sont lus ensemble : rien n'est perdu au-delà du plafond.
+- **Sauvegarde** (`backup.js`) : `buildBackup(store)` → `{ app: 'jeux-ce1', format, schemaVersion,
+  exportedAt, activeProfileId, profiles }` ; `serializeBackup`, `backupFilename` (jamais le prénom),
+  `parseBackup(texte)` / `validateBackup(objet)` → `{ ok, backup }` ou `{ ok: false, error }`
+  (message destiné à un adulte), `describeBackup` (résumé montré AVANT d'écrire),
+  `applyBackup(store, backup, { mode: 'merge' | 'replace' })`. L'import ne recopie jamais le
+  fichier tel quel : chaque profil passe par les migrations puis par un nettoyage champ par champ.
+  Les réglages de l'appareil (thème, son) ne sont ni exportés ni écrasés.
+- **Espace parents** (`gate.js`) : `makeGateChallenge(rng)` → une multiplication de 6 à 9
+  (hors programme de CE1), `checkGate(challenge, réponse)`. La porte reste ouverte jusqu'au
+  rechargement de la page, jamais dans le stockage.
+- **Courbes** (`ui/chart.js`) : `weeklyChart(series, { title, caption })` → `<figure>` contenant
+  un SVG écrit à la main (aucune bibliothèque) et le **même contenu en tableau** ; valeurs écrites
+  à côté des points, ligne coupée sur les semaines sans partie, aucune animation.
 - **Stockage** (`storage.js`) : `createStore(createStorage())` → `getMeta/setMeta/updateMeta`,
   `getProfile/setProfile/updateProfile/removeProfile`, `getSettings/setSetting` (réglages de l'appareil
   dans `meta.settings` : `muted`, `theme`). `store.storage.status()` : `'ok' | 'unavailable' | 'error'`.
@@ -184,7 +222,9 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
   est indisponible, et l'indiquer discrètement.
 - Historique : une entrée par partie `{ t, game, level, score, total, durationMs, missed:[skill] }`,
   plafonné (les plus anciennes au-delà de 5000 sont agrégées par semaine).
-- Export/import : JSON versionné, validé avant import.
+- Export/import : JSON versionné, validé avant import (`core/backup.js`). Deux numéros de version :
+  `format` (l'enveloppe) et `schemaVersion` (les documents de profil, rejoués par `profileMigrations`).
+  Une sauvegarde plus récente que l'application est refusée avec un message explicite.
 
 ## Hors ligne (PWA)
 
