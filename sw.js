@@ -65,6 +65,8 @@ const PRECACHE = [
   'js/core/ui/order.js',
   'js/core/ui/svg.js',
 
+  'js/data/nombres-en-lettres.js',
+
   /* Écrans et jeux : chargés paresseusement par le navigateur, donc jamais demandés tant que
      l'enfant n'a pas ouvert l'écran. On les pré-cache tous (fichiers de quelques kilo-octets,
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
