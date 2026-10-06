@@ -54,7 +54,10 @@ gâteau 🎂 gâ-teau | girafe 🦒 gi-ra-fe | guitare 🎸 gui-ta-re | hélicop
 kiwi 🥝 ki-wi | licorne 🦄 li-cor-ne | lune 🌙 lu-ne | marteau 🔨 mar-teau | micro 🎤 mi-cro |
 moto 🏍️ mo-to | parapluie ☂️ pa-ra-pluie | pastèque 🍉 pas-tè-que | renard 🦊 re-nard | rhinocéros 🦏 rhi-no-cé-ros |
 robot 🤖 ro-bot | tigre 🐯 ti-gre | tomate 🍅 to-ma-te | tortue 🐢 tor-tue | valise 🧳 va-li-se |
-vélo 🚲 vé-lo | zèbre 🦓 zè-bre
+vélo 🚲 vé-lo | zèbre 🦓 zè-bre |
+ambulance 🚑 am-bu-lan-ce | ampoule 💡 am-pou-le | bague 💍 ba-gue | cerise 🍒 ce-ri-se |
+chaise 🪑 chai-se | ciseaux ✂️ ci-seaux | fromage 🧀 fro-ma-ge | glace 🍦 gla-ce |
+glaçon 🧊 gla-çon | rose 🌹 ro-se
 `;
 
 const entries = (text) => text.split('|').map((s) => s.trim().split(/\s+/)).filter((p) => p[0]);
