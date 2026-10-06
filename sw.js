@@ -14,7 +14,7 @@
    service worker attend (pas de skipWaiting automatique) : js/core/offline.js propose la mise à
    jour à l'enfant, qui l'applique quand elle ne joue pas. */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `jeux-ce1-${VERSION}`;
 const INDEX = './index.html';
 
@@ -46,13 +46,17 @@ const PRECACHE = [
   'js/core/alphabet.js',
   'js/core/audio.js',
   'js/core/engine.js',
+  'js/core/gate.js',
   'js/core/history.js',
   'js/core/offline.js',
   'js/core/profile.js',
   'js/core/random.js',
   'js/core/router.js',
+  'js/core/stats.js',
   'js/core/storage.js',
   'js/core/validate.js',
+  'js/core/ui/avatar.js',
+  'js/core/ui/chart.js',
   'js/core/ui/choice.js',
   'js/core/ui/dom.js',
   'js/core/ui/drag.js',
