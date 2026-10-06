@@ -28,6 +28,13 @@ export const GAMES = [
     load: () => import('./sons.js'),
   },
   {
+    id: 'syllabes',
+    title: 'Syllabes en folie',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./syllabes.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
