@@ -1,0 +1,230 @@
+/* Variables de design. Toute couleur utilisée ailleurs DOIT venir d'ici.
+   Thème clair = cahier d'écolier ; thème sombre = ardoise et craie.
+   Le thème sombre est défini deux fois (préférence système + choix explicite [data-theme]) :
+   sans étape de build, c'est la seule façon de ne pas dupliquer la logique en JavaScript. */
+
+:root {
+  color-scheme: light;
+
+  /* Polices */
+  --font-text: 'Andika', 'Andika New Basic', 'Trebuchet MS', system-ui, sans-serif;
+  --font-cursive: 'Playwrite FR Moderne', 'Segoe Script', 'Brush Script MT', cursive;
+  --font-title: 'Fredoka', 'Andika', 'Trebuchet MS', system-ui, sans-serif;
+
+  /* Tailles de texte (fluides du téléphone à la tablette) */
+  --text-s: 1rem;
+  --text-m: 1.125rem;
+  --text-prompt: clamp(1.25rem, 1rem + 1.2vw, 1.6rem);   /* ≥ 22 px sur tablette */
+  --text-l: clamp(1.5rem, 1.2rem + 1.4vw, 2rem);
+  --text-xl: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  --text-show: clamp(2.6rem, 2rem + 4vw, 4.5rem);
+
+  /* Espacements, rayons, tailles tactiles */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-s: 10px;
+  --radius-m: 16px;
+  --radius-l: 24px;
+  --radius-round: 999px;
+  --tap: 56px;            /* zone tactile minimale */
+  --tap-l: 64px;
+  --content-width: 820px;
+  --gutter: 16px;
+
+  /* Réglure Seyès : interligne fin et grand carreau */
+  --seyes-small: 9px;
+  --seyes-big: 36px;
+  --margin-x: clamp(10px, 5vw, 64px);
+
+  /* Mouvements */
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --duration-fast: 120ms;
+  --duration-mid: 260ms;
+
+  /* --- Couleurs : cahier --- */
+  --paper: #fbf8f1;
+  --surface: #fffdf9;          /* étiquettes, cartes */
+  --surface-sunk: #f2eee4;     /* zones creuses (champ de saisie, boîtes) */
+  --surface-raised: #ffffff;
+  --border: #ddd5c4;
+  --border-strong: #b9ae97;
+  --shadow: #3b2f1a24;         /* ombre douce (avec transparence) */
+  --ink: #22305b;              /* encre bleu nuit : texte principal */
+  --ink-soft: #4f5a78;
+  --ink-faint: #636a85;
+  --rule-fine: #ece6f4;        /* lignes fines violettes */
+  --rule-strong: #d5cae9;      /* lignes du grand carreau */
+  --margin-line: #ec9aa6;      /* marge rouge */
+
+  --primary: #2f58cf;          /* stylo bleu */
+  --primary-edge: #1f3d96;
+  --on-primary: #ffffff;
+  --primary-soft: #e4ebfc;
+  --secondary: #fffdf9;
+  --secondary-edge: #c9bfa8;
+  --on-secondary: #22305b;
+
+  --success: #237a42;
+  --success-edge: #175a30;
+  --success-soft: #dcf2e3;
+  --on-success: #ffffff;
+  --retry: #b44a0c;            /* « regarde bien » : orange, jamais un rouge d'alarme */
+  --retry-soft: #fdead8;
+  --retry-edge: #8a3807;
+  --on-retry: #ffffff;
+  --on-island: #ffffff;
+  --focus: #e0306b;
+  --stamp: #c92e4f;            /* tampon de la maîtresse */
+  --stamp-ok: #237a42;
+  --star: #f5b700;
+  --star-edge: #b77f00;
+  --star-empty: #e7e0d0;
+  --star-empty-edge: #c8bea8;
+  --sticker-rim: #ffffff;      /* liseré blanc des gommettes */
+  --overlay: #22305b33;
+
+  /* Une couleur par île (+ fond pâle + encre lisible sur ce fond) */
+  --island-mots: #c8336f;
+  --island-mots-soft: #fbe3ec;
+  --island-mots-ink: #8f1f4d;
+  --island-nombres: #2c6cc4;
+  --island-nombres-soft: #e1ecfa;
+  --island-nombres-ink: #1b4a8c;
+  --island-mesures: #b4560c;
+  --island-mesures-soft: #fdebd8;
+  --island-mesures-ink: #8a420a;
+  --island-monde: #238a4f;
+  --island-monde-soft: #ddf2e5;
+  --island-monde-ink: #175f36;
+  --island-ailleurs: #7a45c9;
+  --island-ailleurs-soft: #ece3fa;
+  --island-ailleurs-ink: #55299a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #27322f;
+    --surface: #303d39;
+    --surface-sunk: #222b29;
+    --surface-raised: #374541;
+    --border: #45544f;
+    --border-strong: #64756f;
+    --shadow: #0000004d;
+    --ink: #f3f1e7;
+    --ink-soft: #cdd2c8;
+    --ink-faint: #a9b1a7;
+    --rule-fine: #2d3935;
+    --rule-strong: #35433f;
+    --margin-line: #8c5560;
+    --primary: #9cb8ff;
+    --primary-edge: #5f7fd6;
+    --on-primary: #0f1a3a;
+    --primary-soft: #2f3c5e;
+    --secondary: #374541;
+    --secondary-edge: #222b29;
+    --on-secondary: #f3f1e7;
+    --success: #7fdca0;
+    --success-edge: #3f9d63;
+    --success-soft: #284534;
+    --on-success: #0d2a18;
+    --retry: #ffb27a;
+    --retry-soft: #4c3526;
+    --retry-edge: #c4743f;
+  --on-retry: #2a1608;
+  --on-island: #1b2220;
+    --focus: #ff8fb8;
+    --stamp: #ff9fb3;
+    --stamp-ok: #8fe0ab;
+    --star: #ffd447;
+    --star-edge: #c79a12;
+    --star-empty: #3e4c48;
+    --star-empty-edge: #5b6b66;
+    --sticker-rim: #f3f1e7;
+    --overlay: #00000066;
+    --island-mots: #ff8db5;
+    --island-mots-soft: #4a2c3a;
+    --island-mots-ink: #ffc2d7;
+    --island-nombres: #86b6ff;
+    --island-nombres-soft: #2a3a55;
+    --island-nombres-ink: #c4dbff;
+    --island-mesures: #ffb067;
+    --island-mesures-soft: #4b3a28;
+    --island-mesures-ink: #ffd5ad;
+    --island-monde: #7fd9a1;
+    --island-monde-soft: #284536;
+    --island-monde-ink: #bdf0cf;
+    --island-ailleurs: #c4a2ff;
+    --island-ailleurs-soft: #3b3152;
+    --island-ailleurs-ink: #e0d0ff;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #27322f;
+  --surface: #303d39;
+  --surface-sunk: #222b29;
+  --surface-raised: #374541;
+  --border: #45544f;
+  --border-strong: #64756f;
+  --shadow: #0000004d;
+  --ink: #f3f1e7;
+  --ink-soft: #cdd2c8;
+  --ink-faint: #a9b1a7;
+  --rule-fine: #2d3935;
+  --rule-strong: #35433f;
+  --margin-line: #8c5560;
+  --primary: #9cb8ff;
+  --primary-edge: #5f7fd6;
+  --on-primary: #0f1a3a;
+  --primary-soft: #2f3c5e;
+  --secondary: #374541;
+  --secondary-edge: #222b29;
+  --on-secondary: #f3f1e7;
+  --success: #7fdca0;
+  --success-edge: #3f9d63;
+  --success-soft: #284534;
+  --on-success: #0d2a18;
+  --retry: #ffb27a;
+  --retry-soft: #4c3526;
+  --retry-edge: #c4743f;
+  --on-retry: #2a1608;
+  --on-island: #1b2220;
+  --focus: #ff8fb8;
+  --stamp: #ff9fb3;
+  --stamp-ok: #8fe0ab;
+  --star: #ffd447;
+  --star-edge: #c79a12;
+  --star-empty: #3e4c48;
+  --star-empty-edge: #5b6b66;
+  --sticker-rim: #f3f1e7;
+  --overlay: #00000066;
+  --island-mots: #ff8db5;
+  --island-mots-soft: #4a2c3a;
+  --island-mots-ink: #ffc2d7;
+  --island-nombres: #86b6ff;
+  --island-nombres-soft: #2a3a55;
+  --island-nombres-ink: #c4dbff;
+  --island-mesures: #ffb067;
+  --island-mesures-soft: #4b3a28;
+  --island-mesures-ink: #ffd5ad;
+  --island-monde: #7fd9a1;
+  --island-monde-soft: #284536;
+  --island-monde-ink: #bdf0cf;
+  --island-ailleurs: #c4a2ff;
+  --island-ailleurs-soft: #3b3152;
+  --island-ailleurs-ink: #e0d0ff;
+}
+
+/* Couleur de l'île courante : un conteneur porte data-island="…" et ses enfants utilisent --island*. */
+[data-island="mots"] { --island: var(--island-mots); --island-soft: var(--island-mots-soft); --island-ink: var(--island-mots-ink); }
+[data-island="nombres"] { --island: var(--island-nombres); --island-soft: var(--island-nombres-soft); --island-ink: var(--island-nombres-ink); }
+[data-island="mesures"] { --island: var(--island-mesures); --island-soft: var(--island-mesures-soft); --island-ink: var(--island-mesures-ink); }
+[data-island="monde"] { --island: var(--island-monde); --island-soft: var(--island-monde-soft); --island-ink: var(--island-monde-ink); }
+[data-island="ailleurs"] { --island: var(--island-ailleurs); --island-soft: var(--island-ailleurs-soft); --island-ink: var(--island-ailleurs-ink); }
