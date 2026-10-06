@@ -23,7 +23,7 @@ et tableau https://github.com/users/scarlaty/projects/1 (colonnes Todo / In Prog
 | `feat/e1-profil` | #9, #10, #12–#15 | bienvenue (prénom, avatar), profils, historique, courbes, export/import, espace parents |
 | `feat/e2-recompenses` | #16–#21 | points, grades, gommettes/album, carte des îles (nouvel accueil), défi du jour, tampons |
 | `feat/jeu-sons` | #22 | jeu Les sons + banque partagée `js/data/mots-illustres.js` |
-| `feat/jeu-calcul-mental` | #52 | jeu Calcul mental avec stratégies expliquées |
+| ~~`feat/jeu-calcul-mental`~~ | #52 | FUSIONNÉ le 06/10 (62 tests OK) |
 
 Vérifier sur GitHub si ces branches ont été poussées (`git fetch && git branch -r`). Si une branche manque
 ou est incomplète, relancer un agent sur les issues correspondantes avec le même cahier des charges.
