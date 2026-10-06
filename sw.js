@@ -88,6 +88,7 @@ const PRECACHE = [
   'js/games/calcul-mental.js',
   'js/games/demo.js',
   'js/games/sons.js',
+  'js/games/tables.js',
 ];
 
 self.addEventListener('install', (event) => {
