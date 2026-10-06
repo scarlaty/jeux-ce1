@@ -1,0 +1,396 @@
+/* Récompenses (#16 → #21) : compteur de points, grades, album de gommettes, carte des îles,
+   défi du jour, confettis. Aucune couleur en dur : uniquement les variables de tokens.css. */
+
+/* L'écran du défi du jour emprunte les couleurs de l'île d'Ailleurs. */
+[data-island="defi"] {
+  --island: var(--island-ailleurs);
+  --island-soft: var(--island-ailleurs-soft);
+  --island-ink: var(--island-ailleurs-ink);
+}
+
+/* ---------- Jauge partagée (grade suivant) ---------- */
+
+.meter {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: 12px;
+  background: var(--surface-sunk);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-round);
+  overflow: hidden;
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  width: calc(var(--ratio, 0) * 100%);
+  min-width: 4px;
+  background: var(--star);
+  border-right: 2px solid var(--star-edge);
+}
+
+/* ---------- Compteur de points pendant la partie (#16) ---------- */
+
+.points { position: relative; flex: none; }
+
+.points-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  background: var(--surface);
+  border: 2px solid var(--star-edge);
+  border-radius: var(--radius-round);
+  box-shadow: 0 2px 0 var(--star-edge);
+}
+.points-chip .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
+.points-chip__value { min-width: 2.2ch; text-align: right; }
+
+.points-chip.is-bumped { animation: points-bump 420ms var(--ease-pop) both; }
+
+@keyframes points-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* « +10 » qui s'envole : purement décoratif (aria-hidden), le total reste lisible. */
+.points__gain {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  font-family: var(--font-title);
+  font-weight: 600;
+  color: var(--success);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: points-fly 1000ms ease-out both;
+}
+.points__gain--bonus { color: var(--stamp); font-size: 1.2rem; }
+
+@keyframes points-fly {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to { opacity: 0; transform: translate(-50%, -34px); }
+}
+
+/* ---------- Nouveau grade (#17) ---------- */
+
+.grade-up {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  text-align: left;
+  background: var(--success-soft);
+  border: 3px solid var(--success);
+  border-radius: var(--radius-l);
+  animation: grade-in 620ms var(--ease-pop) both;
+}
+
+.grade-up__icon { font-size: 2.6rem; animation: grade-icon 900ms var(--ease-pop) 220ms both; }
+.grade-up__text { display: grid; }
+.grade-up__kicker { font-size: var(--text-s); color: var(--ink-soft); text-transform: uppercase; letter-spacing: .08em; }
+.grade-up__name { font-family: var(--font-title); font-size: 1.5rem; color: var(--ink); }
+
+@keyframes grade-in {
+  from { opacity: 0; transform: scale(.7) rotate(-4deg); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes grade-icon {
+  0% { transform: rotate(0) scale(1); }
+  30% { transform: rotate(-16deg) scale(1.25); }
+  60% { transform: rotate(14deg) scale(1.25); }
+  100% { transform: rotate(0) scale(1); }
+}
+
+/* ---------- Confettis (#21) ---------- */
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti__bit {
+  position: absolute;
+  top: -24px;
+  left: var(--x, 50%);
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  animation: confetti-fall var(--fall, 2400ms) linear var(--delay, 0ms) both;
+}
+.confetti__bit--round { width: 12px; height: 12px; border-radius: var(--radius-round); }
+.confetti__bit--1 { background: var(--island-mots); }
+.confetti__bit--2 { background: var(--island-nombres); }
+.confetti__bit--3 { background: var(--island-mesures); }
+.confetti__bit--4 { background: var(--island-monde); }
+.confetti__bit--5 { background: var(--star); }
+
+@keyframes confetti-fall {
+  from { opacity: 1; transform: translate(0, 0) rotate(0); }
+  to { opacity: 0; transform: translate(var(--drift, 0), 102vh) rotate(var(--spin, 360deg)); }
+}
+
+/* ---------- Carte au trésor et bandeau de récompenses (#19) ---------- */
+
+.reward-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--tap-l);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-l);
+  box-shadow: 0 4px 0 var(--border);
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+.reward-bar:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); }
+
+.reward-bar__icon { font-size: 2.4rem; flex: none; }
+.reward-bar__body { display: grid; gap: var(--space-1); flex: 1; min-width: 0; }
+.reward-bar__grade { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; }
+.reward-bar__points, .reward-bar__next, .reward-bar__max { font-size: var(--text-s); color: var(--ink-soft); }
+.reward-bar__go { flex: none; color: var(--ink-faint); }
+
+.daily-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--tap-l);
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--island-ailleurs-soft);
+  border: 3px dashed var(--island-ailleurs);
+  border-radius: var(--radius-l);
+  transition: transform var(--duration-fast);
+}
+.daily-card:active { transform: translateY(3px); }
+.daily-card.is-done { border-style: solid; background: var(--success-soft); border-color: var(--success); }
+.daily-card__icon { font-size: 2.2rem; flex: none; }
+.daily-card__body { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.daily-card__title { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; color: var(--island-ailleurs-ink); }
+.daily-card.is-done .daily-card__title { color: var(--ink); }
+.daily-card__text { font-size: var(--text-s); color: var(--ink-soft); }
+.daily-card__go { flex: none; color: var(--ink-faint); }
+
+/* La « mer » : un fond discret derrière les îles, décoratif et sans coût de lecture. */
+.map { position: relative; }
+.map__sea {
+  position: absolute;
+  inset: calc(-1 * var(--space-4)) calc(-1 * var(--space-3));
+  border-radius: var(--radius-l);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 22px, var(--primary-soft) 22px 24px);
+  opacity: .5;
+  pointer-events: none;
+}
+.map .island-grid { position: relative; }
+
+.island-card__id { flex: 1; min-width: 0; }
+.island-card__lock { flex: none; color: var(--ink-faint); }
+
+.island-card.is-locked {
+  background: var(--surface-sunk);
+  border-color: var(--border-strong);
+  border-top-color: var(--border-strong);
+  border-style: dashed;
+}
+.island-card.is-locked .island-card__name { color: var(--ink-soft); }
+.island-card.is-locked .island-card__dot { background: var(--border-strong); }
+.island-card__locked-text { font-size: var(--text-s); color: var(--ink-soft); }
+
+.island-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.island-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-s);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.island-stat .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
+.island-stat .emoji { font-size: 1.1rem; }
+
+/* Décalage « archipel » sur grand écran : des îles qui ne sont pas toutes alignées. */
+@media (min-width: 760px) {
+  .map .island-card:nth-child(even) { transform: translateY(var(--space-5)); }
+}
+
+/* ---------- Album de gommettes (#18) ---------- */
+
+.album { display: grid; gap: var(--space-4); }
+
+.album-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+.album-top__icon { font-size: 3rem; flex: none; }
+.album-top__body { display: grid; gap: var(--space-1); min-width: 0; }
+.album-top__grade { font-family: var(--font-title); font-weight: 600; font-size: var(--text-l); }
+.album-top__points, .album-top__next { font-size: var(--text-s); color: var(--ink-soft); }
+
+.album-subtitle { font-size: 1.35rem; color: var(--ink-soft); margin-top: var(--space-3); }
+.album-hint { color: var(--ink-soft); }
+
+.grade-ladder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: grade;
+}
+
+.grade-step {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  text-align: center;
+  background: var(--surface-sunk);
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-m);
+}
+.grade-step.is-done { background: var(--surface); border-style: solid; border-color: var(--border); }
+.grade-step.is-current {
+  background: var(--success-soft);
+  border: 3px solid var(--success);
+  border-style: solid;
+}
+.grade-step__icon { font-size: 2.2rem; }
+.grade-step:not(.is-done):not(.is-current) .grade-step__icon { filter: grayscale(1); opacity: .55; }
+.grade-step__name { font-family: var(--font-title); font-weight: 600; }
+.grade-step__points { font-size: var(--text-s); color: var(--ink-soft); }
+
+.album-islands { display: grid; gap: var(--space-5); }
+
+.album-island {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-top: 10px solid var(--island);
+  border-radius: var(--radius-l);
+}
+.album-island__head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.album-island__name { flex: 1; min-width: 0; font-size: 1.3rem; color: var(--island-ink); }
+.album-island__count {
+  flex: none;
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--island-ink);
+  background: var(--island-soft);
+  border: 2px solid var(--island);
+  border-radius: var(--radius-round);
+  padding: 0 var(--space-3);
+}
+
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sticker {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-1);
+  min-height: 96px;
+  padding: var(--space-2);
+  text-align: center;
+  background: var(--surface-raised);
+  border: 3px solid var(--sticker-rim);
+  border-radius: var(--radius-m);
+  box-shadow: 0 2px 6px var(--shadow), 0 0 0 2px var(--island);
+}
+.sticker__art { font-size: 2.4rem; }
+.sticker__name { font-size: .8rem; line-height: 1.2; color: var(--ink-soft); }
+
+.sticker--empty {
+  background: var(--surface-sunk);
+  border: 3px dashed var(--border-strong);
+  box-shadow: none;
+}
+.sticker__hole { font-family: var(--font-title); font-size: 2rem; color: var(--ink-faint); }
+
+.album-actions { display: flex; justify-content: center; margin-top: var(--space-4); }
+
+/* ---------- Défi du jour (#20) ---------- */
+
+.daily-intro {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+}
+.daily-intro__icon { font-size: 3.4rem; }
+.daily-intro__lead { font-size: var(--text-l); color: var(--ink-soft); }
+.daily-intro__games { color: var(--ink); }
+.daily-intro__label { color: var(--ink-soft); }
+.daily-intro__prize { font-weight: 700; color: var(--island-ink); }
+.daily-intro__done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--success-soft);
+  border: 2px solid var(--success);
+  border-radius: var(--radius-m);
+}
+.daily-intro__done .icon { color: var(--success); flex: none; }
+
+/* ---------- Petits écrans ---------- */
+
+@media (max-width: 520px) {
+  .play-head { row-gap: var(--space-2); }
+  .points-chip { min-height: 32px; }
+  .reward-bar, .daily-card { gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+  .reward-bar__icon { font-size: 2rem; }
+  .sticker-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); }
+  .sticker { min-height: 84px; }
+  .sticker__art { font-size: 2rem; }
+  .grade-ladder { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+  .grade-step__icon { font-size: 1.8rem; }
+  .grade-step__name { font-size: .95rem; }
+}
+
+/* « Réduire les animations » : plus de confettis ni de mouvement, mais AUCUNE information perdue
+   (le tampon, le bandeau de grade et les points restent affichés). */
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+  .points__gain { display: none; }
+  .points-chip.is-bumped { animation: none; }
+  .grade-up, .grade-up__icon { animation: none; }
+}
