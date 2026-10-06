@@ -76,7 +76,12 @@ function mascots() {
       onclick: () => {
         art.classList.remove('kw-bounce');
         play(art, 'jump');
-        art.addEventListener('animationend', () => art.classList.add('kw-bounce'), { once: true });
+        const resume = (event) => {
+          if (event.target !== art) return;   // pas le clignement des yeux
+          art.removeEventListener('animationend', resume);
+          art.classList.add('kw-bounce');
+        };
+        art.addEventListener('animationend', resume);
       },
     },
     art,

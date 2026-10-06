@@ -40,7 +40,8 @@ de cette règle, le profil, les récompenses et « Les sons » ont été dévelo
 
 ```
 index.html              application unique (SPA), routage par hash : #/ , #/jeu/<id> , #/defi , #/album ,
-                        #/bienvenue , #/profil , #/profil/nouveau , #/profil/<id> , #/parents
+                        #/bienvenue , #/profil , #/profil/nouveau , #/profil/<id> , #/parents ,
+                        #/kawaii (démonstration du kit kawaii, non listée sur la carte)
 manifest.webmanifest    PWA : nom, icônes, start_url et scope relatifs, standalone (E0-T8)
 sw.js                   service worker hors ligne : liste de pré-cache + stratégies (E0-T8)
 package.json            uniquement pour `npm test` (aucune dépendance)
@@ -56,6 +57,7 @@ css/
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
   profile.css           profils, avatars, courbes, espace parents (E1)
   rewards.css           récompenses : compteur de points, grades, album, carte des îles, confettis
+  kawaii.css            univers kawaii : peinture des personnages, animations douces, page #/kawaii
 js/
   app.js                démarrage : stockage, profil actif, réglages, barre du haut, routeur
   screens/
@@ -89,7 +91,8 @@ js/
       dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
       svg.js            s() et figure() pour construire un SVG (aucun import : pas de cycle)
       confetti.js       confettis de fin de partie (sans effet si « réduire les animations »)
-      art/              dessins demandés par les jeux (index.js = registre, un fichier par genre)
+      art/              dessins demandés par les jeux (index.js = registre, un fichier par genre) ;
+                        kawaii.js (+ kawaii-parts.js, kawaii-deco.js) = kit de personnages kawaii
       avatar.js         pastille d'avatar (barre du haut, listes de profils)
       chart.js          courbe SVG + tableau des valeurs (aucune bibliothèque)
       choice.js         QCM texte / image
@@ -167,7 +170,8 @@ Le `label` ne doit jamais donner la réponse : un cadran décrit la position des
 et le matériel de numération décrit les pièces posées, pas le nombre.
 Genres existants : `clock` (cadran à aiguilles) et `base-ten` (matériel de numération :
 `{ kind: 'base-ten', hundreds, tens, units }`, de 0 à 9 pièces par sorte — plaques de cent,
-barres de dix, cubes ; partagé par les jeux de numération et de calcul).
+barres de dix, cubes ; partagé par les jeux de numération et de calcul), `kawaii` et `kawaii-deco`
+(personnages et décorations du kit kawaii, voir « Univers kawaii »).
 
 Les réponses sont comparées
 par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).
@@ -302,6 +306,63 @@ une seule bonne réponse, réponse présente parmi les choix, pas de choix en do
   disparaissent, mais **aucune information ne disparaît** (tampon, bandeau de grade et points restent).
   Focus clavier visible. Contrastes AA. Info jamais portée par la seule couleur (✓/✗ en plus du vert/rouge).
 - Les émojis sont acceptés comme **images de contenu** (animaux, objets, gommettes), pas comme décoration d'UI.
+
+## Univers kawaii (E15, #88)
+
+Les éléments kawaii sont des **autocollants posés sur la page Seyès** : formes rondes, gros yeux
+brillants, joues roses, liseré clair (`--sticker-rim`, comme les gommettes) et petite ombre portée.
+Le cahier reste le décor ; le kawaii l'habite. Démonstration vivante de tout le kit : **`#/kawaii`**.
+
+**Palette** (`tokens.css`, clair + ardoise) : 7 teintes pastel `rose`, `peche`, `citron`, `menthe`,
+`ciel`, `lavande`, `creme`. Chacune existe en 3 variables : `--kawaii-<c>` (remplissage),
+`--kawaii-<c>-deep` (contour, ombre) et `--kawaii-<c>-ink` (texte posé **sur** la teinte, AA ≥ 4,5:1).
+Communes : `--kawaii-ink` (yeux, bouche), `--kawaii-shine`, `--kawaii-blush`, `--kawaii-tongue`,
+`--kawaii-shadow`, et `--radius-xl` (32 px) pour les cartes kawaii. Sur l'ardoise, les teintes sont un
+ton plus doux mais restent pastel (ce sont des autocollants). `tests/kawaii-tokens.test.js` vérifie
+les contrastes dans les deux thèmes.
+
+**Personnages** (`js/core/ui/art/kawaii.js`) — une description, jamais un dessin fait à la main :
+
+```js
+import { draw, mascot, companion, play } from '../core/ui/art/kawaii.js';
+draw({ body: 'drop', color: 'rose', face: 'joyful', accessory: 'bow' });   // → <svg>
+// body      round | drop | block | star | cloud | egg  (formes)  ·  cat | bunny | bear (+ stage 1…3)
+// face      happy (content) | joyful (très content) | surprised | cheering (encourageant) | sleepy
+// accessory none | bow | hat | flower | sprout | crown | star | glasses   · accent : couleur de l'accessoire
+// name (ajouté au nom accessible), crack (œuf fêlé), blink: false, sticker: false, decorative: true
+draw(mascot('mots', { face: 'cheering' }));        // MASCOTS : une mascotte par île
+draw(companion({ animal: 'bunny', stage: 3 }));   // 0 œuf · 1 œuf qui éclot · 2 bébé · 3 petit · 4 grand
+```
+
+- Dans une question : `art: { kind: 'kawaii', … }` ou `{ kind: 'kawaii-deco', shape }` comme tout dessin.
+- **Fonctions pures** (testées sous node) : `character(spec, { uid })` → arbre `{ tag, attrs, children }`,
+  `toMarkup(arbre)`, `label`, `kawaiiErrors`, `normalize`, `mascot`, `companion`. `draw` = `toNode(character())`.
+- **Identifiants SVG** : chaque dessin préfixe ses `id` (filtre, découpe) d'un `uid` unique — autant de
+  personnages qu'on veut sur une page. Ne jamais écrire d'`id` en dur dans un dessin du kit.
+- Mascottes : Perle (goutte rose, Mots), Cubi (cube bleu ciel à lunettes, Nombres), Étincelle (étoile
+  pêche, Mesures), Pépin (boule menthe à pousse, Monde), Nuagette (nuage lavande à fleur, Ailleurs).
+- Compagnon : le kit **dessine** les stades ; les seuils (étoiles…) appartiennent au module compagnon (#90).
+- **Décorations** (`kawaii-deco.js`, `import { draw as drawDeco }`) : `drawDeco({ shape: 'star' | 'heart' | 'cloud' | 'sparkle', color?, face? })`,
+  décoratives (`aria-hidden`) sauf si `label` est donné.
+- Ajouter une forme / un accessoire / une expression : une entrée dans `kawaii-parts.js`
+  (`SHAPE_GEOMETRY` avec `face`, `top`, `side`, `zz`, `shine` ; `ACCESSORY_PARTS` ; `FACE_PARTS`),
+  son nom français dans `*_NAMES`, puis vérifier sur `#/kawaii` en clair et en sombre.
+
+**Animations** (`css/kawaii.css`) : boucles `.kw-bounce` (rebond), `.kw-float` (flottement),
+`.kw-wobble` (œuf qui va éclore), `.kw-twinkle` (étincelle) ; mouvements ponctuels rejoués avec
+`play(el, 'jump' | 'wiggle' | 'pop')` (saut de joie, encouragement, apparition). Les yeux clignent tout
+seuls, décalés d'un personnage à l'autre. Avec « réduire les animations », tout est immobile et rien
+ne disparaît. Poser l'animation sur le **conteneur** du dessin (les pieds restent au sol).
+
+**À faire / à éviter**
+- ✅ Un personnage accompagne et encourage : il est content, très content, surpris, encourageant ou
+  endormi — **jamais triste, fâché ou qui pleure**, même après une erreur (alors : `cheering`).
+- ✅ Teintes de la palette uniquement ; texte sur une teinte = son `-ink`. ✅ Un personnage qui porte un
+  sens a un nom accessible ; à côté d'un texte qui dit déjà tout, `decorative: true`.
+- ✅ Taille ≥ 64 px pour qu'on voie les yeux ; 2 ou 3 personnages par écran au plus, les décorations avec parcimonie.
+- ❌ Pas d'animation en boucle à côté d'une consigne à lire (elle distrait) : les boucles sont pour
+  l'accueil, la fin de partie, l'album. ❌ Pas d'image externe ni de bibliothèque. ❌ Pas de kawaii
+  sur l'espace parents (sobre). ❌ Ne pas déformer un dessin (largeur seule, `height: auto`).
 
 ## Tests et vérification
 
