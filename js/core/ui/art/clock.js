@@ -55,12 +55,14 @@ export function draw(spec) {
     const [x2, y2] = at(i * 6, R - 1);
     marks.push(s('line', { x1, y1, x2, y2, class: big ? 'clock__tick clock__tick--hour' : 'clock__tick' }));
     if (big) {
-      const [tx, ty] = at(i * 6, R - 15);
+      const [tx, ty] = at(i * 6, R - 12);
       numbers.push(s('text', { x: tx, y: ty, class: 'clock__number', 'dominant-baseline': 'central', 'text-anchor': 'middle', text: i === 0 ? 12 : i / 5 }));
     }
   }
-  const [hx, hy] = at(hour, R - 20);
-  const [mx, my] = at(minute, R - 8);
+  // Les aiguilles s'arrêtent avant la couronne des chiffres : elles désignent le nombre
+  // sans jamais le recouvrir — c'est ce qu'on demande à l'enfant de lire.
+  const [hx, hy] = at(hour, R - 27);
+  const [mx, my] = at(minute, R - 18);
   return figure('0 0 100 100', label(spec),
     s('circle', { cx: CENTER, cy: CENTER, r: R, class: 'clock__face' }),
     marks, numbers,
