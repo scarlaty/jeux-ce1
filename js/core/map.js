@@ -141,6 +141,7 @@ export const SHORT_TITLES = {
   tirelire: 'La tirelire',
   'colors-numbers': 'Colors and numbers',
   'besoins-vivant': 'Besoins du vivant',
+  'regles-de-vie': 'Règles de vie',
 };
 
 /**
