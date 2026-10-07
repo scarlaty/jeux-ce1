@@ -405,7 +405,7 @@
 .map-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
 
 @media (min-width: 720px) {
-  .map-list { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .map-list { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
 }
 
 .map-row {
@@ -425,7 +425,7 @@
 .map-row__body { flex: 1; min-width: 0; display: grid; }
 .map-row__name { font-family: var(--font-title); font-weight: 600; font-size: 1.15rem; }
 .map-row__meta { font-size: var(--text-s); color: var(--ink-soft); }
-.map-row__stars { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-soft); }
+.map-row__stars { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-soft); }
 .map-row__stars .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
 .map-row__art { flex: none; width: 44px; height: 44px; }
 .map-row--locked {
