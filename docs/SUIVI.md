@@ -14,6 +14,10 @@ https://github.com/users/scarlaty/projects/1.
   des issues. Ce fichier ne fait que résumer ; en cas de désaccord, GitHub a raison.
 - Orchestration : Claude (session de scarlaty) relit, teste, fusionne dans `main`, incrémente `VERSION`
   de `sw.js`, ferme les issues. Commits signés `scarlaty` uniquement.
+- **Avant chaque fusion : lancer les juges** ([`docs/juges/`](juges/README.md)) — pédagogie sur les
+  jeux et les banques, visuel + accessibilité sur l'interface. Ils mesurent au lieu d'opiner, ne
+  reçoivent jamais le rapport de l'implémenteur, et tout défaut confirmé repart en test. Rodés sur
+  deux cas réels (#101) : ils ont trouvé neuf défauts que la relecture seule avait manqués.
 
 ## État au 06/10, 22 h : 8 jeux jouables, 286 tests
 

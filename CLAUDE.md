@@ -495,6 +495,35 @@ argent 2, doré 3) que l'enfant touche à l'écran de fin ; il se secoue, brille
   du haut : automatique → clair → sombre).
 - Aucune erreur dans la console.
 
+### Les juges : relecture indépendante avant fusion
+
+`npm test` vérifie ce qu'on a pensé à vérifier. Il ne regarde pas l'écran, ne tabule pas au clavier,
+et ne compte pas ce qu'on ne lui a pas demandé de compter. **Tous les défauts graves de ce projet
+sont passés au travers des tests** : deux questions identiques à l'écran, le défi du jour monomatière,
+des devinettes résolues avec un seul indice, les points et les gommettes effacés par un import, six
+liens rendus anonymes par un `role="img"`.
+
+D'où les **juges** : des agents de relecture lancés sur une branche terminée, **avant** la fusion.
+Leurs grilles sont dans [`docs/juges/`](docs/juges/README.md) — elles font foi.
+
+| La branche touche… | Juges à lancer |
+|---|---|
+| un jeu, une banque `js/data/`, un générateur, un texte lu par l'enfant | **pédagogie** |
+| un écran, du CSS, un dessin, `js/core/ui/` | **visuel** + **accessibilité** |
+| le socle (`engine`, `storage`, `rewards`…) | aucun, mais relecture attentive de l'orchestrateur |
+
+Trois règles, sans lesquelles les juges ne servent à rien :
+
+1. **Un juge mesure, il n'opine pas.** Un verdict sans chiffre ni capture n'est pas un verdict.
+   « Le contenu semble adapté » ne vaut rien ; « sur 4 000 tirages, 99,2 % des questions se résolvent
+   avec un seul indice » vaut une issue.
+2. **Le juge ne reçoit jamais le rapport de l'agent qui a écrit le code.** Un implémenteur justifie
+   toujours bien ses choix ; un juge qui lit ces justifications les adopte.
+3. **Tout défaut confirmé repart en test**, pas en commentaire — sinon il reviendra.
+
+Un verdict « bloquant » est un **avis, pas un veto** : l'orchestrateur tranche et en répond. S'il
+passe outre, il écrit pourquoi dans le commentaire de fusion.
+
 ## Git
 
 - Auteur : `scarlaty` uniquement. **Jamais** de ligne `Co-Authored-By: Claude` ni de mention « Generated with Claude ».

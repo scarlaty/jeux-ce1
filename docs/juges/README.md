@@ -3,10 +3,18 @@
 Un **juge** est un agent de relecture lancé sur une branche terminée, avant la fusion dans `main`.
 Il ne code pas. Il mesure, et il rend un verdict argumenté.
 
-> **Statut : en rodage.** Les grilles ne sont **pas encore** inscrites dans la méthode de `CLAUDE.md`.
-> On les éprouve d'abord sur de vraies branches : elles vont laisser passer des choses, et c'est en
-> corrigeant ce qu'elles ont manqué qu'elles deviendront utiles. Elles n'entreront dans la méthode
-> qu'une fois qu'elles auront attrapé des défauts que la relecture seule n'avait pas vus. Suivi : #101.
+> **Statut : en service.** Les grilles ont été rodées sur deux cas réels (#101) et sont inscrites dans
+> la méthode de `CLAUDE.md`.
+>
+> - **Visuel et accessibilité**, sur la branche de l'archipel : quatre défauts trouvés que la relecture
+>   de l'orchestrateur avait manqués — anneau de focus à 2,00 de contraste sur l'ardoise, étoile gagnée
+>   moins visible que l'étoile vide, panneau de nom recouvrant 30,5 % de l'île qu'il désigne, liste
+>   HTML brisée en quatre lignes.
+> - **Pédagogie**, sur les devinettes, à l'aveugle : les quatre défauts déjà connus retrouvés avec de
+>   meilleurs chiffres, plus cinq inédits — dont « C'est un ail ! » affiché 81 fois sur 9 000.
+>
+> Chaque rodage a **corrigé la grille elle-même**. Continuer : une grille qui ne change plus est une
+> grille qu'on n'écoute plus.
 
 Ces grilles sont nées des défauts réellement trouvés sur ce projet. Elles ne sont pas théoriques :
 chaque critère vient d'un bug qui est passé au travers des tests.
