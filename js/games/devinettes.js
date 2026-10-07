@@ -1,6 +1,6 @@
 // Devinettes (E3-T6) : croiser des indices pour trouver la bonne réponse.
 //  Niveau 1 : 2 indices, 3 images.
-//  Niveau 2 : 3 indices, 4 images.
+//  Niveau 2 : 3 indices, 4 images — trois affirmations, ou deux plus un indice dit à l'envers.
 //  Niveau 3 : réponses en mots seulement ; 2 indices + un indice dit à l'envers (« Je ne suis pas jaune. »).
 // Règle d'or (#97) : CHAQUE INDICE EST NÉCESSAIRE. À chaque indice correspond un intrus qui vérifie tous les
 // autres indices et ne contredit que celui-là : en retirer un seul rend la devinette ambiguë. Aucun intrus ne
@@ -9,16 +9,20 @@
 // (voir js/data/devinettes.js : `is` / `maybe`).
 import {
   THINGS, KIND_RANK, TAGS, NEGATIONS, confusable, clueText, negationText, whyNot, definite, indefinite,
-  holds, fails, couldHold, colourClosed,
+  holds, fails, couldHold, colourClosed, canDeny,
 } from '../data/devinettes.js';
 
 const kind = (tag) => TAGS[tag].kind;
 const byRank = (a, b) => KIND_RANK[kind(a)] - KIND_RANK[kind(b)];
 
-/** `count` indices tirés parmi `tags` : au plus une catégorie et une couleur (sinon l'indice est redondant). */
+/**
+ * `count` indices tirés parmi `tags` : au plus une catégorie et une couleur (sinon l'indice est redondant).
+ * On écarte d'emblée les indices « ouverts » (#108) : on ne sait pas les nier, donc aucun intrus ne peut
+ * les vérifier — les tirer ne ferait que gâcher des tentatives et appauvrir les réponses possibles.
+ */
 function pickClues(tags, count, rng) {
   const picked = [];
-  for (const tag of rng.shuffle([...tags])) {
+  for (const tag of rng.shuffle([...tags].filter(canDeny))) {
     if (picked.length === count) break;
     if (['cat', 'colour'].includes(kind(tag)) && picked.some((p) => kind(p) === kind(tag))) continue;
     picked.push(tag);
@@ -31,14 +35,17 @@ const compatible = (t, chosen) => chosen.every((c) => c.emoji !== t.emoji && !co
 
 /**
  * Un intrus par contrainte : il vérifie TOUTES les autres avec certitude et contredit celle-là avec certitude.
+ * `said` est l'énoncé déjà écrit : aucun choix ne peut y être nommé (« Je ne suis pas orange. » à côté de
+ * l'image d'une orange — il suffirait de barrer le mot recopié, voir la grille du juge, § 2 bis).
  * Renvoie [{ thing, missed }] ou null si la banque n'offre pas un tel intrus.
  */
-function pickLures(answer, constraints, rng) {
+function pickLures(answer, constraints, said, rng) {
   const chosen = [answer];
   const lures = [];
   for (const missed of rng.shuffle([...constraints])) {
     const others = constraints.filter((c) => c !== missed);
-    const base = THINGS.filter((t) => compatible(t, chosen) && fails(t, missed) && !(missed.neg && TAGS[missed.tag].kind === 'colour' && !colourClosed(t)));
+    const base = THINGS.filter((t) => compatible(t, chosen) && fails(t, missed) && !said.includes(t.word)
+      && !(missed.neg && TAGS[missed.tag].kind === 'colour' && !colourClosed(t)));
     // De préférence un intrus qui vérifie les autres indices avec certitude ; sinon, qui pourrait les vérifier.
     const sure = base.filter((t) => others.every((c) => holds(t, c)));
     const candidates = sure.length ? sure : base.filter((t) => others.every((c) => couldHold(t, c)));
@@ -88,20 +95,36 @@ function buildQuestion(level, answer, constraints, lures, rng) {
   };
 }
 
+/**
+ * Formes d'énoncé d'un niveau : combien d'indices affirmatifs, et un indice dit à l'envers ou non.
+ * Le niveau 2 en a deux (#108) : trois affirmations exigent trois intrus qui vérifient chacun les deux
+ * autres indices, ce que la banque ne permet que pour 16 réponses — d'où « baleine » dans 29,7 % des
+ * questions. Un indice dit à l'envers est bien plus facile à contredire : il ouvre le reste de la banque.
+ */
+const SHAPES = { 1: [[2, false]], 2: [[3, false], [2, true]], 3: [[2, true]] };
+
+/**
+ * Plusieurs jeux d'indices sont essayés pour la MÊME réponse (#108). Avant, un seul échec rejetait la
+ * réponse entière : le tirage se concentrait sur les rares choses faciles à entourer d'intrus et la
+ * plupart des indices ne sortaient jamais.
+ */
 function question(level, rng) {
   const answer = rng.pick(THINGS);
-  const positives = level === 1 ? 2 : level === 2 ? 3 : 2;
-  if (answer.is.size < positives) return null;
-  const clues = pickClues(answer.is, positives, rng);
-  if (!clues) return null;
-  const constraints = clues.map((tag) => ({ tag }));
-  if (level === 3) {
-    const negatable = Object.keys(NEGATIONS).filter((tag) => holds(answer, { tag, neg: true }));
-    if (!negatable.length) return null;
-    constraints.push({ tag: rng.pick(negatable), neg: true });
+  const negatable = Object.keys(NEGATIONS).filter((tag) => holds(answer, { tag, neg: true }));
+  for (const [positives, deny] of rng.shuffle(SHAPES[level])) {
+    if (answer.is.size < positives || (deny && !negatable.length)) continue;
+    for (let i = 0; i < 6; i++) {
+      const clues = pickClues(answer.is, positives, rng);
+      if (!clues) break;
+      const constraints = clues.map((tag) => ({ tag }));
+      if (deny) constraints.push({ tag: rng.pick(negatable), neg: true });
+      const said = constraints.map((c) => clueSentence(c, answer)).join(' ').toLowerCase();
+      if (said.includes(answer.word)) continue;
+      const lures = pickLures(answer, constraints, said, rng);
+      if (lures) return buildQuestion(level, answer, constraints, lures, rng);
+    }
   }
-  const lures = pickLures(answer, constraints, rng);
-  return lures ? buildQuestion(level, answer, constraints, lures, rng) : null;
+  return null;
 }
 
 function draw(level, rng) {

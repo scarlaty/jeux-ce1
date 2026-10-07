@@ -148,10 +148,15 @@ test('niveaux : nombre d\'indices et de choix, images puis mots', () => {
     assert.ok(q.display.choices.every((c) => c.emoji));
   }
   for (const q of byLevel[2]) {
-    assert.equal(q.riddle.clues.length, 3);
+    // Trois indices : trois affirmations, ou deux plus un indice dit à l'envers (#108).
+    assert.equal(q.riddle.clues.length + (q.riddle.not ? 1 : 0), 3, q.key);
+    assert.ok(q.riddle.clues.length >= 2, q.key);
     assert.equal(q.display.choices.length, 4);
     assert.ok(q.display.choices.every((c) => c.emoji));
   }
+  // Les deux formes sortent vraiment : ni l'une ni l'autre n'est décorative.
+  const denied = byLevel[2].filter((q) => q.riddle.not).length;
+  assert.ok(denied > 0 && denied < byLevel[2].length, `niveau 2 : ${denied} / ${byLevel[2].length} à l'envers`);
   for (const q of byLevel[3]) {
     assert.equal(q.riddle.clues.length, 2);
     assert.ok(q.riddle.not, 'niveau 3 : un indice dit à l\'envers');
@@ -296,5 +301,51 @@ test('questions distinctes : au moins 30 par niveau avec la banque seule', () =>
   const byLevel = draws();
   for (const level of [1, 2, 3]) {
     assert.ok(new Set(byLevel[level].map((q) => q.key)).size >= 60, `niveau ${level}`);
+  }
+});
+
+// #108 : les corrections de #97/#106 avaient rendu le jeu juste mais répétitif. Mesures de l'orchestrateur
+// avant correction (6 000 tirages) : niveau 1, 55 réponses ; niveau 2, 12 réponses dont « baleine » 29,8 % ;
+// niveau 3, 51 réponses ; et 27 indices sur 124 seulement (21,8 %) sortaient un jour.
+test('variété : au moins 30 réponses par niveau, aucune au-dessus de 10 % (#108)', () => {
+  const byLevel = draws();
+  for (const level of [1, 2, 3]) {
+    const n = byLevel[level].length;
+    const counts = new Map();
+    for (const q of byLevel[level]) counts.set(q.answer, (counts.get(q.answer) || 0) + 1);
+    assert.ok(counts.size >= 30, `niveau ${level} : ${counts.size} réponses distinctes`);
+    const [top, c] = [...counts].sort((a, b) => b[1] - a[1])[0];
+    assert.ok(c / n <= 0.10, `niveau ${level} : « ${top} » dans ${(100 * c / n).toFixed(1)} % des questions`);
+  }
+});
+
+test('variété : au moins la moitié des indices de la banque sont atteignables (#108)', () => {
+  const used = new Set();
+  for (const q of all(draws())) {
+    q.riddle.clues.forEach((t) => used.add(t));
+    if (q.riddle.not) used.add(q.riddle.not);
+  }
+  const total = Object.keys(TAGS).length;
+  assert.ok(used.size / total >= 0.5, `${used.size} / ${total} indices atteignables`);
+  // Un indice de signature (ce qui ne désigne presque qu'une chose) sort vraiment : sans eux, les
+  // devinettes ne parlaient plus que de couleur, de catégorie et de taille.
+  const signatures = ['trompe', 'laine', 'grappe', 'queue', 'coquille', 'rugit', 'desert', 'boulangerie',
+    'criniere', 'carapace', 'oreilles', 'plumes', 'bec', 'cornes', 'cheminee', 'noisette'];
+  assert.deepEqual(signatures.filter((t) => !used.has(t)), [], 'indices de signature jamais tirés');
+});
+
+test('un indice « ouvert » n\'est jamais nié ni posé comme indice (#108)', () => {
+  // On ne nie que ce qui est certain : « ne sent pas bon », « n'est pas rond », « ne flotte pas »
+  // seraient faux pour trop de choses — ces indices ne servent donc jamais.
+  const open = Object.values(TAGS).filter((t) => t.open).map((t) => t.id);
+  assert.deepEqual(open.sort(), ['ferme', 'flotte', 'foret', 'grand', 'main', 'nuit', 'parfum', 'rond', 'toit']);
+  for (const t of THINGS) for (const tag of open) {
+    if (tag === 'main' || tag === 'grand') continue;   // la taille se nie par son contraire
+    assert.ok(!never(t, tag), `${t.word} : ${tag} ne devrait jamais être nié`);
+  }
+  for (const q of all(draws())) {
+    for (const c of constraintsOf(q)) {
+      assert.ok(!TAGS[c.tag].open || c.tag === 'main' || c.tag === 'grand', `indice ouvert : ${q.key}`);
+    }
   }
 });
