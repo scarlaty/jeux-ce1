@@ -32,7 +32,7 @@ https://github.com/users/scarlaty/projects/1.
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
-| E15 plaisir de jouer | #88 – #91 | #88, #89 **terminés** (kit kawaii et mascottes sur tous les écrans) ; puis #90 compagnon, #91 coffre surprise |
+| E15 plaisir de jouer | #88 – #91 | #88, #89, #90 **terminés** (kit kawaii, mascottes, compagnon : éclosion après 3 parties, stades à 20 et 60 étoiles) ; reste #91 coffre surprise |
 
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54), **Lecture éclair** (#26), **Devinettes** (#27).
@@ -43,7 +43,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #90 compagnon | `feat/90-compagnon` |
 | Claude (session scarlaty) | #58 Lire l'heure | `feat/58-heure` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
@@ -89,7 +88,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v11`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v12`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
