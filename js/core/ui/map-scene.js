@@ -349,7 +349,7 @@ export function archipelagoScene(entries) {
 
 const ISLAND_PROPS = [
   'sun', 'cloud', 'bird', 'boat', 'palm', 'tree', 'bush', 'flower', 'tuft', 'pebble', 'rock',
-  'shell', 'starfish', 'mushroom', 'lantern', 'bunting', 'barrel', 'chest', 'frond', 'sign',
+  'shell', 'starfish', 'mushroom', 'lantern', 'bunting', 'barrel', 'chest', 'frond',
 ];
 
 /**
@@ -488,8 +488,8 @@ function grassMarks(cx, cy, rx, ry) {
  */
 function trail(slots) {
   if (slots.length < 2) return [];
-  const mid = slots.reduce((sum, p) => sum + p.y, 0) / slots.length;
-  const at = (x, dy) => [x, r2(mid + dy)];
+  const band = slots.reduce((sum, p) => sum + p.y, 0) / slots.length;
+  const at = (x, dy) => [x, r2(band + dy)];
   const d = smooth([at(2, 24), at(28, 11), at(62, -7), at(100, 3), at(138, -8), at(172, 10), at(198, 22)]);
   return [path(d, 'sc-trail'), path(d, 'sc-trail-top')];
 }
@@ -503,7 +503,7 @@ function badgeNode({ x, y }, { stars, max, played }) {
   const { width: w, height: hg } = BADGE;
   const left = r2(x - w / 2);
   const rad = r2(hg / 2);
-  const mid = r2(y + hg / 2);
+  const row = r2(y + hg / 2);
   return n('g', { class: `sc-badge${played ? '' : ' is-new'}` },
     n('rect', { x: left, y: r2(y + 1.1), width: w, height: hg, rx: rad, class: 'sc-badge-shadow' }),
     n('rect', { x: left, y, width: w, height: hg, rx: rad, class: 'sc-badge-board' }),
@@ -513,7 +513,7 @@ function badgeNode({ x, y }, { stars, max, played }) {
     }),
     n('rect', { x: left, y, width: w, height: hg, rx: rad, class: 'sc-ln sc-ln--badge' }),
     // Trois étoiles pour résumer neuf : la première s'allume dès la première étoile gagnée.
-    [0, 1, 2].map((i) => starMark(r2(x - 5.4 + i * 5.4), mid, 2.4,
+    [0, 1, 2].map((i) => starMark(r2(x - 5.4 + i * 5.4), row, 2.4,
       played && stars >= (i * max) / 3 + 1)));
 }
 
@@ -523,7 +523,7 @@ function badgeNode({ x, y }, { stars, max, played }) {
  * Le décor est ramené à l'emprise de l'emplacement : un phare est haut, des rochers sont bas,
  * et aucun des deux ne doit avoir l'air perdu ni déborder sur son voisin.
  */
-function placeNode(place, layout, scene) {
+function placeNode(place, scene) {
   const { slot } = place;
   // Le facteur est borné : un décor bas (des rochers) ne doit pas être étiré jusqu'à la taille
   // d'un phare, sinon il déborde en largeur sur ses voisins.
@@ -708,7 +708,7 @@ export function islandScene(island, places, layout) {
   use('bunting', { scene, x: 100, y: 64, scale: 1.6 }),
   n('g', { class: 'sc-scatter' }, scatter(scene, ISLAND_SCATTER)),
   mascotNode(island.id, { x: 76, y: 108, size: 23 }),
-  places.map((place) => placeNode(place, layout, scene)),
+  places.map((place) => placeNode(place, scene)),
   n('g', { class: 'sc-foreground' }, scatter(scene, ISLAND_FOREGROUND)),
   tipLayer());
   const svg = toNode(tree);
