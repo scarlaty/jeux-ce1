@@ -34,7 +34,7 @@ https://github.com/users/scarlaty/projects/1.
 | E7 nombres | #47, #50 | **terminés** ; #48, #49, #51 libres |
 | E8 calcul | #52, #54 | **terminés** ; #53, #55 – #57 libres |
 | E9, E10 mesures et géométrie | #58 – #67 | #58, #60 **terminés** ; #59, #61 – #67 libres |
-| E11 – E13 monde, anglais, EMC | #68 – #81 | #76 **terminé** (anglais, repli écrit sans voix anglaise) , #68 **terminé** (besoins du vivant) ; reste libre |
+| E11 – E13 monde, anglais, EMC | #68 – #81 | #76 **terminé** (anglais, repli écrit sans voix anglaise) , #68 **terminé** (besoins du vivant), #80 **terminé** (règles de vie, corrigé après juge) ; reste libre |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
 | E15 plaisir de jouer | #88 – #91 | #88, #89, #90 **terminés** (kit kawaii, mascottes, compagnon : éclosion après 3 parties, stades à 20 et 60 étoiles)  et #91 coffre surprise : **E15 terminé** |
 
@@ -49,7 +49,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #80 Les règles de vie | `feat/80-regles-de-vie` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
@@ -94,7 +93,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v24`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v25`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
