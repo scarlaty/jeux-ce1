@@ -20,22 +20,37 @@ const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !',
 const AUTO_NEXT_MS = 1100;
 const GAIN_MS = 1000;
 
-/** `display.show.flash` (durée en ms) : l'illustration ne reste visible que ce temps, puis un bouton « Revoir »
- *  la remontre. Le contenu garde sa place (pas de saut de mise en page) et se cache aux lecteurs d'écran. */
-function flashControls(contentEl, ms) {
+/** `display.show.flash` (durée en ms) : décompte 3, 2, 1, puis l'illustration s'affiche ce temps et disparaît ;
+ *  alors seulement les réponses apparaissent, avec un bouton « Revoir » (sans décompte). Le contenu garde sa
+ *  place (pas de saut de mise en page) et se cache aux lecteurs d'écran. Renvoie [zone illustrée, bouton]. */
+const COUNTDOWN_STEP_MS = 700;
+function flashControls(contentEl, ms, answerEl) {
   let timer = null;
-  const reveal = () => {
-    clearTimeout(timer);
-    contentEl.classList.remove('is-hidden');
-    contentEl.removeAttribute('aria-hidden');
-    timer = setTimeout(() => {
-      contentEl.classList.add('is-hidden');
-      contentEl.setAttribute('aria-hidden', 'true');
-    }, ms);
+  const hide = (el, hidden) => {
+    el.classList.toggle('is-hidden', hidden);
+    if (hidden) el.setAttribute('aria-hidden', 'true'); else el.removeAttribute('aria-hidden');
   };
-  reveal();
-  return h('button', { type: 'button', class: 'btn btn--secondary btn--small show__replay', onclick: reveal },
+  const count = h('div', { class: 'show__countdown', 'aria-live': 'assertive' });
+  const replay = h('button', { type: 'button', class: 'btn btn--secondary btn--small show__replay', onclick: () => reveal() },
     h('span', { text: 'Revoir' }));
+  const reveal = (then) => {
+    clearTimeout(timer);
+    hide(contentEl, false);
+    timer = setTimeout(() => { hide(contentEl, true); then?.(); }, ms);
+  };
+  hide(contentEl, true); hide(answerEl, true); hide(replay, true);
+  const tick = (n) => {
+    if (n === 0) {
+      count.remove();
+      reveal(() => { hide(answerEl, false); hide(replay, false); });
+      return;
+    }
+    count.textContent = String(n);
+    count.classList.remove('is-tick'); void count.offsetWidth; count.classList.add('is-tick');
+    timer = setTimeout(() => tick(n - 1), COUNTDOWN_STEP_MS);
+  };
+  tick(3);
+  return [h('div', { class: 'show__flash' }, contentEl, count), replay];
 }
 
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
@@ -169,16 +184,18 @@ export function createGameView(root, { app, game, onEnd }) {
     const show = question.display?.show;
     const lang = question.lang || 'fr-FR';
     const showContent = show && h('div', { class: `show__content${show.text && !show.emoji ? ' show__content--text' : ''}` }, content(show, { cursive: Boolean(show.cursive) }));
+    const answerEl = h('div', { class: `answer answer--${question.type}` }, ui.el);
+    const [showMain, replay] = show?.flash ? flashControls(showContent, show.flash, answerEl) : [showContent, null];
     stage.className = `stage stage--${question.type}${show ? ' stage--with-show' : ''}`;
     stage.replaceChildren(...[
       h('div', { class: 'prompt' },
         listenButton(question.speak || question.prompt, { lang }),
         h('p', { class: 'prompt__text', text: question.prompt })),
       show && h('div', { class: 'show' },
-        showContent,
-        show.flash && flashControls(showContent, show.flash),
+        showMain,
+        replay,
         show.speak && listenButton(show.speak, { lang: show.lang || 'fr-FR', label: 'Écouter le mot', className: 'listen--word' })),
-      h('div', { class: `answer answer--${question.type}` }, ui.el),
+      answerEl,
       feedback,
     ].filter(Boolean));
 

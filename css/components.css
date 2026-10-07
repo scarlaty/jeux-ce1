@@ -462,8 +462,18 @@
   min-width: 0;
 }
 .show__content { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-3); }
-.show__content.is-hidden { visibility: hidden; }  /* display.show.flash : le mot a disparu, la place reste */
+/* display.show.flash : décompte 3, 2, 1, puis le mot apparaît et disparaît ; la place reste réservée. */
+.show__content.is-hidden, .answer.is-hidden, .show__replay.is-hidden { visibility: hidden; }
 .show__replay { flex: none; }
+.show__flash { position: relative; display: grid; place-items: center; }
+.show__countdown {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-title); font-weight: 600; font-size: clamp(3.5rem, 2.5rem + 5vw, 5.5rem);
+  color: var(--primary);
+}
+.show__countdown.is-tick { animation: countdown-pop .7s ease-out both; }
+@keyframes countdown-pop { from { transform: scale(1.6); opacity: 0; } 30% { transform: scale(1); opacity: 1; } to { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .show__countdown.is-tick { animation: none; } }
 .show__content .emoji { font-size: clamp(4rem, 3rem + 5vw, 6rem); filter: drop-shadow(0 6px 6px var(--shadow)); }
 /* Un mot long (« rhinocéros ») ne passe jamais à la ligne : sa taille diminue pour tenir dans la
    largeur de l'illustration (--text-len = nombre de caractères, posé par content() dans ui/dom.js ;

@@ -89,7 +89,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v8`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v9`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais

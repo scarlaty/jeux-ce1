@@ -159,8 +159,9 @@ comme un calcul : morceaux séparés par des espaces, vrais signes `+ − × =`,
 trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`). Un mot long dans
 `show.text` (ou sous l'image d'un choix illustré) rapetisse pour tenir sur sa ligne (`--text-len`, posé par
 `content()`), et l'image, le mot et le bouton « écouter » passent à la ligne plutôt que de déborder.
-`show.flash: <ms>` (300 à 5000, vérifié par `validateQuestion`) : l'illustration n'est visible que ce temps, puis
-elle disparaît (sa place est conservée, `aria-hidden`) ; un bouton « Revoir » la remontre à volonté (lecture
+`show.flash: <ms>` (300 à 5000, vérifié par `validateQuestion`) : après un décompte 3, 2, 1, l'illustration n'est visible
+que ce temps puis disparaît (sa place est conservée, `aria-hidden`) ; les réponses n'apparaissent qu'ensuite, avec un
+bouton « Revoir » qui la remontre à volonté, sans décompte (lecture
 éclair, jeux de mémoire visuelle). Géré par `flashControls` dans `screens/play.js` ; sans effet sur le moteur.
 
 **Dessins** : une illustration autre qu'un émoji se demande par `art: { kind, … }`, utilisable dans
