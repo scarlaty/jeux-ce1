@@ -293,9 +293,8 @@ export function isDailyDone(rewards, date = new Date()) {
 //
 // Les jeux ne sont pas répartis également entre les matières (6 en français, 6 en maths, 1 en
 // anglais, 1 en questionner le monde) : tirer un jeu au hasard à chaque question écrase presque
-// totalement l'anglais et le monde. On tire donc par MATIÈRE d'abord (chaque matière a la même
-// chance, quel que soit son nombre de jeux), puis par jeu dans la matière retenue, en tournant
-// sur les matières pour qu'un défi ne soit jamais monomatière quand plusieurs sont possibles.
+// totalement l'anglais et le monde. On tire donc par MATIÈRE d'abord, selon un POIDS choisi, puis
+// par jeu dans la matière retenue — le nombre de jeux d'une matière n'influence plus rien.
 // Une question est en plus réservée à un jeu peu ou pas joué, posée au niveau 1 : c'est elle qui
 // fait découvrir une matière qu'on n'a jamais essayée.
 //
@@ -303,6 +302,27 @@ export function isDailyDone(rewards, date = new Date()) {
 // la journée, pour tout le monde). `entries` : [{ id, subject, maxLevel, plays }].
 
 export const DISCOVERY_MAX_PLAYS = 2;   // « peu joué » : au plus 2 parties ; au-delà, rien à découvrir
+
+/**
+ * Poids de chaque matière dans le défi. Le français et les maths sont les dominantes du programme
+ * de CE1 ; l'anglais et « questionner le monde » y sont des initiations — on les veut présents,
+ * pas à parité. Seuls les rapports comptent, pas la somme.
+ */
+export const SUBJECT_WEIGHTS = { français: 35, maths: 35, anglais: 15, monde: 15, emc: 15 };
+const DEFAULT_SUBJECT_WEIGHT = 15;
+
+const weightOf = (subject) => SUBJECT_WEIGHTS[subject] ?? DEFAULT_SUBJECT_WEIGHT;
+
+/** Tire une matière au hasard, proportionnellement à son poids. */
+function pickWeightedSubject(subjects, rng) {
+  const total = subjects.reduce((sum, s) => sum + weightOf(s), 0);
+  let ticket = rng.next() * total;
+  for (const subject of subjects) {
+    ticket -= weightOf(subject);
+    if (ticket < 0) return subject;
+  }
+  return subjects[subjects.length - 1];
+}
 
 /** Regroupe les entrées par matière, dans leur ordre d'apparition. */
 function groupBySubject(entries) {
@@ -324,9 +344,9 @@ function pickDiscoveryEntry(entries, rng) {
 }
 
 /**
- * Choisit `needed` entrées en tirant par matière puis par jeu : à chaque tour, les matières sont
- * mélangées et on pioche un jeu (si possible inédit) dans chacune à son tour, pour répartir les
- * questions et varier les jeux au lieu de les répéter.
+ * Choisit `needed` entrées : à chaque question, une matière est tirée selon son poids, puis un jeu
+ * (de préférence pas encore retenu) dans cette matière. Un défi reste donc varié en jeux, et les
+ * matières se répartissent selon SUBJECT_WEIGHTS sur la durée, pas selon leur nombre de jeux.
  */
 function pickBalancedEntries(entries, rng, needed) {
   const bySubject = groupBySubject(entries);
@@ -334,17 +354,17 @@ function pickBalancedEntries(entries, rng, needed) {
   const used = new Set();
   const picked = [];
   while (picked.length < needed) {
-    const order = rng.shuffle(subjects);
-    const before = picked.length;
-    for (const subject of order) {
-      if (picked.length >= needed) break;
-      const pool = bySubject.get(subject);
-      const fresh = pool.filter((e) => !used.has(e.id));
-      const entry = rng.pick(fresh.length ? fresh : pool);
-      used.add(entry.id);
-      picked.push(entry);
-    }
-    if (picked.length === before) break;   // sécurité : n'arrive pas, `subjects` n'est jamais vide
+    const pool = bySubject.get(pickWeightedSubject(subjects, rng));
+    const fresh = pool.filter((e) => !used.has(e.id));
+    const entry = rng.pick(fresh.length ? fresh : pool);
+    used.add(entry.id);
+    picked.push(entry);
+  }
+  // Un tirage pondéré peut, un jour sur quelques-uns, tout faire tomber dans la même matière.
+  // Le défi doit rester un mélange : on échange alors la dernière question contre une autre matière.
+  if (subjects.length > 1 && picked.length > 1 && new Set(picked.map((e) => e.subject)).size === 1) {
+    const others = subjects.filter((s) => s !== picked[0].subject);
+    picked[picked.length - 1] = rng.pick(bySubject.get(pickWeightedSubject(others, rng)));
   }
   return picked;
 }

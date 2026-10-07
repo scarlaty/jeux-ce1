@@ -9,6 +9,7 @@ import {
   STICKERS, STICKER_ISLANDS, islandStickers, findSticker, stickersWon, nextStickers,
   defaultRewards, normalizeRewards, readRewards, stickerCount, stickerTotal, applyGameRewards,
   DAILY_QUESTIONS, dailyKey, dailySeed, hashString, isDailyDone, buildDailyPlan, DISCOVERY_MAX_PLAYS,
+  SUBJECT_WEIGHTS,
   gameStars, totalStars, ISLAND_UNLOCK_STARS, islandUnlocked, islandStarsLeft, islandUnlockStars,
 } from '../js/core/rewards.js';
 import { ISLANDS, GAMES } from '../js/games/registry.js';
@@ -371,18 +372,21 @@ test('répartition par matière, 2000 défis simulés : aucune matière écrasé
   }
 
   // Avant #94 : anglais et monde (1 jeu chacun sur 14) recevaient environ 1 / 14 ≈ 7 % des
-  // questions. Le tirage par matière doit leur donner une part proche de 1 / nombre de matières,
-  // très loin de leur ancienne part écrasée.
-  const expectedShare = 1 / subjects.length;
+  // questions — leur part suivait le NOMBRE DE JEUX. Elle doit désormais suivre SUBJECT_WEIGHTS :
+  // français 35, maths 35, anglais 15, monde 15 (le français et les maths restent les dominantes
+  // du programme de CE1 ; l'anglais et le monde sont des initiations, présentes mais pas à parité).
+  const weightTotal = subjects.reduce((sum, s) => sum + SUBJECT_WEIGHTS[s], 0);
   for (const subject of subjects) {
     const share = counts[subject] / total;
+    const expected = SUBJECT_WEIGHTS[subject] / weightTotal;
     assert.ok(
-      share > expectedShare * 0.5 && share < expectedShare * 1.5,
-      `${subject} : ${(share * 100).toFixed(1)} % (attendu ≈ ${(expectedShare * 100).toFixed(1)} %)`,
+      share > expected * 0.8 && share < expected * 1.2,
+      `${subject} : ${(share * 100).toFixed(1)} % (attendu ≈ ${(expected * 100).toFixed(1)} %)`,
     );
   }
-  assert.ok(counts.anglais / total > 0.15, `anglais encore écrasé : ${counts.anglais} / ${total}`);
-  assert.ok(counts.monde / total > 0.15, `monde encore écrasé : ${counts.monde} / ${total}`);
+  // Le point de départ de l'issue : ces deux matières ne doivent plus être écrasées à ~7 %.
+  assert.ok(counts.anglais / total > 0.12, `anglais encore écrasé : ${counts.anglais} / ${total}`);
+  assert.ok(counts.monde / total > 0.12, `monde encore écrasé : ${counts.monde} / ${total}`);
   // Avec 4 matières disponibles, un défi monomatière ne devrait quasiment jamais arriver.
   assert.ok(multiSubjectDays / trials > 0.95, `trop de défis monomatières : ${multiSubjectDays} / ${trials}`);
 });
