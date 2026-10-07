@@ -381,9 +381,6 @@ function archipelagoIsland(entry, scene) {
   const body = n('g', { class: 'sc-island-body' },
     islandBody({ ...entry, thickness: ISLAND_THICKNESS }),
     islandTrim(entry, scene));
-  const halo = n('ellipse', {
-    cx, cy: r2(cy + ry * 0.2), rx: r2(rx + 5), ry: r2(ry * 1.5 + 6), class: 'sc-halo',
-  });
   if (!unlocked) {
     // Pas de lien : rien à activer. Le `role="img"` est sans danger ici — ce groupe ne contient
     // aucun élément focalisable (le piège, c'était `role="img"` sur la scène entière).
@@ -398,7 +395,10 @@ function archipelagoIsland(entry, scene) {
     href: `#/ile/${id}`, class: 'sc-island sc-link', 'data-island': id, 'aria-label': label,
   },
   n('rect', { ...hit, rx: 10, class: 'sc-hit' }),
-  halo,
+  // Le halo déborde l'île de tous côtés : dessiné DERRIÈRE elle, c'est son pourtour qui s'éclaire.
+  n('ellipse', {
+    cx, cy: r2(cy + ry * 0.2), rx: r2(rx + 5), ry: r2(ry * 1.5 + 6), class: 'sc-halo',
+  }),
   body,
   n('rect', { ...hit, rx: 10, class: 'sc-halo-box' }),
   islandBadge(entry, scene));
