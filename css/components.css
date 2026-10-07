@@ -940,3 +940,18 @@
   .order-slot { min-width: 64px; }
   .token { min-width: 60px; padding: var(--space-1) var(--space-3); }
 }
+
+/* Cadrans en choix (jeu « Lire l'heure ») : 3 cadrans, assez grands pour lire les aiguilles.
+   Sur téléphone, 2 + 1 : le dernier se centre au lieu de rester seul à gauche. */
+.choices:has(.clock__face) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
+.choices:has(.clock__face) .choice { padding: var(--space-2); }
+.choices:has(.clock__face) .choice .art { width: clamp(7rem, 5rem + 12vw, 9.5rem); }
+.choices:has(.clock__face) .choice:nth-child(3):last-child { grid-column: 1 / -1; justify-self: center; width: calc(50% - var(--space-3) / 2); }
+@media (min-width: 640px) {
+  .choices:has(.clock__face) { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 720px; }
+  .choices:has(.clock__face) .choice:nth-child(3):last-child { grid-column: auto; justify-self: stretch; width: auto; }
+}
+@media (min-width: 900px) {
+  .stage--with-show.stage--choice .choices:has(.clock__face) { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
+  .choices:has(.clock__face) .choice .art { width: clamp(6rem, 9vw, 8.5rem); }
+}

@@ -111,6 +111,7 @@ const PRECACHE = [
   'js/games/demo.js',
   'js/games/devinettes.js',
   'js/games/ecrire-nombres.js',
+  'js/games/heure.js',
   'js/games/lecture-eclair.js',
   'js/games/lettres-qui-changent.js',
   'js/games/lettres-soeurs.js',
