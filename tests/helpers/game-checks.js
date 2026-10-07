@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { createRng } from '../../js/core/random.js';
 import { validateQuestion } from '../../js/core/validate.js';
-import { buildQuestions } from '../../js/core/engine.js';
+import { buildQuestions, renderFingerprint, QUESTIONS_PER_GAME } from '../../js/core/engine.js';
 
 const ISLANDS = ['mots', 'nombres', 'mesures', 'monde', 'ailleurs'];
 
@@ -18,16 +18,35 @@ export function checkGameShape(game) {
   assert.equal(typeof game.makeQuestion, 'function');
 }
 
+// Nombre de parties simulées (graines déterministes) pour traquer un doublon d'écran rare :
+// le bug de l'issue #92 (deux pastilles entendues différentes, écran strictement identique)
+// n'apparaissait que dans ~1,7 % des parties. Avec 200 parties par niveau, il est débusqué dès
+// la partie 62 pour la graine utilisée ici : une régression ne peut pas se glisser en silence.
+const RENDER_PARTIES = 200;
+
 /**
  * Tire `draws` questions par niveau (en simulant des parties, `seen` compris) et vérifie
- * chacune avec validateQuestion. Renvoie, par niveau, les questions tirées.
+ * chacune avec validateQuestion. Vérifie aussi, sur `RENDER_PARTIES` parties, que deux questions
+ * d'UNE MÊME partie ne se ressemblent jamais à l'écran (voir `renderFingerprint`, issue #92) :
+ * un générateur trop pauvre pour varier le rendu sur une partie entière doit être corrigé, pas
+ * contourné. Renvoie, par niveau, les questions tirées (les `draws` premières).
  */
 export function checkGenerator(game, { draws = 500, minDistinct = 30, checks } = {}) {
   const byLevel = {};
+  const renderTarget = Math.max(draws, RENDER_PARTIES * QUESTIONS_PER_GAME);
   for (let level = 1; level <= game.levels.length; level++) {
     const rng = createRng(1000 + level);
     const questions = [];
-    while (questions.length < draws) questions.push(...buildQuestions(game, level, rng, 10));
+    let checked = 0;
+    while (checked < renderTarget) {
+      const partie = buildQuestions(game, level, rng, QUESTIONS_PER_GAME);
+      const renders = partie.map(renderFingerprint);
+      assert.equal(new Set(renders).size, renders.length,
+        `niveau ${level} : deux questions d'une même partie se ressemblent à l'écran parmi `
+        + `${partie.map((q) => q.key).join(', ')}`);
+      checked += partie.length;
+      if (questions.length < draws) questions.push(...partie);
+    }
     for (const q of questions) {
       const errors = validateQuestion(q, { checks });
       assert.deepEqual(errors, [], `niveau ${level}, ${q.key} : ${errors.join(' ; ')}`);
