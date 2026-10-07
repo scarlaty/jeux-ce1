@@ -4,9 +4,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SCENE, SAFE, PLACE_HEIGHT, STARS_PER_GAME, MAX_LINE, MAX_LINES, BADGE,
-  placeLayout, placeKind, wrapLabel, shortTitle, islandPlaces,
-  archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, ISLAND_PLAQUE, SHORT_TITLES,
+  SCENE, SAFE, PLACE_HEIGHT, STARS_PER_GAME, MAX_SHORT_TITLE, BADGE, ISLAND_BADGE,
+  placeLayout, placeKind, shortTitle, islandPlaces, waterline,
+  archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, SHORT_TITLES,
 } from '../js/core/map.js';
 import { GAMES, ISLANDS } from '../js/games/registry.js';
 import { PROPS } from '../js/core/ui/art/scenery.js';
@@ -19,25 +19,17 @@ const inside = (box, area = SAFE) =>
   box.x >= area.x && box.y >= area.y
   && box.x + box.width <= area.x + area.width && box.y + box.height <= area.y + area.height;
 
-const plaqueBox = ({ x, y }, { width, height }) =>
-  ({ x: x - width / 2, y: y - height / 2, width, height });
+const badgeBox = ({ x, y }, { width, height }) => ({ x: x - width / 2, y, width, height });
 
-// --- Découpe des noms ---------------------------------------------------------------------------
+// --- Noms courts ---------------------------------------------------------------------------------
+//
+// Le panneau de survol tient sur UNE ligne : un nom trop long le ferait déborder de la zone sûre.
 
-test('un nom se coupe en au plus deux lignes courtes', () => {
-  assert.deepEqual(wrapLabel('Les sons'), ['Les sons']);
-  assert.deepEqual(wrapLabel('Lettres sœurs'), ['Lettres', 'sœurs']);
-  assert.deepEqual(wrapLabel('Lettres qui changent'), ['Lettres qui', 'changent']);
-  assert.deepEqual(wrapLabel(''), ['']);
-});
-
-test('tout jeu du registre tient sur la plaque (deux lignes, lignes courtes)', () => {
+test('tout jeu du registre a un nom court qui tient sur une ligne du panneau', () => {
   for (const game of GAMES.filter((g) => !g.demo)) {
-    const lines = wrapLabel(shortTitle(game));
-    assert.ok(lines.length <= MAX_LINES, `${game.id} : ${lines.length} lignes`);
-    for (const line of lines) {
-      assert.ok(line.length <= MAX_LINE + 1, `${game.id} : ligne trop longue « ${line} »`);
-    }
+    const name = shortTitle(game);
+    assert.ok(name.length <= MAX_SHORT_TITLE, `${game.id} : nom trop long « ${name} »`);
+    assert.ok(!/\s{2,}/.test(name), `${game.id} : le nom court tient sur une ligne`);
   }
 });
 
@@ -167,15 +159,49 @@ test('les cinq îles ont une place sur la carte, de la plus lointaine à la plus
   }
 });
 
-test('les plaques des îles ne se chevauchent pas et tiennent dans la zone sûre', () => {
+// Troisième lot (#96) : plus aucune pancarte de nom sur l'archipel. Ce qui doit tenir, c'est donc
+// la même chose qu'à l'intérieur d'une île — une zone cliquable par île, assez grande pour un
+// doigt, jamais à cheval sur celle de la voisine, et un repère qui ne couvre pas l'île.
+
+test('aucune pancarte de nom ne reste sur l\'archipel', () => {
+  for (const [id, g] of Object.entries(ISLAND_GEOMETRY)) {
+    assert.equal(g.plaque, undefined, `${id} porte encore une plaque de nom`);
+  }
+});
+
+test('chaque île est une zone cliquable confortable, et deux îles ne se recouvrent jamais', () => {
+  // Même calcul que pour les lieux : 30 unités = 56 px sur un téléphone de 360 px.
+  const MIN_UNITS = 30;
   const entries = archipelago(ISLANDS, fakeRead());
-  const boxes = entries.map((e) => plaqueBox(e.plaque, ISLAND_PLAQUE));
-  for (let i = 0; i < boxes.length; i += 1) {
-    assert.ok(inside(boxes[i]), `plaque de ${entries[i].id} hors de la zone sûre`);
-    for (let j = i + 1; j < boxes.length; j += 1) {
-      assert.ok(!boxesOverlap(boxes[i], boxes[j]),
-        `plaques superposées : ${entries[i].id} et ${entries[j].id}`);
+  const hits = entries.map((e) => e.hit);
+  for (let i = 0; i < hits.length; i += 1) {
+    assert.ok(hits[i], `${entries[i].id} : pas de zone cliquable`);
+    assert.ok(hits[i].width >= MIN_UNITS && hits[i].height >= MIN_UNITS,
+      `${entries[i].id} : zone trop petite (${hits[i].width} × ${hits[i].height})`);
+    assert.ok(inside(hits[i]), `${entries[i].id} : zone cliquable hors de la zone sûre`);
+    for (let j = i + 1; j < hits.length; j += 1) {
+      assert.ok(!boxesOverlap(hits[i], hits[j]),
+        `zones cliquables superposées : ${entries[i].id} et ${entries[j].id}`);
     }
+  }
+});
+
+test('le corps de chaque île tient dans sa propre zone cliquable', () => {
+  for (const [id, g] of Object.entries(ISLAND_GEOMETRY)) {
+    const body = {
+      x: g.cx - g.rx, y: g.cy - g.ry, width: g.rx * 2, height: waterline(g) - (g.cy - g.ry),
+    };
+    assert.ok(inside(body, g.hit), `${id} : l'île déborde de sa zone cliquable`);
+  }
+});
+
+test('le repère d\'une île est posé SOUS la ligne de flottaison, jamais devant l\'île', () => {
+  for (const [id, g] of Object.entries(ISLAND_GEOMETRY)) {
+    const badge = badgeBox(g.badge, ISLAND_BADGE);
+    assert.ok(badge.y > waterline(g), `${id} : le repère est posé sur l'île, pas sous elle`);
+    assert.ok(Math.abs(g.badge.x - g.cx) >= 8, `${id} : le repère doit être décalé sur le côté`);
+    assert.ok(inside(badge, g.hit), `${id} : le repère sort de la zone cliquable de son île`);
+    assert.ok(inside(badge), `${id} : le repère sort de la zone sûre`);
   }
 });
 
@@ -219,8 +245,10 @@ test('le nom accessible d\'une île dit tout ce que le dessin montre', () => {
   assert.match(islandLabel(ISLANDS[3], locked), /encore 9 étoiles/);
   assert.equal(islandMeta(locked), 'encore 9 ⭐');
 
+  assert.match(label, /Île ouverte/);
+
   const empty = { unlocked: true, starsLeft: 0, earned: 0, possible: 0, stickers: 0, total: 10, games: 0 };
-  assert.match(islandLabel(ISLANDS[2], empty), /Pas encore de jeu/);
+  assert.match(islandLabel(ISLANDS[2], empty), /pas encore de jeu/);
   assert.equal(islandMeta(empty), 'bientôt');
 });
 

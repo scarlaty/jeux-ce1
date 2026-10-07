@@ -17,8 +17,6 @@
   box-shadow: 0 6px 0 var(--shadow);
   /* Les textes de la scène : leur taille est en unités du dessin, donc elle grandit avec la scène.
      Sur téléphone, le cadrage portrait zoome déjà ; on remonte un peu la graisse du texte. */
-  --map-name: 5.9px;
-  --map-meta: 5px;
   --map-tip: 7px;
   --map-tip-sub: 5.4px;
   overflow: hidden;
@@ -28,8 +26,6 @@
 @media (max-width: 620px) {
   .map-scene {
     aspect-ratio: 200 / 212;
-    --map-name: 6.8px;
-    --map-meta: 5.8px;
     --map-tip: 8.4px;
     --map-tip-sub: 6.4px;
   }
@@ -59,6 +55,37 @@
    c'est ce qui remplace la démarcation au cordeau entre le ciel et l'eau. */
 .sc-foam--far { stroke-width: .9; opacity: .4; }
 .sc-haze { fill: var(--map-haze); opacity: .5; }
+/* Le rang de nuages le plus haut est aussi le plus lointain : il s'efface. */
+.sc-sky-far { opacity: .72; }
+
+/* ---------- La mer vivante ----------
+   Ce qui flotte, ce qui saute, ce qui passe dessous. Tout reste PÂLE : la lecture des cinq îles
+   passe avant le décor. Un objet immergé (banc de poissons, banc de sable) n'a pas de contour —
+   c'est ce qui le place sous la surface plutôt que dessus. */
+.sc-splash { fill: var(--sea-foam); opacity: .45; }
+.sc-school { fill: var(--sea-deep); opacity: .45; }
+.sc-bar { fill: var(--land-sand); opacity: .3; }
+.sc-bar-lt { fill: var(--land-sand); opacity: .55; }
+.sc-spout {
+  fill: none;
+  stroke: var(--sea-foam);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+  opacity: .85;
+}
+.sc-tentacle {
+  fill: none;
+  stroke: var(--sc-tint-dk, var(--kawaii-rose-deep));
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.6);
+  stroke-linecap: round;
+}
+.sc-beak { fill: var(--kawaii-peche-deep); }
+.sc-leg {
+  fill: none;
+  stroke: var(--kawaii-peche-deep);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+}
 
 /* ---------- Le volume d'une île : quatre couches, pas un aplat ---------- */
 .sc-cast { fill: var(--kawaii-shadow); }
@@ -227,10 +254,12 @@
 .sc-flag--1 { --sc-tint: var(--kawaii-citron); --sc-tint-lt: var(--kawaii-citron-light); }
 .sc-flag--2 { --sc-tint: var(--kawaii-ciel); --sc-tint-lt: var(--kawaii-ciel-light); }
 
-/* ---------- Les îles de l'archipel ---------- */
+/* ---------- Les îles de l'archipel ----------
+   L'île EST la zone cliquable : plus aucune pancarte opaque posée dessus. Une île fermée reste
+   visible dans la brume, mais ne s'active pas. */
 .sc-island { cursor: pointer; }
-.sc-island.is-locked { opacity: .62; cursor: default; }
-.sc-island.is-locked .sc-plaque-name { fill: var(--ink-faint); }
+.sc-island.is-locked { cursor: default; }
+.sc-island.is-locked .sc-island-body { opacity: .62; }
 
 /* ---------- Lieux : zones touchables et surbrillance ----------
    La zone cliquable, c'est le DÉCOR : un rectangle invisible l'enveloppe, et rien ne se dessine
@@ -258,13 +287,15 @@
   stroke: var(--focus);
   stroke-width: 3.4;
 }
-.sc-link:hover .sc-plaque-board,
-.sc-link:focus-visible .sc-plaque-board { fill: var(--kawaii-creme-light); }
 /* Le lieu désigné se soulève d'un cheveu : c'est le seul mouvement de la scène qui réagisse au
    doigt, et il ne porte aucune information (le halo et le panneau de nom s'en chargent). */
 .sc-place-art { transition: transform .18s ease-out; }
 .sc-link:hover .sc-place-art,
 .sc-link:focus-visible .sc-place-art { transform: translateY(-2px); }
+/* Même geste pour une île de l'archipel : elle monte d'un cheveu au-dessus de l'eau. */
+.sc-island-body { transition: transform .18s ease-out; }
+.sc-link:hover .sc-island-body,
+.sc-link:focus-visible .sc-island-body { transform: translateY(-2px); }
 
 /* ---------- Le repère d'étoiles d'un lieu ----------
    Tout ce que la scène affiche en permanence pour un lieu : une pastille de bois grande comme un
@@ -277,6 +308,16 @@
 /* « À découvrir » : la même pastille en bois terni, et trois étoiles creuses. */
 .sc-badge.is-new .sc-badge-board { fill: var(--surface-sunk); }
 .sc-badge.is-new .sc-badge-light { fill: var(--surface); opacity: .5; }
+/* Île fermée : la pastille porte le cadenas et le SEUIL à atteindre, pas des étoiles gagnées. */
+.sc-badge.is-locked .sc-badge-board { fill: var(--surface-sunk); }
+.sc-badge.is-locked .sc-badge-light { fill: var(--surface); opacity: .5; }
+.sc-badge-text {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 5.6px;
+  fill: var(--ink);
+  dominant-baseline: middle;
+}
 
 /* ---------- Le panneau de nom, au survol / au focus / au toucher ----------
    Un seul panneau pour toute la scène, dessiné en dernier : il passe donc au-dessus de tout
@@ -314,29 +355,7 @@
   dominant-baseline: middle;
 }
 
-/* ---------- Plaques de bois ---------- */
-.sc-plaque-board { fill: var(--kawaii-creme); }
-.sc-plaque-light { fill: var(--kawaii-creme-light); opacity: .8; }
-.sc-plaque-shadow { fill: var(--kawaii-shadow); }
-.sc-plaque-name {
-  font-family: var(--font-title);
-  font-weight: 600;
-  font-size: var(--map-name, 6.4px);
-  fill: var(--kawaii-creme-ink);
-  dominant-baseline: middle;
-}
-.sc-plaque-meta {
-  font-family: var(--font-text);
-  font-size: var(--map-meta, 5.2px);
-  fill: var(--kawaii-creme-ink);
-  dominant-baseline: middle;
-}
-/* « À découvrir » : la même plaque, en bois plus clair et sans étoiles. Le bandeau de lumière
-   doit se ternir LUI AUSSI, sinon le nom se retrouve en gris clair sur crème (illisible). */
-.sc-plaque.is-dim .sc-plaque-board { fill: var(--surface-sunk); }
-.sc-plaque.is-dim .sc-plaque-light { fill: var(--surface); opacity: .5; }
-.sc-plaque.is-dim .sc-plaque-name { fill: var(--ink); }
-.sc-plaque.is-dim .sc-plaque-meta { fill: var(--ink-soft); }
+/* ---------- Étoiles ---------- */
 .sc-star { fill: var(--star); stroke: var(--star-edge); stroke-width: .5; }
 /* Étoile pas encore gagnée : creuse. Un aplat se lirait comme une étoile d'une autre couleur. */
 .sc-star-empty { fill: none; stroke: var(--star-empty-edge); stroke-width: .9; }
@@ -360,9 +379,12 @@
   /* Le soulèvement et le fondu du panneau disparaissent ; le halo, le panneau et son texte
      restent — aucune information n'est portée par le mouvement. */
   .sc-place-art,
+  .sc-island-body,
   .sc-tip { transition: none; }
   .sc-link:hover .sc-place-art,
-  .sc-link:focus-visible .sc-place-art { transform: none; }
+  .sc-link:focus-visible .sc-place-art,
+  .sc-link:hover .sc-island-body,
+  .sc-link:focus-visible .sc-island-body { transform: none; }
 }
 
 /* ---------- La même carte en liste ----------

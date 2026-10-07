@@ -11,12 +11,13 @@
 import { n, toNode, roundedStar } from './art/kawaii-parts.js';
 import { character, mascot } from './art/kawaii.js';
 import { propDefs, use, scatter, idsOf, propHeight } from './art/scenery.js';
-import { SCENE, SAFE, PLACE_HEIGHT, BADGE, ISLAND_PLAQUE } from '../map.js';
+import {
+  SCENE, SAFE, PLACE_HEIGHT, BADGE, ISLAND_BADGE, ISLAND_THICKNESS, waterline,
+} from '../map.js';
 
 const r2 = (x) => Number(Number(x).toFixed(2));
 const path = (d, cls) => n('path', { d, class: cls });
 const ell = (cx, cy, rx, ry, cls) => n('ellipse', { cx, cy, rx, ry, class: cls });
-const text = (x, y, value, cls) => n('text', { x, y, class: cls, 'text-anchor': 'middle', text: value });
 
 /** Courbe douce passant par une suite de points (chemins, écume, lignes de relief). */
 function smooth(points) {
@@ -31,7 +32,7 @@ function smooth(points) {
   return d;
 }
 
-/** Petite étoile pleine ou vide : repère d'un lieu, plaque d'une île. */
+/** Petite étoile pleine ou vide : le repère d'un lieu comme celui d'une île. */
 const starMark = (x, y, size, filled) => path(
   roundedStar(x, y, size, size * 0.46, { round: 0.3, innerRound: 0.24 }),
   filled ? 'sc-star' : 'sc-star-empty',
@@ -39,21 +40,39 @@ const starMark = (x, y, size, filled) => path(
 
 // --- Ciel et mer ---------------------------------------------------------------------------------
 
-/** Le ciel : deux nappes (le haut plus froid, l'horizon plus chaud), le soleil, des nuages. */
+/**
+ * Le ciel : deux nappes (le haut plus froid, l'horizon plus chaud), le soleil, des nuages.
+ * Les nuages sont posés sur TROIS niveaux — les plus hauts petits et pâles, les plus bas grands et
+ * francs. Un seul rang de nuages alignés se lisait comme une frise ; trois rangs font une
+ * profondeur.
+ */
 function sky({ horizon, scene }) {
-  // Tout reste SOUS la ligne de crop du cadrage paysage : un soleil coupé en deux se lit comme
-  // une erreur, pas comme un cadrage.
   return [
     n('rect', { x: 0, y: 0, width: SCENE.width, height: SCENE.height, class: 'sc-sky' }),
     path(`M0 ${r2(horizon - 12)}Q50 ${r2(horizon - 18)} 100 ${r2(horizon - 11)}T200 ${r2(horizon - 14)}`
       + `V${r2(horizon + 2)}H0Z`, 'sc-sky-low'),
+    // Niveau haut : loin, donc petit et effacé. Rien au-dessus de horizon − 10 : le cadrage
+    // paysage coupe au-dessus de y = 14, et un nuage sans sommet se lit comme une erreur.
+    n('g', { class: 'sc-sky-far' },
+      use('cloud', { scene, x: 60, y: r2(horizon - 10), scale: 0.4 }),
+      use('cloud', { scene, x: 118, y: r2(horizon - 10), scale: 0.34, flip: true }),
+      use('cloud', { scene, x: 186, y: r2(horizon - 9), scale: 0.44 }),
+      use('bird', { scene, x: 110, y: r2(horizon - 11), scale: 0.5 }),
+      use('bird', { scene, x: 118, y: r2(horizon - 13), scale: 0.38 })),
     use('sun', { scene, x: 30, y: r2(horizon + 1), scale: 0.56 }),
+    // Niveau moyen
     use('cloud', { scene, x: 86, y: r2(horizon - 4), scale: 0.78 }),
     use('cloud', { scene, x: 160, y: r2(horizon - 7), scale: 0.6, flip: true }),
     use('cloud', { scene, x: 126, y: r2(horizon - 1), scale: 0.46 }),
+    // Niveau bas : posés presque sur l'horizon, c'est eux qui ferment la scène.
+    use('cloud', { scene, x: 8, y: r2(horizon - 2), scale: 0.66, flip: true }),
+    use('cloud', { scene, x: 196, y: r2(horizon - 2), scale: 0.7 }),
+    use('cloud', { scene, x: 54, y: r2(horizon + 1), scale: 0.38 }),
     use('bird', { scene, x: 60, y: r2(horizon - 9), scale: 0.85 }),
     use('bird', { scene, x: 70, y: r2(horizon - 13), scale: 0.6 }),
     use('bird', { scene, x: 182, y: r2(horizon - 4), scale: 0.7 }),
+    use('bird', { scene, x: 142, y: r2(horizon - 10), scale: 0.75 }),
+    use('bird', { scene, x: 150, y: r2(horizon - 13), scale: 0.5 }),
   ];
 }
 
@@ -177,48 +196,88 @@ function islandBody({
   ];
 }
 
-// --- Plaques ---------------------------------------------------------------------------------------
+// --- Planchettes de repère ----------------------------------------------------------------------
+//
+// Le SEUL élément d'interface que les scènes affichent en permanence : une planchette de bois à
+// l'échelle du décor. Elle ne dit que les étoiles. Le nom vient au survol, au focus clavier et au
+// toucher, et la liste HTML sous la scène le porte en toutes lettres.
+
+/** Le bois d'une planchette : ombre portée, planche, bandeau de lumière, contour. */
+function plank(x, y, width, height, afloat = false) {
+  const left = r2(x - width / 2);
+  const rad = r2(height / 2);
+  return [
+    // Sur l'eau, un bref remous sous la planchette : sans lui, le repère d'une île a l'air posé
+    // sur rien. Sur l'herbe, l'ombre portée suffit.
+    afloat ? ell(x, r2(y + height), r2(width * 0.56), r2(height * 0.28), 'sc-shoal') : null,
+    n('rect', { x: left, y: r2(y + 1.1), width, height, rx: rad, class: 'sc-badge-shadow' }),
+    n('rect', { x: left, y, width, height, rx: rad, class: 'sc-badge-board' }),
+    n('rect', {
+      x: r2(left + 1.6), y: r2(y + 1), width: r2(width - 3.2), height: r2(height * 0.36),
+      rx: r2(height * 0.18), class: 'sc-badge-light',
+    }),
+    n('rect', { x: left, y, width, height, rx: rad, class: 'sc-ln sc-ln--badge' }),
+  ];
+}
 
 /**
- * La plaque de bois d'un lieu : deux piquets, une planche, le nom sur une ou deux lignes et le
- * compte d'étoiles. Taille fixe (core/map.js) : c'est ce qui garantit l'absence de chevauchement.
+ * Trois étoiles pour résumer un total : la première s'allume dès la PREMIÈRE étoile gagnée, pas au
+ * tiers. Une enfant qui vient de réussir un niveau doit voir quelque chose s'allumer.
  */
-function plaque({ x, y, width, height, lines, meta, stars = null, max = 0, dim = false }) {
-  const w2 = r2(width / 2);
-  const h2 = r2(height / 2);
-  const lh = r2(height * 0.33);
-  const top = r2(-(lines.length - 1) * lh / 2 - height * 0.12);
-  const starRow = stars === null ? null : n('g', {},
-    // Trois étoiles pour résumer neuf : la première se gagne dès la première étoile, pas au tiers.
-    // Une enfant qui vient de réussir un niveau doit VOIR quelque chose s'allumer.
-    [0, 1, 2].map((i) => starMark(r2(x - 15 + i * 5), r2(y + height * 0.3), r2(height * 0.105),
-      stars >= (i * max) / 3 + 1)),
-    n('text', {
-      x: r2(x + 9), y: r2(y + height * 0.36), class: 'sc-plaque-meta', 'text-anchor': 'middle', text: meta,
-    }));
-  return n('g', { class: `sc-plaque${dim ? ' is-dim' : ''}` },
-    n('rect', { x: r2(x - w2 * 0.56), y: r2(y + h2 - 2), width: 2.6, height: r2(height * 0.46), class: 'sc-post' }),
-    n('rect', { x: r2(x + w2 * 0.56 - 2.6), y: r2(y + h2 - 2), width: 2.6, height: r2(height * 0.46), class: 'sc-post' }),
-    n('rect', {
-      x: r2(x - w2 + 1.5), y: r2(y - h2 + 2.5), width: r2(width - 3), height, rx: 4, class: 'sc-plaque-shadow',
-    }),
-    n('rect', { x: r2(x - w2), y: r2(y - h2), width, height, rx: 4.5, class: 'sc-plaque-board' }),
-    n('rect', {
-      x: r2(x - w2 + 1.6), y: r2(y - h2 + 1.6), width: r2(width - 3.2), height: r2(height * 0.34), rx: 3,
-      class: 'sc-plaque-light',
-    }),
-    n('rect', { x: r2(x - w2), y: r2(y - h2), width, height, rx: 4.5, class: 'sc-ln' }),
-    lines.map((line, i) => text(x, r2(y + top + i * lh), line, 'sc-plaque-name')),
-    starRow || n('text', {
-      x, y: r2(y + height * 0.36), class: 'sc-plaque-meta', 'text-anchor': 'middle', text: meta,
-    }));
-}
+const starRow = (x, y, size, step, earned, max) =>
+  [0, 1, 2].map((i) => starMark(r2(x + (i - 1) * step), y, size, max > 0 && earned >= (i * max) / 3 + 1));
 
 // --- L'archipel --------------------------------------------------------------------------------------
 
 const ARCHIPELAGO_PROPS = [
   'sun', 'cloud', 'bird', 'palm', 'tree', 'bush', 'rock', 'boat', 'frond', 'lock', 'tuft',
   'flower', 'pebble', 'mushroom', 'tent', 'lantern', 'shell', 'starfish',
+];
+
+/**
+ * La mer de l'archipel. Les cinq pancartes retirées, l'eau était un grand aplat vide — l'écart le
+ * plus net avec les références. On la meuble, en se tenant à deux règles :
+ *   - RIEN dans l'emprise cliquable d'une île (core/map.js) : on ne pose pas un crabe là où le
+ *     doigt cherche une île. Les zones libres sont les marges, les couloirs entre les îles et la
+ *     bande du premier plan ;
+ *   - tout reste petit et pâle. Les cinq îles doivent rester les cinq seules grandes formes.
+ * Le semis est dessiné AVANT les îles : un objet qui mord sur une île passe derrière elle.
+ */
+const ARCHIPELAGO_SEA = [
+  // Le large, juste sous l'horizon : la baleine souffle, un banc de poissons passe.
+  { id: 'whale', x: 100, y: 50, scale: 0.52, tint: 'lavande' },
+  { id: 'school', x: 112, y: 64, scale: 0.45 },
+  { id: 'swirl', x: 80, y: 60, scale: 0.6 },
+  // La baie de gauche, sous l'île du Monde : la bouée, un poisson qui saute, un banc de sable.
+  { id: 'sandbar', x: 44, y: 98, scale: 0.5 },
+  { id: 'reef', x: 19, y: 86, scale: 0.5 },
+  { id: 'gull', x: 19, y: 82, scale: 0.38 },
+  { id: 'buoy', x: 26, y: 97, scale: 0.55, tint: 'rose' },
+  { id: 'fish', x: 46, y: 105, scale: 0.5, tint: 'peche' },
+  { id: 'school', x: 62, y: 92, scale: 0.5 },
+  { id: 'swirl', x: 32, y: 110, scale: 0.6 },
+  // La baie de droite, sous l'île d'Ailleurs : un récif, sa mouette et son crabe. Rien au-delà de
+  // x = 184 : le cadrage portrait d'un téléphone coupe à 185, et un crabe coupé est un défaut.
+  { id: 'reef', x: 179, y: 102, scale: 0.55 },
+  { id: 'gull', x: 178, y: 97, scale: 0.42 },
+  { id: 'crab', x: 167, y: 110, scale: 0.5, tint: 'peche' },
+  { id: 'fish', x: 140, y: 99, scale: 0.5, tint: 'ciel' },
+  { id: 'swirl', x: 136, y: 85, scale: 0.6 },
+  { id: 'school', x: 154, y: 83, scale: 0.45 },
+  // Le détroit du milieu, entre les Mots et les Nombres : la pieuvre curieuse lève la tête.
+  { id: 'octopus', x: 102, y: 139, scale: 0.55, tint: 'lavande' },
+  { id: 'school', x: 102, y: 154, scale: 0.5 },
+  // Les bords : encore visibles en portrait, mais petits — c'est là que le cadrage mord.
+  { id: 'swirl', x: 16, y: 128, scale: 0.7 },
+  { id: 'buoy', x: 16, y: 156, scale: 0.5, tint: 'citron' },
+  { id: 'school', x: 18, y: 146, scale: 0.45 },
+  { id: 'fish', x: 180, y: 140, scale: 0.5, tint: 'menthe' },
+  { id: 'swirl', x: 190, y: 68, scale: 0.6 },
+  // Le premier plan : le banc de sable et son crabe, juste au bord du cadrage paysage.
+  { id: 'sandbar', x: 100, y: 166, scale: 0.5 },
+  { id: 'crab', x: 106, y: 164, scale: 0.5, tint: 'rose' },
+  { id: 'sandbar', x: 168, y: 174, scale: 0.6 },
+  { id: 'swirl', x: 54, y: 170, scale: 0.7 },
 ];
 
 /**
@@ -230,15 +289,17 @@ const ARCHIPELAGO_PROPS = [
  * Forme d'un élément : [prop, u, v, échelle, retourné ?, teinte ?].
  */
 export const ISLAND_TRIM = {
-  // Tropicale : cocotiers penchés, fleurs, coquillages sur le sable. Les deux grands sont posés
-  // AUX EXTRÉMITÉS : au milieu, la plaque de l'île les cacherait entièrement.
+  // Tropicale : cocotiers penchés, fleurs, coquillages sur le sable. Le milieu de l'île est à
+  // nouveau libre depuis que la plaque de nom a disparu : on y plante le plus grand cocotier.
   mots: [
-    ['palm', -0.8, 0.04, 0.88], ['palm', 0.56, 0.52, 0.78, true],
+    ['palm', -0.8, 0.04, 0.78], ['palm', 0.56, 0.52, 0.68, true],
+    ['palm', -0.1, -0.22, 0.86, true], ['bush', 0.04, 0.14, 0.9],
     ['bush', -0.44, 0.34, 0.95], ['bush', 0.26, 0.3, 0.85, true],
     ['flower', -0.22, 0.46, 1, false, 'rose'], ['flower', 0.06, 0.5, 0.95, false, 'citron'],
     ['tuft', -0.62, 0.42, 0.95], ['tuft', 0.44, 0.48, 0.9],
     ['shell', 0.2, 0.62, 0.75, false, 'rose'], ['starfish', -0.36, 0.64, 0.7, false, 'peche'],
-    ['pebble', 0.86, 0.3, 0.8],
+    ['pebble', 0.86, 0.3, 0.8], ['flower', -0.64, 0.14, 0.85, false, 'lavande'],
+    ['mushroom', 0.4, 0.1, 0.8, false, 'peche'],
   ],
   // Rocheuse : des blocs empilés, peu d'arbres, des galets au bord de l'eau.
   nombres: [
@@ -285,31 +346,82 @@ function islandTrim(entry, scene) {
   return scatter(scene, items);
 }
 
-/** Une île de l'archipel : un lien vers son intérieur, ou une île encore fermée dans la brume. */
+/**
+ * Le repère permanent d'une île : une planchette qui flotte SOUS sa ligne de flottaison, décalée
+ * sur le côté. Elle ne peut donc pas couvrir l'île qu'elle désigne — c'est tout le reproche fait
+ * aux cinq pancartes. Île ouverte : trois étoiles. Île fermée : le cadenas et le seuil à atteindre.
+ */
+function islandBadge(entry, scene) {
+  const { x, y } = entry.badge;
+  const { width: w, height: hg } = ISLAND_BADGE;
+  const mid = r2(y + hg / 2);
+  if (!entry.unlocked) {
+    return n('g', { class: 'sc-badge is-locked' },
+      plank(x, y, w, hg, true),
+      use('lock', { scene, x: r2(x - 6.6), y: r2(y + 5.6), scale: 0.3 }),
+      starMark(r2(x + 2.2), mid, 2.5, false),
+      n('text', {
+        x: r2(x + 8.2), y: mid, class: 'sc-badge-text', 'text-anchor': 'middle', text: String(entry.starsLeft),
+      }));
+  }
+  // Île ouverte : toujours la planchette claire, même sans étoile. Le bois terni des lieux « à
+  // découvrir » se lirait ici comme un trou dans l'eau — les trois étoiles creuses suffisent.
+  return n('g', { class: 'sc-badge' },
+    plank(x, y, w, hg, true),
+    starRow(x, mid, 2.5, 5.6, entry.earned, entry.possible));
+}
+
+/**
+ * Une île de l'archipel : L'ÎLE EST LA ZONE CLIQUABLE. Un rectangle invisible l'enveloppe, et plus
+ * rien d'opaque n'est dessiné par-dessus. Son nom complet apparaît dans l'infobulle, au survol, au
+ * focus clavier et au toucher ; la liste sous la scène le porte en permanence.
+ */
 function archipelagoIsland(entry, scene) {
-  const { id, unlocked, plaque: at, lines, label, starsLeft } = entry;
+  const { id, unlocked, label, hit, cx, cy, rx, ry } = entry;
   const body = n('g', { class: 'sc-island-body' },
-    islandBody({ ...entry, thickness: 0.46 }),
+    islandBody({ ...entry, thickness: ISLAND_THICKNESS }),
     islandTrim(entry, scene));
-  const board = { x: at.x, y: at.y, ...ISLAND_PLAQUE, lines, meta: entry.meta };
-  const sign = unlocked
-    ? plaque({ ...board, stars: null })
-    : n('g', {},
-      plaque({ ...board, dim: true }),
-      use('lock', { scene, x: at.x + 16, y: at.y - 5, scale: 0.68 }));
-  const content = [body, sign];
   if (!unlocked) {
+    // Pas de lien : rien à activer. Le `role="img"` est sans danger ici — ce groupe ne contient
+    // aucun élément focalisable (le piège, c'était `role="img"` sur la scène entière).
     return n('g', {
       class: 'sc-island is-locked', 'data-island': id, role: 'img', 'aria-label': label,
-    }, content, n('title', { text: `${entry.name} — encore ${starsLeft} étoiles` }));
+    },
+    n('rect', { ...hit, rx: 10, class: 'sc-hit' }),
+    body,
+    islandBadge(entry, scene));
   }
   return n('a', {
     href: `#/ile/${id}`, class: 'sc-island sc-link', 'data-island': id, 'aria-label': label,
   },
+  n('rect', { ...hit, rx: 10, class: 'sc-hit' }),
+  // Le halo déborde l'île de tous côtés : dessiné DERRIÈRE elle, c'est son pourtour qui s'éclaire.
   n('ellipse', {
-    cx: entry.cx, cy: entry.cy, rx: r2(entry.rx + 4), ry: r2(entry.ry + 10), class: 'sc-halo',
+    cx, cy: r2(cy + ry * 0.2), rx: r2(rx + 5), ry: r2(ry * 1.5 + 6), class: 'sc-halo',
   }),
-  content);
+  body,
+  n('rect', { ...hit, rx: 10, class: 'sc-halo-box' }),
+  islandBadge(entry, scene));
+}
+
+/**
+ * Ce que l'infobulle doit savoir d'une île : son nom, sa ligne de détail, et les trois points
+ * d'accroche du panneau (au-dessus, replié dessous, et la pointe qui désigne l'île).
+ */
+function islandTip(entry) {
+  return {
+    id: entry.id,
+    name: entry.name,
+    // Le panneau ne porte QUE l'avancement : « Grandeurs, mesures et géométrie » l'élargissait
+    // jusqu'à couvrir l'île voisine. La matière reste dans la liste et dans le nom accessible.
+    where: entry.meta,
+    anchor: {
+      x: entry.cx,
+      top: r2(entry.cy - entry.ry),
+      under: r2(waterline(entry) + ISLAND_BADGE.height + 6),
+      point: r2(entry.cy - entry.ry * 0.3),
+    },
+  };
 }
 
 /** La scène de l'archipel (accueil). `entries` vient de core/map.js (déjà triées par profondeur). */
@@ -334,15 +446,20 @@ export function archipelagoScene(entries) {
     'aria-label': 'Carte de l\'archipel : cinq îles posées sur la mer.',
     focusable: 'false',
   },
-  n('defs', { 'aria-hidden': 'true' }, propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(foreground), 'pebble', 'starfish'])),
+  n('defs', { 'aria-hidden': 'true' },
+    propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(ARCHIPELAGO_SEA), ...idsOf(foreground)])),
   sky({ horizon, scene }),
   sea({ horizon }),
-  use('boat', { scene, x: 188, y: 70, scale: 0.8, tint: 'citron' }),
-  use('boat', { scene, x: 14, y: 100, scale: 0.62, tint: 'rose' }),
-  use('boat', { scene, x: 120, y: 56, scale: 0.5, tint: 'menthe' }),
+  use('boat', { scene, x: 84, y: 46, scale: 0.5, tint: 'menthe' }),
+  use('boat', { scene, x: 157, y: 109, scale: 0.6, tint: 'citron' }),
+  use('boat', { scene, x: 100, y: 118, scale: 0.52, tint: 'rose' }),
+  n('g', { class: 'sc-sea-life' }, scatter(scene, ARCHIPELAGO_SEA)),
   entries.map((entry) => archipelagoIsland(entry, scene)),
-  n('g', { class: 'sc-foreground' }, scatter(scene, foreground)));
-  return toNode(tree);
+  n('g', { class: 'sc-foreground' }, scatter(scene, foreground)),
+  tipLayer());
+  const svg = toNode(tree);
+  wireTips(svg, entries.map(islandTip), { selector: '.sc-island', key: 'island' });
+  return svg;
 }
 
 // --- L'intérieur d'une île -----------------------------------------------------------------------
@@ -501,20 +618,9 @@ function trail(slots) {
  */
 function badgeNode({ x, y }, { stars, max, played }) {
   const { width: w, height: hg } = BADGE;
-  const left = r2(x - w / 2);
-  const rad = r2(hg / 2);
-  const row = r2(y + hg / 2);
   return n('g', { class: `sc-badge${played ? '' : ' is-new'}` },
-    n('rect', { x: left, y: r2(y + 1.1), width: w, height: hg, rx: rad, class: 'sc-badge-shadow' }),
-    n('rect', { x: left, y, width: w, height: hg, rx: rad, class: 'sc-badge-board' }),
-    n('rect', {
-      x: r2(left + 1.6), y: r2(y + 1), width: r2(w - 3.2), height: r2(hg * 0.36), rx: r2(hg * 0.18),
-      class: 'sc-badge-light',
-    }),
-    n('rect', { x: left, y, width: w, height: hg, rx: rad, class: 'sc-ln sc-ln--badge' }),
-    // Trois étoiles pour résumer neuf : la première s'allume dès la première étoile gagnée.
-    [0, 1, 2].map((i) => starMark(r2(x - 5.4 + i * 5.4), row, 2.4,
-      played && stars >= (i * max) / 3 + 1)));
+    plank(x, y, w, hg),
+    starRow(x, r2(y + hg / 2), 2.4, 5.4, played ? stars : 0, max));
 }
 
 /**
@@ -541,6 +647,22 @@ function placeNode(place, scene) {
   n('g', { class: 'sc-place-art', 'aria-hidden': 'true' },
     use(place.kind, { scene, x: slot.x, y: slot.y, scale: r2(slot.scale * fit) })),
   badgeNode(slot.badge, place));
+}
+
+/** Ce que l'infobulle doit savoir d'un lieu : le nom court, le lieu, et ses points d'accroche. */
+function placeTip(place) {
+  const { slot } = place;
+  return {
+    id: place.id,
+    name: place.name,
+    where: place.where,
+    anchor: {
+      x: slot.x,
+      top: r2(slot.y - PLACE_HEIGHT * slot.scale),
+      under: r2(slot.y + 15),
+      point: r2(slot.y - 2),
+    },
+  };
 }
 
 // --- Le nom d'un lieu, à la demande ----------------------------------------------------------
@@ -580,13 +702,15 @@ function textBox(node, size) {
 }
 
 /**
- * Branche le panneau de nom sur les lieux : survol, focus clavier et appui du doigt.
- * Un seul jeu d'écouteurs, posé sur la scène (délégation) : ajouter un lieu n'ajoute rien ici.
+ * Branche le panneau de nom sur des cibles : survol, focus clavier et appui du doigt.
+ * Un seul jeu d'écouteurs, posé sur la scène (délégation) : ajouter une cible n'ajoute rien ici.
+ * Une cible : `{ id, name, where, anchor: { x, top, under, point } }` — l'archipel donne ses îles,
+ * l'intérieur d'une île ses lieux, et le panneau est le même.
  */
-function wireTips(svg, places) {
+function wireTips(svg, targets, { selector = '.sc-place', key = 'place' } = {}) {
   const tip = svg.querySelector('.sc-tip');
   if (!tip) return;
-  const byId = new Map(places.map((place) => [place.id, place]));
+  const byId = new Map(targets.map((target) => [target.id, target]));
   const parts = {
     stem: tip.querySelector('.sc-tip-stem'),
     shadow: tip.querySelector('.sc-tip-shadow'),
@@ -599,21 +723,21 @@ function wireTips(svg, places) {
 
   const hide = () => tip.classList.remove('is-on');
 
-  const show = (place) => {
-    const { slot } = place;
-    parts.name.textContent = place.name;
-    parts.where.textContent = place.where;
+  const show = (target) => {
+    const { anchor } = target;
+    parts.name.textContent = target.name;
+    parts.where.textContent = target.where;
     const top = textBox(parts.name, 7);
     const sub = textBox(parts.where, 5.4);
     const width = r2(Math.min(174, Math.max(top.width, sub.width, 34) + TIP_PAD.x * 2));
     const height = r2(TIP_PAD.y * 2 + top.height + TIP_GAP + sub.height);
     // Au-dessus du décor, et replié dessous si le haut de la scène manque de place. Le panneau
     // reste dans la ZONE SÛRE : au-delà, le cadrage portrait d'un téléphone le couperait.
-    const above = slot.y - PLACE_HEIGHT * slot.scale - height - 5;
+    const above = anchor.top - height - 5;
     const under = above < SAFE.y;
-    const y = r2(under ? slot.y + 15 : above);
+    const y = r2(under ? Math.min(anchor.under, SAFE.y + SAFE.height - height) : above);
     const room = SAFE.x + SAFE.width + 2 - width;
-    const x = r2(Math.min(Math.max(room, SAFE.x - 2), Math.max(SAFE.x - 2, slot.x - width / 2)));
+    const x = r2(Math.min(Math.max(room, SAFE.x - 2), Math.max(SAFE.x - 2, anchor.x - width / 2)));
     for (const box of [parts.shadow, parts.board, parts.line]) {
       box.setAttribute('x', x);
       box.setAttribute('y', box === parts.shadow ? r2(y + 1.4) : y);
@@ -628,17 +752,17 @@ function wireTips(svg, places) {
     parts.name.setAttribute('y', r2(y + TIP_PAD.y + top.height / 2));
     parts.where.setAttribute('x', r2(x + width / 2));
     parts.where.setAttribute('y', r2(y + TIP_PAD.y + top.height + TIP_GAP + sub.height / 2));
-    // Un petit pied désigne le lieu : court, sinon il barre le décor dont il parle.
-    const stemX = r2(Math.min(x + width - 5, Math.max(x + 5, slot.x)));
+    // Un petit pied désigne la cible : court, sinon il barre le décor dont il parle.
+    const stemX = r2(Math.min(x + width - 5, Math.max(x + 5, anchor.x)));
     const from = under ? y : r2(y + height);
-    const way = Math.sign(slot.y - 2 - from) || 1;
-    parts.stem.setAttribute('d', `M${stemX} ${from}L${stemX} ${r2(from + way * Math.min(9, Math.abs(slot.y - 2 - from)))}`);
+    const way = Math.sign(anchor.point - from) || 1;
+    parts.stem.setAttribute('d', `M${stemX} ${from}L${stemX} ${r2(from + way * Math.min(9, Math.abs(anchor.point - from)))}`);
     tip.classList.add('is-on');
   };
 
   const find = (event) => {
-    const link = event.target.closest?.('.sc-place');
-    return link ? byId.get(link.dataset.place) : null;
+    const hit = event.target.closest?.(selector);
+    return hit ? byId.get(hit.dataset[key]) : null;
   };
   const onEnter = (event) => {
     const place = find(event);
@@ -648,7 +772,7 @@ function wireTips(svg, places) {
   for (const type of ['pointerout', 'focusout']) svg.addEventListener(type, (event) => {
     if (!find(event)) return;
     const to = event.relatedTarget;
-    if (!(to && to.closest?.('.sc-place') === event.target.closest('.sc-place'))) hide();
+    if (!(to && to.closest?.(selector) === event.target.closest(selector))) hide();
   });
   svg.addEventListener('pointerleave', hide);
 }
@@ -712,7 +836,7 @@ export function islandScene(island, places, layout) {
   n('g', { class: 'sc-foreground' }, scatter(scene, ISLAND_FOREGROUND)),
   tipLayer());
   const svg = toNode(tree);
-  wireTips(svg, places);
+  wireTips(svg, places.map(placeTip));
   return svg;
 }
 

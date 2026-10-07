@@ -316,12 +316,20 @@ Règles non négociables de ces deux scènes :
   `aspect-ratio`) : paysage sur tablette, portrait sur téléphone. Il n'y a jamais deux dessins à
   tenir à jour. Tout ce qui porte de l'information tient dans la **zone sûre** (`SAFE` de `core/map.js`),
   visible dans les deux cadrages.
-- **Le décor EST le lieu, et le décor EST la zone cliquable.** Un lieu ne porte pas d'étiquette
-  posée sur l'île : seulement son décor, et un petit **repère d'étoiles** planté à côté, sous la
-  ligne de sol (jamais devant le bâtiment). Le nom complet n'apparaît qu'**au survol, au focus
-  clavier et au toucher**, dans un panneau unique dessiné en dernier (SVG n'a pas de `z-index`) —
-  jamais plusieurs noms à la fois. Six plaques opaques, c'était une grille de boutons posée sur
-  une image au lieu d'une île qu'on explore.
+- **Le décor EST la zone cliquable** — à l'intérieur d'une île comme sur l'archipel. Un lieu, c'est
+  son décor ; une île, c'est son corps. Rien d'opaque n'est dessiné par-dessus : seulement un petit
+  **repère d'étoiles**, planté à côté du bâtiment sous la ligne de sol, ou flottant sous la ligne de
+  flottaison de l'île (`waterline`) et décalé — jamais devant ce qu'il désigne. Une île fermée y
+  montre le cadenas et son seuil. Le nom complet n'apparaît qu'**au survol, au focus clavier et au
+  toucher**, dans un panneau unique dessiné en dernier (SVG n'a pas de `z-index`) et partagé par les
+  deux scènes (`wireTips`) — jamais plusieurs noms à la fois. Des pancartes opaques, c'était une
+  grille de boutons posée sur une image au lieu d'une carte qu'on explore.
+- **Les zones cliquables ne se recouvrent jamais.** Les cinq `hit` de `ISLAND_GEOMETRY` et les
+  emprises de `placeLayout` sont vérifiées par `tests/map.test.js` : taille ≥ 30 unités (56 px sur
+  un écran de 360 px), dans la zone sûre, sans chevauchement. Le décor de mer se pose donc **hors**
+  de ces rectangles — on ne met pas un crabe là où le doigt cherche une île.
+- **`role="group"` sur les `<svg>` de scène, jamais `role="img"`** : `img` rend les descendants
+  présentatifs, et l'on tabule alors sur des liens sans nom.
 - **`core/map.js` est pur** : positions des îles, emplacements des lieux, découpe des noms, noms
   accessibles. `placeLayout(n)` garantit que deux zones touchables ne se chevauchent jamais, d'un à
   neuf lieux, qu'elles restent assez grandes pour un doigt (≥ 30 unités, soit 56 px sur un écran de
@@ -332,6 +340,10 @@ Règles non négociables de ces deux scènes :
   (`squareness`) et l'ondulation qui y creuse des baies (`wave` — elle ne fait que rentrer, donc une
   île ne déborde jamais de la place qui lui est réservée) ; `ISLAND_TRIM` de `ui/map-scene.js` donne
   son paysage en coordonnées relatives (tropicale, rocheuse, plateau, forêt, campement).
+- **La mer est habitée.** `ARCHIPELAGO_SEA` pose bancs de poissons, remous, bouées, récifs, bancs de
+  sable, une baleine au loin — et quatre habitants à visage (poisson, crabe, pieuvre, mouette), en
+  plus du soleil et de la mascotte. Tout y reste petit et pâle : les cinq îles doivent rester les
+  cinq seules grandes formes. Le ciel a trois étages de nuages, le plus haut pâli.
 - **Le décor vient de `ui/art/scenery.js`** : chaque objet est déclaré UNE fois dans le `<defs>` de la
   scène et posé par `<use>`. Ajouter un objet = une entrée dans `PROPS` + ses classes dans `css/map.css`
   (un test échoue si une classe n'existe pas, ou si une couleur est écrite en dur). Un lieu déclare en

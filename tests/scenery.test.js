@@ -52,13 +52,32 @@ test('chaque classe de dessin existe dans css/map.css', () => {
   }
 });
 
+// Seule exception au contour : ce qu'on voit À TRAVERS l'eau. Un banc de poissons cerné d'un trait
+// remonterait à la surface ; c'est justement l'absence de contour qui le place dessous.
+const SUBMERGED = new Set(['school']);
+
 test('chaque objet porte un contour : c\'est le marqueur n°1 du style', () => {
   for (const id of PROP_IDS) {
+    if (SUBMERGED.has(id)) continue;
     const classes = classesOf(PROPS[id].parts());
-    const outlined = ['sc-ln', 'sc-dt', 'sc-bird', 'sc-smile', 'sc-arm', 'sc-post', 'sc-rope', 'sc-stem', 'sc-ray']
+    const outlined = ['sc-ln', 'sc-dt', 'sc-bird', 'sc-smile', 'sc-arm', 'sc-post', 'sc-rope',
+      'sc-stem', 'sc-ray', 'sc-ripple', 'sc-leg', 'sc-spout', 'sc-tentacle']
       .some((cls) => classes.has(cls));
     assert.ok(outlined, `objet sans aucun trait : ${id}`);
   }
+});
+
+test('la mer a des habitants, et quatre d\'entre eux ont un visage', () => {
+  for (const id of ['fish', 'school', 'gull', 'crab', 'whale', 'octopus', 'buoy', 'reef',
+    'sandbar', 'swirl']) {
+    assert.ok(PROPS[id], `habitant de la mer manquant : ${id}`);
+  }
+  // Point 5 de la direction artistique : du caractère. Un visage = des yeux et un sourire.
+  for (const id of ['fish', 'crab', 'whale', 'octopus']) {
+    const classes = classesOf(PROPS[id].parts());
+    assert.ok(classes.has('sc-ink') && classes.has('sc-smile'), `${id} n'a pas de visage`);
+  }
+  assert.ok(classesOf(PROPS.gull.parts()).has('sc-ink'), 'la mouette n\'a pas d\'œil');
 });
 
 test('les objets volumineux ont trois tons de la même matière', () => {

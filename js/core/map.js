@@ -122,7 +122,7 @@ export function placeKind(gameId, index = 0) {
 // Les titres de jeu sont faits pour une liste, pas pour une bulle posée sur un dessin. On en donne
 // un nom court, qui tient sur une ligne même sur un téléphone de 360 px : c'est ce nom-là qui
 // apparaît au survol, au focus et au toucher. Le titre complet reste dans le nom accessible du
-// lien et dans la liste HTML sous la scène. `wrapLabel` sert encore aux plaques de l'archipel.
+// lien et dans la liste HTML sous la scène.
 
 export const SHORT_TITLES = {
   sons: 'Les sons',
@@ -141,21 +141,11 @@ export const SHORT_TITLES = {
   'besoins-vivant': 'Besoins du vivant',
 };
 
-export const MAX_LINE = 11;
-export const MAX_LINES = 2;
-
-/** Coupe un nom en au plus `MAX_LINES` lignes d'au plus `MAX_LINE` caractères (glouton). Pure. */
-export function wrapLabel(text, max = MAX_LINE, maxLines = MAX_LINES) {
-  const lines = [];
-  for (const word of String(text).trim().split(/\s+/)) {
-    const last = lines[lines.length - 1];
-    if (last !== undefined && `${last} ${word}`.length <= max) lines[lines.length - 1] = `${last} ${word}`;
-    else lines.push(word);
-  }
-  if (lines.length <= maxLines) return lines;
-  // Débordement : on garde les premières lignes et on agrège le reste (toujours lisible, jamais vide).
-  return [...lines.slice(0, maxLines - 1), lines.slice(maxLines - 1).join(' ')];
-}
+/**
+ * Longueur maximale d'un nom court. Le panneau de survol tient sur UNE ligne : au-delà, il
+ * déborderait de la zone sûre sur un téléphone de 360 px. Vérifié par tests/map.test.js.
+ */
+export const MAX_SHORT_TITLE = 21;
 
 export function shortTitle(game) {
   return SHORT_TITLES[game.id] || game.title;
@@ -204,36 +194,57 @@ export function islandPlaces(games, progressFor = () => null) {
 // --- L'archipel ------------------------------------------------------------------------------------
 //
 // Cinq îles vues de trois quarts, posées à la main : la plus avancée au premier plan (grande,
-// saturée), les suivantes plus petites, plus hautes dans l'image et plus pâles. Les plaques de nom
-// sont également placées à la main, et le test vérifie qu'elles ne se chevauchent pas.
-
+// saturée), les suivantes plus petites, plus hautes dans l'image et plus pâles.
+//
+// Troisième lot (#96) : les cinq plaques de nom ont disparu. Elles s'affichaient toutes en même
+// temps, masquaient la mer, et celle des Mesures chevauchait le corps de l'île aux Mots. On
+// applique ici le traitement déjà validé à l'intérieur des îles :
+//   - `hit`   : L'ÎLE ELLE-MÊME est la zone cliquable (un rectangle invisible l'enveloppe) ;
+//   - `badge` : le seul repère permanent, posé SOUS la ligne de flottaison et décalé sur le côté,
+//               donc jamais devant l'île — étoiles gagnées, ou cadenas + seuil si elle est fermée ;
+//   - le nom complet n'apparaît qu'au survol, au focus clavier et au toucher, dans la couche
+//     d'infobulle partagée avec l'intérieur des îles.
+// La liste HTML sous la scène porte, elle, toute l'information en permanence.
+//
 // Chaque île a sa SILHOUETTE : `squareness` règle le galbe du contour (2 = ovale, 3,5 = plateau
 // aux coins ronds) et `wave` y creuse des baies — `amp` leur profondeur, `k` leur nombre, `phase`
 // leur orientation. L'ondulation ne fait que RENTRER (jamais sortir), donc une île ne peut pas
 // déborder de son rayon : la composition et les tests restent valables.
-/** La plaque de nom d'une île. Les lieux, eux, n'en ont plus : seul l'archipel en garde. */
-export const ISLAND_PLAQUE = { width: 42, height: 19 };
+
+/** Épaisseur de la falaise d'une île de l'archipel, en fraction de son rayon vertical. */
+export const ISLAND_THICKNESS = 0.46;
+
+/** Le repère permanent d'une île : une planchette flottante, grande comme une bouée. */
+export const ISLAND_BADGE = { width: 24, height: 9.4 };
+
+/** Ligne de flottaison d'une île : le bas de sa falaise, là où la terre entre dans l'eau. */
+export const waterline = ({ cy, ry }) => Number((cy + ry * (1 + ISLAND_THICKNESS)).toFixed(2));
 
 export const ISLAND_GEOMETRY = {
   mots: {
-    cx: 52, cy: 134, rx: 42, ry: 15, plaque: { x: 48, y: 110 }, depth: 1,
+    cx: 55, cy: 130, rx: 34, ry: 13, depth: 1,
     squareness: 2.6, wave: { amp: 0.14, k: 3, phase: 0.6 },
+    hit: { x: 20, y: 114, width: 70, height: 46 }, badge: { x: 69, y: 150.4 },
   },
   nombres: {
-    cx: 152, cy: 128, rx: 31, ry: 12, plaque: { x: 154, y: 104 }, depth: 0.78,
+    cx: 146, cy: 128, rx: 28, ry: 11.5, depth: 0.78,
     squareness: 2.1, wave: { amp: 0.2, k: 4, phase: 1.5 },
+    hit: { x: 114, y: 114, width: 66, height: 46 }, badge: { x: 133, y: 146.4 },
   },
   mesures: {
-    cx: 102, cy: 82, rx: 27, ry: 10.5, plaque: { x: 102, y: 102 }, depth: 0.58,
+    cx: 100, cy: 86, rx: 26, ry: 10, depth: 0.58,
     squareness: 3.1, wave: { amp: 0.1, k: 5, phase: 0.2 },
+    hit: { x: 72, y: 70, width: 56, height: 42 }, badge: { x: 113, y: 102 },
   },
   monde: {
-    cx: 44, cy: 50, rx: 24, ry: 9, plaque: { x: 46, y: 80 }, depth: 0.45,
+    cx: 46, cy: 54, rx: 23, ry: 9, depth: 0.45,
     squareness: 2.3, wave: { amp: 0.22, k: 3, phase: 2.3 },
+    hit: { x: 22, y: 40, width: 50, height: 40 }, badge: { x: 59, y: 68.6 },
   },
   ailleurs: {
-    cx: 158, cy: 46, rx: 22, ry: 8.5, plaque: { x: 156, y: 78 }, depth: 0.38,
+    cx: 154, cy: 50, rx: 21, ry: 8.5, depth: 0.38,
     squareness: 2, wave: { amp: 0.16, k: 2, phase: 1.1 },
+    hit: { x: 130, y: 36, width: 50, height: 40 }, badge: { x: 143, y: 64 },
   },
 };
 
@@ -252,7 +263,6 @@ export function archipelago(islands, read) {
         ...island,
         ...geometry,
         ...data,
-        lines: wrapLabel(island.name, 13),
         meta: islandMeta(data),
         label: islandLabel(island, data),
       };
@@ -266,9 +276,9 @@ export function islandLabel(island, data) {
   if (!data.unlocked) {
     return `${island.name}, ${island.subject}. Île fermée : encore ${plural(data.starsLeft, 'étoile')} à gagner.`;
   }
-  if (!data.games) return `${island.name}, ${island.subject}. Pas encore de jeu ici.`;
+  if (!data.games) return `${island.name}, ${island.subject}. Île ouverte, pas encore de jeu ici.`;
   return `${island.name}, ${island.subject}. ${plural(data.earned, 'étoile')} sur ${data.possible}, `
-    + `${plural(data.stickers, 'gommette')} sur ${data.total}.`;
+    + `${plural(data.stickers, 'gommette')} sur ${data.total}. Île ouverte.`;
 }
 
 /** Texte court affiché sous une île (le même que le nom accessible, en abrégé). Pure. */
