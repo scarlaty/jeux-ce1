@@ -16,7 +16,7 @@ const CATEGORIES = ['animal', 'fruit', 'legume', 'vetement', 'vehicule'];
 // Les indices d'une question tirée, sous forme de contraintes { tag, neg? }.
 const constraintsOf = (q) => [
   ...q.riddle.clues.map((tag) => ({ tag })),
-  ...(q.riddle.not ? [{ tag: q.riddle.not, neg: true }] : []),
+  ...q.riddle.not.map((tag) => ({ tag, neg: true })),
 ];
 const accessors = {
   constraintsOf,
@@ -143,27 +143,64 @@ test('niveaux : nombre d\'indices et de choix, images puis mots', () => {
   const byLevel = draws();
   for (const q of byLevel[1]) {
     assert.equal(q.riddle.clues.length, 2);
-    assert.equal(q.riddle.not, null);
+    assert.deepEqual(q.riddle.not, []);
     assert.equal(q.display.choices.length, 3);
     assert.ok(q.display.choices.every((c) => c.emoji));
   }
   for (const q of byLevel[2]) {
     // Trois indices : trois affirmations, ou deux plus un indice dit à l'envers (#108).
-    assert.equal(q.riddle.clues.length + (q.riddle.not ? 1 : 0), 3, q.key);
+    assert.equal(q.riddle.clues.length + q.riddle.not.length, 3, q.key);
     assert.ok(q.riddle.clues.length >= 2, q.key);
     assert.equal(q.display.choices.length, 4);
     assert.ok(q.display.choices.every((c) => c.emoji));
   }
-  // Les deux formes sortent vraiment : ni l'une ni l'autre n'est décorative.
-  const denied = byLevel[2].filter((q) => q.riddle.not).length;
-  assert.ok(denied > 0 && denied < byLevel[2].length, `niveau 2 : ${denied} / ${byLevel[2].length} à l'envers`);
   for (const q of byLevel[3]) {
-    assert.equal(q.riddle.clues.length, 2);
-    assert.ok(q.riddle.not, 'niveau 3 : un indice dit à l\'envers');
-    assert.equal(q.display.choices.length, 4);
+    // Quatre indices dont DEUX à l'envers : la forme propre du niveau 3, celle qu'aucun autre n'a.
+    assert.equal(q.riddle.clues.length, 2, q.key);
+    assert.equal(q.riddle.not.length, 2, q.key);
+    assert.equal(q.display.choices.length, 5);
     assert.ok(q.display.choices.every((c) => !c.emoji && c.text), 'niveau 3 : mots seulement');
-    assert.ok(q.prompt.includes(negationText(q.riddle.not, findThing(q.answer))), q.key);
+    for (const tag of q.riddle.not) {
+      assert.ok(q.prompt.includes(negationText(tag, findThing(q.answer))), q.key);
+    }
   }
+});
+
+// #108, relecture du juge : le niveau 2 était devenu le niveau 3 (80,8 % de ses questions avaient sa forme,
+// et 97,05 % des énoncés du niveau 3 reparaissaient au niveau 2). Les trois mesures qui l'interdisent.
+test('les trois niveaux restent trois exercices différents (#108)', () => {
+  const byLevel = draws();
+  // 1. Le niveau 2 garde ses deux formes, aucune réduite à la figuration.
+  const trois = byLevel[2].filter((q) => !q.riddle.not.length).length / byLevel[2].length;
+  assert.ok(trois >= 0.30 && trois <= 0.70, `niveau 2 : ${(100 * trois).toFixed(1)} % de trois affirmations`);
+  // 2. Un énoncé du niveau 3 ne se repose pas au niveau 2 (même réponse, mêmes indices, mêmes négations).
+  const sign = (q) => `${q.answer}|${[...q.riddle.clues].sort()}|${[...q.riddle.not].sort()}`;
+  const deux = new Set(byLevel[2].map(sign));
+  const trois3 = new Set(byLevel[3].map(sign));
+  const commun = [...trois3].filter((s) => deux.has(s)).length / trois3.size;
+  assert.ok(commun < 0.50, `${(100 * commun).toFixed(1)} % des énoncés du niveau 3 reparaissent au niveau 2`);
+});
+
+// #108, relecture du juge : « les devinettes ne parlent plus que de couleur, de catégorie et de taille ».
+test('chaque niveau parle d\'autre chose que de couleur, de catégorie et de taille (#108)', () => {
+  const byLevel = draws();
+  const tags = (q) => [...q.riddle.clues, ...q.riddle.not];
+  const substantiel = (t) => TAGS[t].kind !== 'cat' && TAGS[t].kind !== 'colour' && t !== 'main' && t !== 'grand';
+  for (const level of [1, 2, 3]) {
+    const qs = byLevel[level];
+    const fond = qs.filter((q) => tags(q).some(substantiel)).length / qs.length;
+    const taille = qs.filter((q) => tags(q).some((t) => t === 'main' || t === 'grand')).length / qs.length;
+    assert.ok(fond >= 0.70, `niveau ${level} : ${(100 * fond).toFixed(1)} % d'indices de fond`);
+    assert.ok(taille <= 0.40, `niveau ${level} : ${(100 * taille).toFixed(1)} % de « main » ou « grand »`);
+  }
+  // Les indices de signature vivent surtout au niveau 1 : une question qui porte un indice dit à l'envers
+  // ne peut presque jamais en porter un (l'intrus de la négation devrait lui aussi pouvoir vérifier la
+  // signature — voir le commentaire de tête de js/data/devinettes.js). Mesuré : 26,7 % / 2,0 % / 0,5 %.
+  const signature = (level) => byLevel[level].filter((q) => tags(q).some((t) => TAGS[t].kind === 'sign')).length
+    / byLevel[level].length;
+  assert.ok(signature(1) >= 0.10, `niveau 1 : ${(100 * signature(1)).toFixed(2)} % d'indices de signature`);
+  assert.ok(signature(2) >= 0.01, `niveau 2 : ${(100 * signature(2)).toFixed(2)} % d'indices de signature`);
+  assert.ok(signature(3) > 0, `niveau 3 : ${(100 * signature(3)).toFixed(2)} % d'indices de signature`);
 });
 
 // #97 : CHAQUE INDICE EST NÉCESSAIRE. Mesures du juge avant correction (4 000 tirages) : un seul indice suffisait
@@ -183,7 +220,7 @@ test('le mesureur détecte une devinette dont un indice est décoratif', () => {
   const chien = findThing('chien');
   const q = {
     answer: 'chien',
-    riddle: { clues: ['animal', 'pattes4'], wrong: ['poisson', 'château'], not: null },
+    riddle: { clues: ['animal', 'pattes4'], wrong: ['poisson', 'château'], not: [] },
     display: { choices: ['chien', 'poisson', 'château'].map((value) => ({ value })) },
   };
   const m = measureClues([q], accessors);
@@ -197,15 +234,19 @@ test('le mesureur détecte une devinette dont un indice est décoratif', () => {
 test('niveau 3 : une vraie déduction, pas de mot à barrer', () => {
   for (const q of draws()[3]) {
     const a = findThing(q.answer);
-    // L'indice dit à l'envers porte sur une propriété, jamais sur un mot affiché.
-    assert.ok(NEGATIONS[q.riddle.not], q.key);
-    assert.ok(holds(a, { tag: q.riddle.not, neg: true }), `la négation est fausse pour la réponse : ${q.key}`);
+    // Les indices dits à l'envers portent sur une propriété, jamais sur un mot affiché.
+    for (const tag of q.riddle.not) {
+      assert.ok(NEGATIONS[tag], q.key);
+      assert.ok(holds(a, { tag, neg: true }), `la négation est fausse pour la réponse : ${q.key}`);
+    }
     // Le mot de la réponse n'est écrit nulle part dans l'énoncé.
     for (const c of q.display.choices) assert.ok(!q.prompt.toLowerCase().includes(c.value), q.key);
-    // Un intrus au moins ne se trahit que par la négation : sans elle, il conviendrait.
-    const lure = q.riddle.wrong.map(findThing).find((w) => fails(w, { tag: q.riddle.not, neg: true }));
-    assert.ok(lure, `aucun intrus écarté par « ${q.riddle.not} » : ${q.key}`);
-    assert.ok(q.riddle.clues.every((t) => couldHold(lure, { tag: t })), q.key);
+    // CHAQUE négation écarte son propre intrus : sans elle, il conviendrait. Deux négations, deux intrus.
+    for (const tag of q.riddle.not) {
+      const lure = q.riddle.wrong.map(findThing).find((w) => fails(w, { tag, neg: true }));
+      assert.ok(lure, `aucun intrus écarté par « ${tag} » : ${q.key}`);
+      assert.ok(q.riddle.clues.every((t) => couldHold(lure, { tag: t })), q.key);
+    }
   }
 });
 
@@ -262,9 +303,9 @@ test('on ne nie que ce qui est certain : jamais une affirmation fausse du monde 
   let phrases = 0;
   for (const q of all(draws())) {
     const answer = findThing(q.answer);
-    if (q.riddle.not) {
-      assert.ok(!bad.has(`${answer.word}|${q.riddle.not}`), `négation fausse : ${q.key}`);
-      assert.ok(never(answer, q.riddle.not), `négation non certaine : ${q.key}`);
+    for (const tag of q.riddle.not) {
+      assert.ok(!bad.has(`${answer.word}|${tag}`), `négation fausse : ${q.key}`);
+      assert.ok(never(answer, tag), `négation non certaine : ${q.key}`);
     }
     for (const w of q.riddle.wrong) {
       const t = findThing(w);
@@ -293,8 +334,9 @@ test('banque : une propriété « jamais » n\'est jamais possible', () => {
 test('participes accordés dans les phrases de correction (juge, C3)', () => {
   assert.equal(whyNot('pond', findThing('banane')), "La banane n'est pas pondue par une poule.");
   assert.equal(whyNot('pond', findThing('chocolat')), "Le chocolat n'est pas pondu par une poule.");
-  assert.equal(whyNot('roi', findThing('couronne')), "La couronne n'est pas portée par un roi.");
-  assert.equal(whyNot('rois', findThing('maison')), "La maison n'a pas été habitée par des rois.");
+  // Mixité (CLAUDE.md) : les reines portent couronne et habitent les châteaux autant que les rois.
+  assert.equal(whyNot('roi', findThing('couronne')), "La couronne n'est pas portée par un roi ou une reine.");
+  assert.equal(whyNot('rois', findThing('maison')), "La maison n'a pas été habitée par des rois et des reines.");
 });
 
 test('questions distinctes : au moins 30 par niveau avec la banque seule', () => {
@@ -323,7 +365,7 @@ test('variété : au moins la moitié des indices de la banque sont atteignables
   const used = new Set();
   for (const q of all(draws())) {
     q.riddle.clues.forEach((t) => used.add(t));
-    if (q.riddle.not) used.add(q.riddle.not);
+    q.riddle.not.forEach((t) => used.add(t));
   }
   const total = Object.keys(TAGS).length;
   assert.ok(used.size / total >= 0.5, `${used.size} / ${total} indices atteignables`);
@@ -334,11 +376,45 @@ test('variété : au moins la moitié des indices de la banque sont atteignables
   assert.deepEqual(signatures.filter((t) => !used.has(t)), [], 'indices de signature jamais tirés');
 });
 
+/**
+ * Indices que la banque porte mais ne peut PAS poser, et pourquoi (relecture du juge, #108). Un indice T
+ * n'est tirable que s'il existe une chose qui POURRAIT vérifier T (`is` ou `maybe`) tout en contredisant à
+ * coup sûr un autre indice de la même réponse. D'où des indices morts malgré plusieurs porteurs :
+ * `lait` (vache + chèvre) et `noyau` (pêche + cerise) parce que leurs porteurs partagent tous leurs autres
+ * indices ; `route`, `pedales`, `transporte` parce que tout ce qui roule est un véhicule à roues.
+ * La plupart sont des signatures à porteur unique : « je miaule » désignerait à lui seul la réponse, ce que
+ * la règle d'or de #97 interdit. Les laisser ici, nommés, vaut mieux que de les croire vivants.
+ */
+const INDICES_MORTS = [
+  'arbre', 'bele', 'pedales', 'route', 'sonne', 'ciel', 'brule', 'singes', 'bananes', 'lapins',
+  'fromage', 'miel_fait', 'bambou', 'hurle', 'coasse', 'poche', 'bosse', 'toile', 'huit', 'aileron',
+  'miaule', 'aboie', 'lait', 'metamorphose', 'devenir', 'colonie', 'grains', 'noyau', 'pieds', 'mains',
+  'jambes', 'pond', 'tartine', 'papier', 'lune', 'lacets', 'manches', 'rails', 'transporte', 'heure',
+  'matin', 'foot', 'soupe', 'chauffe', 'brille_nuit', 'rois', 'camping', 'noel', 'petales', 'baguettes',
+  'boum',
+];
+
+test('tout indice est tirable, ou nommé mort et expliqué (#108)', () => {
+  const used = new Set();
+  for (const q of all(draws())) [...q.riddle.clues, ...q.riddle.not].forEach((t) => used.add(t));
+  const open = Object.values(TAGS).filter((t) => t.open && t.id !== 'main' && t.id !== 'grand').map((t) => t.id);
+  const attendus = Object.keys(TAGS).filter((t) => !open.includes(t) && !INDICES_MORTS.includes(t));
+  // Un indice vivant qui meurt : la banque a perdu le porteur qui le rendait tirable.
+  assert.deepEqual(attendus.filter((t) => !used.has(t)), [], 'indices devenus morts sans être déclarés');
+  // Un indice mort qui ressuscite : tant mieux, mais il doit sortir de la liste.
+  assert.deepEqual(INDICES_MORTS.filter((t) => used.has(t)), [], 'indices morts à retirer de INDICES_MORTS');
+  assert.deepEqual(open.filter((t) => used.has(t)), [], 'un indice ouvert ne peut pas être posé');
+});
+
 test('un indice « ouvert » n\'est jamais nié ni posé comme indice (#108)', () => {
   // On ne nie que ce qui est certain : « ne sent pas bon », « n'est pas rond », « ne flotte pas »
   // seraient faux pour trop de choses — ces indices ne servent donc jamais.
   const open = Object.values(TAGS).filter((t) => t.open).map((t) => t.id);
-  assert.deepEqual(open.sort(), ['ferme', 'flotte', 'foret', 'grand', 'main', 'nuit', 'parfum', 'rond', 'toit']);
+  assert.deepEqual(open.sort(),
+    ['ferme', 'flotte', 'foret', 'grand', 'main', 'minuscule', 'nuit', 'parfum', 'rond', 'toit']);
+  // « minuscule » est graduel comme « rond » : l'écureuil, la cerise et le chien ne sont pas minuscules,
+  // mais le dire est faux pour une enfant (relecture du juge, #108).
+  assert.ok(TAGS.minuscule.open);
   for (const t of THINGS) for (const tag of open) {
     if (tag === 'main' || tag === 'grand') continue;   // la taille se nie par son contraire
     assert.ok(!never(t, tag), `${t.word} : ${tag} ne devrait jamais être nié`);

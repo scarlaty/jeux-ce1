@@ -81,6 +81,13 @@ export const AFFIRMATIONS_FAUSSES = [
   ['écureuil', 'bonds'], ['chien', 'bonds'], ['raisin', 'acide'], ['serpent', 'foret'],
   ['cheval', 'passagers'], ['chameau', 'passagers'], ['éléphant', 'passagers'], ['œuf', 'epluche'],
   ['moto', 'transporte'], ['vélo', 'transporte'],
+  // Relevé du juge sur #108 : quatre familles revenues avec la règle « exclusif par défaut ».
+  ['oiseau', 'aliment'],                                        // poulet, canard, dinde se mangent
+  ['chocolat', 'boulangerie'], ['bonbon', 'boulangerie'], ['banane', 'boulangerie'],  // boulangerie-pâtisserie
+  ['gâteau', 'vert'],                                           // pistache, glaçage d'anniversaire
+  ['lion', 'blanc'],                                            // les lions blancs des zoos et des albums
+  // « minuscule » est graduel : il est devenu un indice `ouvert`, ces trois phrases ne peuvent plus sortir.
+  ['écureuil', 'minuscule'], ['cerise', 'minuscule'], ['chien', 'minuscule'],
 ];
 
 /** Tous les émojis affichés par une question (choix, éléments à ranger, illustration). */

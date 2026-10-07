@@ -13,8 +13,15 @@
 // JAMAIS, et peut servir d'intrus (« le chien ne miaule pas »). C'est ce qui rend utilisables les indices
 // de signature — sans quoi 71 indices sur 124 ne sortaient jamais, faute d'intrus qui les vérifie.
 // Ajouter un indice oblige donc à relire toute la banque. Les indices trop larges pour cela (sentir bon,
-// être rond, se trouver à la ferme, flotter…) portent un 5ᵉ champ `'ouvert'` : on ne les nie jamais, et
-// ils ne peuvent donc pas servir d'indice.
+// être rond, se trouver à la ferme, flotter, être minuscule…) portent un 5ᵉ champ `'ouvert'` : on ne les
+// nie jamais, et ils ne peuvent donc pas servir d'indice.
+//
+// ET LUI DONNER UN PORTEUR QUI NE PARTAGE PAS SES AUTRES INDICES. Un indice n'est tirable que si une
+// autre chose POURRAIT le vérifier (`maybe` suffit) tout en contredisant à coup sûr un autre indice de la
+// même réponse — sinon aucun intrus ne peut l'accompagner et l'indice est mort-né. C'est pour cela que
+// `lait` (vache + chèvre) et `noyau` (pêche + cerise) ne sortent jamais malgré leurs deux porteurs : ceux-ci
+// partagent tous leurs autres indices. `tests/games/devinettes.test.js` liste les indices morts connus
+// (`INDICES_MORTS`) et échoue dès qu'un indice vivant meurt, ou qu'un mort ressuscite sans être retiré.
 
 /** [id, genre d'indice, phrase de la devinette, phrase qui dit pourquoi une autre ne convient pas, 'ouvert' éventuel] */
 const TAG_ROWS = [
@@ -69,7 +76,7 @@ const TAG_ROWS = [
   ['carapace', 'sign', "J'ai une carapace.", "n'a pas de carapace."],
   ['rayures', 'sign', "J'ai des rayures.", "n'a pas de rayures."],
   ['pedales', 'sign', "J'ai des pédales.", "n'a pas de pédales."],
-  ['minuscule', 'trait', 'Je suis minuscule.', "n'est pas minuscule."],
+  ['minuscule', 'trait', 'Je suis minuscule.', "n'est pas minuscule.", 'ouvert'],  // graduel : une cerise est petite sans être minuscule
   ['epluche', 'trait', "On m'épluche avant de me manger.", "ne s'épluche pas."],
   ['pepins', 'trait', "J'ai des pépins.", "n'a pas de pépins."],
   ['sucre', 'trait', 'Je suis {sucré|sucrée}.', "n'est pas {sucré|sucrée}."],
@@ -120,7 +127,7 @@ const TAG_ROWS = [
   ['mains', 'sign', 'On me met aux mains.', 'ne se met pas aux mains.'],
   ['jambes', 'sign', 'On me met sur les jambes.', 'ne se met pas sur les jambes.'],
   ['froid', 'sign', 'Je protège du froid.', 'ne protège pas du froid.'],
-  ['roi', 'sign', 'Un roi me porte.', "n'est pas {porté|portée} par un roi."],
+  ['roi', 'sign', 'Un roi ou une reine me porte.', "n'est pas {porté|portée} par un roi ou une reine."],
   ['boulangerie', 'sign', "On m'achète à la boulangerie.", "ne s'achète pas à la boulangerie."],
   ['coquille', 'sign', "J'ai une coquille.", "n'a pas de coquille."],
   ['pond', 'sign', 'Une poule me pond.', "n'est pas {pondu|pondue} par une poule."],
@@ -139,7 +146,7 @@ const TAG_ROWS = [
   ['chauffe', 'sign', 'Je chauffe la Terre.', 'ne chauffe pas la Terre.'],
   ['brille_nuit', 'sign', 'Je brille la nuit.', 'ne brille pas la nuit.'],
   ['cheminee', 'sign', "J'ai une cheminée.", "n'a pas de cheminée."],
-  ['rois', 'sign', 'Des rois ont habité chez moi.', "n'a pas été {habité|habitée} par des rois."],
+  ['rois', 'sign', 'Des rois et des reines ont habité chez moi.', "n'a pas été {habité|habitée} par des rois et des reines."],
   ['camping', 'sign', 'On dort dedans en camping.', 'ne sert pas à dormir en camping.'],
   ['noel', 'sign', 'On me décore à Noël.', 'ne se décore pas à Noël.'],
   ['petales', 'sign', "J'ai des pétales.", "n'a pas de pétales."],
@@ -185,13 +192,13 @@ const RAW = [
   ['kangourou', 'un', 'm', '🦘', 'animal poche bonds poils', 'marron gris pattes4 grand aliment'],
   ['chameau', 'un', 'm', '🐫', 'animal pattes4 bosse desert grand poils', 'marron jaune cou galope passagers transporte'],
   ['écureuil', 'un', 'm', '🐿️', 'animal pattes4 noisette queue poils', 'marron orange foret main rayures rouge bonds'],
-  ['oiseau', 'un', 'm', '🐦', 'animal vole ailes plumes bec', 'oiseau bleu noir marron main ferme cou blanc vert minuscule siffle'],
+  ['oiseau', 'un', 'm', '🐦', 'animal vole ailes plumes bec', 'aliment oiseau bleu noir marron main ferme cou blanc vert minuscule siffle'],
   ['hibou', 'un', 'm', '🦉', 'animal oiseau vole ailes plumes bec nuit', 'marron gris cou ferme'],
   ['chenille', 'une', 'f', '🐛', 'animal vert rampe devenir main', 'insecte minuscule poils ferme foret'],
   ['mouche', 'une', 'f', '🪰', 'animal insecte vole ailes main', 'noir gris minuscule ferme foret'],
   ['moustique', 'un', 'm', '🦟', 'animal insecte vole ailes pique main', 'noir gris minuscule ferme foret trompe'],
   // Fruits et légumes
-  ['banane', 'une', 'f', '🍌', 'fruit aliment jaune singes sucre epluche main', 'blanc vert grappe'],
+  ['banane', 'une', 'f', '🍌', 'fruit aliment jaune singes sucre epluche main', 'blanc vert grappe boulangerie'],
   ['pomme', 'une', 'f', '🍎', 'fruit aliment rouge pepins main rond', 'sucre vert epluche jaune acide blanc'],
   ['poire', 'une', 'f', '🍐', 'fruit aliment vert pepins main', 'jaune sucre epluche'],
   ['fraise', 'une', 'f', '🍓', 'fruit aliment rouge grains main', 'sucre pepins rond minuscule'],
@@ -206,11 +213,11 @@ const RAW = [
   // Aliments
   ['pain', 'un', 'm', '🍞', 'aliment boulangerie marron', 'jaune main rond blanc'],
   ['croissant', 'un', 'm', '🥐', 'aliment boulangerie lune main', 'marron jaune sucre orange rond'],
-  ['chocolat', 'du', 'm', '🍫', 'aliment marron sucre main', 'tartine papier'],
+  ['chocolat', 'du', 'm', '🍫', 'aliment marron sucre main', 'tartine papier boulangerie'],
   // Le gâteau est le seul sucré de la boulangerie : sans lui, « boulangerie » ne sortait jamais (#108).
   ['gâteau', 'un', 'm', '🍰', 'aliment boulangerie sucre main', 'marron blanc rose jaune rond'],
   ['œuf', 'un', 'm', '🥚', 'aliment blanc coquille pond main', 'marron rond jaune'],
-  ['bonbon', 'un', 'm', '🍬', 'aliment sucre papier main', 'rose bleu rouge rond'],
+  ['bonbon', 'un', 'm', '🍬', 'aliment sucre papier main', 'rose bleu rouge rond boulangerie'],
   // Vêtements
   ['chapeau', 'un', 'm', '🎩', 'vetement tete noir', 'froid marron main rond jaune rouge orange vert rose gris blanc bleu violet'],
   ['chaussure', 'une', 'f', '👟', 'vetement pieds lacets', 'blanc bleu marron noir rouge main jaune orange vert rose gris violet froid'],
@@ -244,6 +251,10 @@ const RAW = [
   ['coccinelle', 'une', 'f', '🐞', 'animal insecte vole ailes rouge noir main minuscule', 'carapace'],
   ['canard', 'un', 'm', '🦆', 'animal oiseau vole ailes plumes bec', 'nage flotte jaune blanc marron vert noir ferme aliment cou'],
   // Le seul oiseau qui ne vole pas : sans lui, « oiseau », « plumes » et « bec » ne sortaient jamais (#108).
+  // Choix assumé : en zoologie, 🐧 dessine un MANCHOT — le pingouin, lui, vole, et on lui fait pourtant
+  // dire « Je ne peux pas voler. » L'usage courant et les albums jeunesse appellent cette image
+  // « pingouin », et c'est le mot de l'enfant : la nommer « manchot » la dérouterait davantage.
+  // À reprendre le jour où le jeu voudra enseigner la distinction.
   ['pingouin', 'un', 'm', '🐧', 'animal oiseau plumes bec noir blanc', 'nage flotte cou grand'],
   ['dauphin', 'un', 'm', '🐬', 'animal nage gris', 'bleu aileron grand flotte bonds'],
   ['baleine', 'une', 'f', '🐳', 'animal nage grand bleu', 'gris flotte blanc aileron'],
@@ -294,7 +305,7 @@ export const CONFUSABLE = [
   ['banane', 'citron'], ['fleur', 'soleil'],
   ['cheval', 'zèbre'], ['girafe', 'chameau'], ['dauphin', 'requin'], ['dauphin', 'baleine'], ['baleine', 'poisson'],
   ['crocodile', 'serpent'], ['tortue', 'escargot'], ['coccinelle', 'fourmi'], ['coccinelle', 'abeille'], ['canard', 'oiseau'],
-  ['cerise', 'fraise'], ['cerise', 'pomme'], ['kiwi', 'concombre'], ['brocoli', 'sapin'], ['bus', 'camion'], ['bus', 'voiture'],
+  ['cerise', 'fraise'], ['gâteau', 'fraise'], ['cerise', 'pomme'], ['kiwi', 'concombre'], ['brocoli', 'sapin'], ['bus', 'camion'], ['bus', 'voiture'],
   ['moto', 'vélo'], ['hélicoptère', 'avion'], ['casquette', 'chapeau'], ['t-shirt', 'manteau'], ['pastèque', 'fraise'],
   ['bateau', 'poisson'], ['ananas', 'banane'], ['crocodile', 'requin'],
 ];
@@ -376,7 +387,7 @@ const NEVER_COLOURS = {
   coccinelle: 'bleu rose violet vert gris', fourmi: 'bleu rose violet vert', panda: 'bleu rose violet rouge orange jaune vert marron gris',
   baleine: 'rouge rose violet orange jaune vert marron', dauphin: 'rouge rose violet orange jaune vert marron noir',
   requin: 'rose violet rouge orange jaune vert marron', loup: 'bleu rose violet rouge orange jaune vert',
-  lion: 'bleu rose violet rouge vert noir blanc gris', cochon: 'bleu violet rouge orange jaune vert gris',
+  lion: 'bleu rose violet rouge vert noir gris', cochon: 'bleu violet rouge orange jaune vert gris',
   mouton: 'bleu rose violet rouge orange vert jaune', lapin: 'bleu rose violet rouge orange vert jaune',
   chèvre: 'bleu rose violet rouge orange vert jaune', hibou: 'bleu rose violet rouge orange jaune vert',
   ours: 'bleu rose violet rouge orange jaune vert', chat: 'bleu rose violet rouge vert',
@@ -387,7 +398,7 @@ const NEVER_COLOURS = {
   feu: 'rose violet', chocolat: 'bleu rose violet rouge orange vert gris jaune',
   pain: 'bleu rose violet rouge vert gris noir', croissant: 'bleu rose violet rouge vert gris noir',
   œuf: 'bleu rose violet rouge vert gris noir orange', sapin: 'bleu rose violet rouge orange gris',
-  pingouin: 'bleu rose violet rouge vert marron', gâteau: 'bleu violet vert gris noir',
+  pingouin: 'bleu rose violet rouge vert marron', gâteau: 'bleu violet gris noir',
 };
 const NEVER = new Map(Object.entries(NEVER_COLOURS).map(([w, s]) => [w.replace(/_/g, ' '), new Set(s.split(' '))]));
 /** Sa couleur est connue sans doute possible (pas un bonbon, un poisson ou un oiseau multicolores). */
