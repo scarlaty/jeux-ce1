@@ -1,4 +1,4 @@
-# Suivi du projet — point d'étape du 06/10/2026, 21 h
+# Suivi du projet — point d'étape du 07/10/2026
 
 Document de reprise. Le backlog fait foi : issues + jalons du dépôt et le tableau
 https://github.com/users/scarlaty/projects/1.
@@ -49,6 +49,12 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
+| Claude (session scarlaty) | #97 + #106 Devinettes (niveau trop faible, « un ail », émojis) | `feat/97-106-devinettes` |
+| Claude (session scarlaty) | #105 points / étoiles confondus, compagnon qui grandit en rejouant | `feat/105-points-etoiles` |
+
+Ensuite, sur demande de l'utilisateur (« traite les bugs ») : #87 (tables, défilement), #102 / #103 (contraste, carte).
+**Règle du 07/10 : aucun nouveau ticket (jeu ou amélioration) sans l'accord de l'utilisateur.**
+Règle « Mixité » (CLAUDE.md) : textes épicènes, personnages variés — le jeu est pour filles et garçons.
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
