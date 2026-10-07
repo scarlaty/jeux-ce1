@@ -433,6 +433,10 @@
 .stage {
   position: relative;
   display: grid;
+  /* Une seule colonne qui ne dépasse jamais la page : sans `minmax(0, 1fr)`, la colonne « auto »
+     prenait la largeur minimale de ses réponses (deux choix de 185 px, calculs compris) et
+     débordait de la page sur téléphone (#87). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
 }
