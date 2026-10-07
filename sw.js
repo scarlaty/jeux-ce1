@@ -95,6 +95,7 @@ const PRECACHE = [
   /* Écrans et jeux : chargés paresseusement par le navigateur, donc jamais demandés tant que
      l'enfant n'a pas ouvert l'écran. On les pré-cache tous (fichiers de quelques kilo-octets,
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
+  'js/data/besoins-vivant.js',
   'js/data/devinettes.js',
   'js/data/mots-illustres.js',
   'js/data/anglais.js',
@@ -115,6 +116,7 @@ const PRECACHE = [
   'js/screens/welcome.js',
 
   'js/games/registry.js',
+  'js/games/besoins-vivant.js',
   'js/games/calcul-mental.js',
   'js/games/cdu.js',
   'js/games/colors-numbers.js',

@@ -111,6 +111,13 @@ export const GAMES = [
     subject: 'anglais',
     load: () => import('./colors-numbers.js'),
   },
+  {
+    id: 'besoins-vivant',
+    title: 'Besoins du vivant',
+    island: 'monde',
+    subject: 'monde',
+    load: () => import('./besoins-vivant.js'),
+  },
 ];
 
 export function getIsland(id) {
