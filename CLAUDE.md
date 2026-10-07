@@ -274,6 +274,13 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
   `speak(texte, { lang })`, `canSpeak()`. En français, les signes de calcul entourés d'espaces sont lus
   avec des mots (`speakableText` : « 15 − 8 = ? » → « 15 moins 8 égale combien ? »). Couper le son coupe les effets ; la voix ne parle que sur un
   appui volontaire sur « écouter » et reste donc disponible. Sans synthèse vocale, pas de bouton « écouter ».
+  `hasVoice(lang)` dit si une voix existe pour la langue. **Questions d'anglais à l'écoute** : `lang: 'en-GB'`, `speak` (le texte
+  anglais), `listenOnly: true` et `listenLabel` (nom du bouton) ; sans voix anglaise (ou sans synthèse), `play.js` écrit
+  « Pas de voix anglaise sur cet appareil. Lis : … » avec le texte de `speak`, et la question reste jouable. Après une erreur,
+  un bouton « Réécouter en anglais » s'ajoute (la voix française lirait mal le mot). Un mot à lire (et non à deviner) se met
+  dans `display.show = { text, lang: 'en-GB', speak }`. Un choix dessiné peut porter `label` : la correction l'écrit près du dessin.
+  Dessin `colored` (`{ kind: 'colored', shape: 'swatch' | 'apple' | 'balloon' | 'star' | 'flower', color, count? }`, 11 couleurs,
+  tokens `--swatch-*` identiques en clair et sombre) ; banque `js/data/anglais.js` (couleurs, nombres 1-20 et dizaines, accords français).
 
 Exigences par jeu (critères des issues) : 3 niveaux progressifs, **au moins 30 questions distinctes
 par niveau** (générées ou en banque), correction expliquée, jouable au doigt et à la souris,

@@ -643,6 +643,8 @@
   .stage--with-show:is(.stage--choice, .stage--keypad) .feedback { grid-column: 1 / -1; }
   .stage--with-show:is(.stage--choice, .stage--keypad) .show { min-height: 240px; align-self: center; }
   .stage--with-show.stage--choice .choices:not(.choices--images) { grid-template-columns: 1fr; max-width: 380px; }
+  .stage--with-show.stage--choice .choices:has(.art--swatch) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 380px; }
+  .stage--with-show.stage--choice .choices:has(.art--objects) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
   /* Un calcul a besoin de largeur : le pavé (330 px au plus) lui laisse le reste. */
   .stage--with-show.stage--keypad:has(.math) { grid-template-columns: minmax(0, 1fr) 340px; }
 }
