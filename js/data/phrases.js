@@ -133,11 +133,11 @@ export const CONTEXTS = [
   ...ctx('?', [
     ['Léa demande à sa maman si elle peut jouer.', 'Je peux jouer dehors'],
     ['Tom veut savoir si son ami vient.', 'Tu viens avec nous'],
-    ['Mia demande à son frère s'il a vu son sac.', 'Tu as vu mon sac'],
+    ['Mia demande à son frère s\'il a vu son sac.', 'Tu as vu mon sac'],
     ['Papa veut savoir si Léa a faim.', 'Tu as faim'],
     ['Emma demande à la maîtresse si elle peut sortir.', 'Je peux aller aux toilettes'],
     ['Lucas demande à un ami s\'il a fini.', 'Tu as terminé ton dessin'],
-    ['Un enfant demande si c\'est l\'heure de partir.', 'C\'est déjà l\'heure'],
+    ['Un enfant demande si c\'est l\'heure de partir.', 'C\'est l\'heure de partir'],
     ['Mamie veut savoir si le gâteau est bon.', 'Le gâteau est bon'],
     ['Léa demande à Tom s\'il a un chat.', 'Tu as un chat'],
     ['Maman veut savoir si les enfants ont lavé leurs mains.', 'Vous avez lavé vos mains'],
@@ -147,15 +147,15 @@ export const CONTEXTS = [
   ...ctx('!', [
     ['Léa voit un énorme gâteau et s\'écrie.', 'C\'est un énorme gâteau'],
     ['Tom est très content : il a gagné et crie de joie.', 'J\'ai gagné'],
-    ['Mia est très surprise de voir un gros chien.', 'Il est énorme'],
+    ['Mia s\'écrie en voyant un gros chien.', 'Il est énorme'],
     ['Léa frissonne et s\'écrie.', 'Il fait froid'],
     ['Emma voit un arc-en-ciel et s\'écrie.', 'C\'est magnifique'],
     ['Papa goûte le gâteau et dit sa joie.', 'Il est délicieux'],
-    ['Tom s'écrie, tout content, en voyant la neige.', 'Il neige'],
+    ['Tom s\'écrie, tout content, en voyant la neige.', 'Il neige'],
     ['Mamie est très heureuse de voir ses petits-enfants.', 'Vous êtes là'],
     ['Tom a très peur d\'une grosse araignée et crie.', 'Elle est énorme'],
     ['Emma est très contente de son cadeau.', 'Il est magnifique'],
-    ['Lucas est très étonné de voir un énorme poisson.', 'Il est gigantesque'],
+    ['Lucas s\'écrie en voyant un énorme poisson.', 'Il est gigantesque'],
   ]),
 ];
 
