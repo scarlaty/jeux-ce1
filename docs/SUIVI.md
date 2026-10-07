@@ -77,6 +77,8 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 - Polices hébergées dans `fonts/` ; « son coupé » = bruitages seulement, la voix reste sur demande.
 - Calcul mental : la moitié s'affiche « la moitié de 46 = ? » (fait le 06/10, `VERSION` v4).
+- Compagnon (07/10) : l'ourson se débloque à 30 étoiles ; après l'adoption, pas de retour au chat ni au lapin.
+- Devinettes (07/10) : fusion de #97/#106 malgré un niveau 2 répétitif (baleine 30 %) — justesse avant variété ; suite dans #108. Compte rendu complet sur #97.
 - Univers kawaii validé (mascottes Perle, Cubi, Étincelle, Pépin, Nuagette ; compagnon œuf → grand).
 
 ## Ce que le socle offre maintenant (à réutiliser, pas à réécrire)
