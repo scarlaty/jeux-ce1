@@ -1,7 +1,8 @@
 // Lecture éclair (E3-T5) : fluence de lecture de mots fréquents.
 //  Niveau 1 : un mot court (script) -> toucher la bonne image parmi 3 images aux mots voisins.
 //  Niveau 2 : un mot (cursive ou script) -> image parmi 4 ; ou « Touche le mot que tu entends » (3 mots proches).
-//  Niveau 3 : mots-outils : la voix lit, on touche le mot écrit parmi 4 mots proches.
+//  Niveau 3 : mots-outils : le mot apparaît en flash (~1 s) puis disparaît (bouton « Revoir »),
+//  on touche le mot écrit parmi 4 mots proches (display.show.flash, voir CLAUDE.md).
 // Sécurité : jamais deux bonnes réponses (pas d'homophones quand la voix lit, pas deux images
 // pour un même mot, pas deux mêmes émojis). Aucun chrono : la voix peut être réécoutée à volonté.
 import { SYLLABLE_WORDS, isTransparent } from '../data/syllabes.js';
@@ -49,6 +50,23 @@ export const POOLS = {
   3: prepare(OUTILS, [...OUTILS, ...WITH_IMAGE.map((w) => ({ word: w.word, text: w.word }))], 3, (t, w) => w.text !== t.text),
 };
 
+const FLASH_MS = 1200;
+
+function flashQuestion({ entry, others }, rng) {
+  const wrong = rng.sample(others, 3);
+  const choices = rng.shuffle([entry, ...wrong]).map((w) => ({ value: w.word, text: w.text }));
+  return {
+    key: `lecture-eclair:flash:${entry.word}`,
+    type: 'choice',
+    prompt: 'Regarde bien : le mot va disparaître. Touche le mot que tu as vu.',
+    speak: 'Regarde bien : le mot va disparaître. Touche le mot que tu as vu.',
+    display: { show: { text: entry.text, flash: FLASH_MS }, choices },
+    answer: entry.word,
+    explain: `Le mot était « ${entry.text} » : ${spell(entry.text)}. Appuie sur « Revoir » pour le relire autant que tu veux.`,
+    skill: 'mots-outils fréquents',
+  };
+}
+
 const quote = (w) => `« ${w} »`;
 const spell = (w) => [...w].filter((c) => c !== ' ').join('-');
 
@@ -71,9 +89,9 @@ function pictureQuestion({ entry, others }, level, rng) {
 function hearQuestion({ entry, others }, level, rng) {
   const wrong = [];
   for (const w of rng.shuffle(others)) {
-    if (wrong.length < (level === 2 ? 2 : 3) && !wrong.some((x) => sameSound(x.word, w.word))) wrong.push(w);
+    if (wrong.length < 2 && !wrong.some((x) => sameSound(x.word, w.word))) wrong.push(w);
   }
-  if (wrong.length < (level === 2 ? 2 : 3)) return hearQuestion(rng.pick(POOLS[level === 2 ? 'hear2' : 3]), level, rng);
+  if (wrong.length < 2) return hearQuestion(rng.pick(POOLS.hear2), level, rng);
   const text = (w) => w.text || w.word;
   const choices = rng.shuffle([entry, ...wrong]).map((w) => ({ value: w.word, text: text(w) }));
   return {
@@ -84,7 +102,7 @@ function hearQuestion({ entry, others }, level, rng) {
     display: { show: { emoji: '🔊', label: 'Écoute', speak: text(entry) }, choices, cursive: level === 2 },
     answer: entry.word,
     explain: `Tu as entendu ${quote(text(entry))} : ${spell(text(entry))}. Regarde bien toutes les lettres du mot.`,
-    skill: level === 3 ? 'mots-outils fréquents' : 'lire des mots fréquents',
+    skill: 'lire des mots fréquents',
   };
 }
 
@@ -93,7 +111,7 @@ const PICK = {
   2: (rng) => (rng.chance()
     ? pictureQuestion(rng.pick(POOLS[2]), 2, rng)
     : hearQuestion(rng.pick(POOLS.hear2), 2, rng)),
-  3: (rng) => hearQuestion(rng.pick(POOLS[3]), 3, rng),
+  3: (rng) => flashQuestion(rng.pick(POOLS[3]), rng),
 };
 
 export default {
@@ -106,7 +124,7 @@ export default {
   levels: [
     { label: 'Niveau 1', hint: 'Un mot court, trois images' },
     { label: 'Niveau 2', hint: 'Mots en cursive, mots à écouter' },
-    { label: 'Niveau 3', hint: 'Petits mots du quotidien' },
+    { label: 'Niveau 3', hint: 'Le mot disparaît vite !' },
   ],
   makeQuestion(level, rng, seen) {
     for (let i = 0; i < 12; i++) {

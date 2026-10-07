@@ -101,5 +101,8 @@ export function validateQuestion(q, { checks: extra = {} } = {}) {
   const show = q.display?.show;
   if (show && !shows(show)) errors.push('display.show vide');
   if (show) checkArt([show], errors);
+  if (show && show.flash !== undefined && !(Number.isFinite(show.flash) && show.flash >= 300 && show.flash <= 5000)) {
+    errors.push('display.show.flash : durée en ms entre 300 et 5000');
+  }
   return errors;
 }

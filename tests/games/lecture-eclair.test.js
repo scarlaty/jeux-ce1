@@ -31,7 +31,12 @@ test('niveaux : nombre de choix et forme', () => {
   assert.ok(byLevel[1].every((q) => q.display.choices.length === 3 && !q.display.show.cursive));
   assert.ok(byLevel[2].every((q) => q.display.choices.length === (q.display.show.speak ? 3 : 4)));
   assert.ok(byLevel[2].some((q) => q.display.show.cursive) && byLevel[2].some((q) => q.display.show.speak));
-  assert.ok(byLevel[3].every((q) => q.display.choices.length === 4 && q.display.show.speak));
+  assert.ok(byLevel[3].every((q) => q.display.choices.length === 4 && q.display.show.flash === 1200 && !q.display.show.speak));
+  for (const q of byLevel[3]) {
+    const texts = q.display.choices.map((c) => c.text);
+    assert.equal(new Set(texts).size, 4, q.key);
+    assert.ok(q.display.choices.some((c) => c.value === q.answer && c.text === q.display.show.text), q.key);
+  }
 });
 
 test('mots fréquents : sans doublon, minuscules, assez nombreux', () => {
