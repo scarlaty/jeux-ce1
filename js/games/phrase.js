@@ -36,8 +36,8 @@ const SIGN_RULE = {
 
 const SIGN_CHOICES = [
   { value: '.', text: 'Un point ( . )' },
-  { value: '?', text: 'Un point d\'interrogation ( ? )' },
-  { value: '!', text: 'Un point d\'exclamation ( ! )' },
+  { value: '?', text: 'Une question ( ? )' },
+  { value: '!', text: 'Une exclamation ( ! )' },
 ];
 
 // --- « Est-ce une phrase ? » ---------------------------------------------------------------------------
