@@ -58,4 +58,97 @@ export function checkGenerator(game, { draws = 500, minDistinct = 30, checks } =
   return byLevel;
 }
 
+/**
+ * Émojis écartés après vérification à l'écran : une enfant de 7 ans hésite à les nommer (issues #93, #106).
+ * Une fois jugé illisible, un émoji ne revient dans AUCUN jeu. Comparés sans le sélecteur de variante U+FE0F.
+ */
+export const EMOJIS_ECARTES = ['🌬️', '⚖️', '💐', '🐔', '🧄', '🧈', '🍈'];
+const bare = (e) => String(e).replace(/️/g, '');
+
+/**
+ * Affirmations fausses dans le monde réel, relevées par le juge pédagogie sur les devinettes (#97/#106) :
+ * [chose, propriété] = on ne doit jamais dire « la chose n'est pas <propriété> » ni l'utiliser comme intrus
+ * de cette propriété. Les choses multicolores le sont pour TOUTES les couleurs.
+ */
+const COULEURS = ['jaune', 'rouge', 'orange', 'vert', 'rose', 'marron', 'gris', 'blanc', 'noir', 'bleu', 'violet'];
+export const AFFIRMATIONS_FAUSSES = [
+  ['ours', 'blanc'], ['ours', 'gris'], ['chocolat', 'blanc'], ['chocolat', 'noir'],
+  ...['bonbon', 'cuillère', 'chapeau', 'poisson', 'oiseau', 'serpent', 'couronne', 'ballon', 'chaussette', 'gant'].flatMap(
+    (w) => COULEURS.map((c) => [w, c])),
+  ['cerise', 'noir'], ['requin', 'blanc'], ['raisin', 'blanc'], ['raisin', 'noir'], ['mouton', 'noir'], ['lapin', 'noir'],
+  ['chèvre', 'noir'], ['cochon', 'blanc'], ['cochon', 'noir'], ['cochon', 'marron'], ['hibou', 'blanc'], ['feu', 'vert'],
+  ['avion', 'roues'], ['coccinelle', 'rond'], ['panda', 'rond'], ['abeille', 'rond'], ['kiwi', 'poils'], ['pêche', 'poils'],
+  ['écureuil', 'bonds'], ['chien', 'bonds'], ['raisin', 'acide'], ['serpent', 'foret'],
+  ['cheval', 'passagers'], ['chameau', 'passagers'], ['éléphant', 'passagers'], ['œuf', 'epluche'],
+  ['moto', 'transporte'], ['vélo', 'transporte'],
+];
+
+/** Tous les émojis affichés par une question (choix, éléments à ranger, illustration). */
+function emojisOf(q) {
+  const d = q.display || {};
+  const items = [...(d.choices || []), ...(d.items || []), ...(d.targets || [])];
+  return [d.show && d.show.emoji, ...items.map((i) => i && i.emoji)].filter(Boolean);
+}
+
+/** Aucune question ne montre un émoji écarté. */
+export function checkEmojis(questions, banned = EMOJIS_ECARTES) {
+  const out = new Set(banned.map(bare));
+  for (const q of questions) {
+    for (const e of emojisOf(q)) assert.ok(!out.has(bare(e)), `émoji écarté ${e} dans ${q.key}`);
+  }
+}
+
+/**
+ * Mesure la NÉCESSITÉ des indices d'une devinette (issue #97) : le générateur vérifie qu'une seule chose
+ * satisfait tous les indices, jamais qu'il les faille tous. Pour chaque question :
+ *  - `constraintsOf(q)` : la liste des indices ; `choicesOf(q)` : les choix affichés ;
+ *  - `couldHold(choice, indice)` : le choix PEUT-IL vérifier l'indice (au sens large : doute = oui) ;
+ *  - `isAnswer(choice, q)`.
+ * Renvoie des parts (0 à 1) : `single` (un seul indice suffit à désigner la réponse parmi les choix),
+ * `eachSuffices` (chaque indice suffit séparément), `dispensable` (au moins un indice peut être retiré sans
+ * rendre la réponse ambiguë), `lureNoShare` (intrus ne vérifiant AUCUN indice) et `lureMissesOne`
+ * (intrus qui vérifient tous les indices sauf un).
+ */
+export function measureClues(questions, { constraintsOf, choicesOf, couldHold, isAnswer }) {
+  const n = { single: 0, each: 0, dispensable: 0, lures: 0, noShare: 0, missOne: 0 };
+  for (const q of questions) {
+    const cons = constraintsOf(q);
+    const lures = choicesOf(q).filter((c) => !isAnswer(c, q));
+    const solvedBy = (subset) => !lures.some((l) => subset.every((c) => couldHold(l, c)));
+    const alone = cons.map((c) => solvedBy([c]));
+    if (alone.some(Boolean)) n.single++;
+    if (alone.every(Boolean)) n.each++;
+    if (cons.some((c) => solvedBy(cons.filter((o) => o !== c)))) n.dispensable++;
+    for (const l of lures) {
+      n.lures++;
+      const ok = cons.filter((c) => couldHold(l, c)).length;
+      if (ok === 0) n.noShare++;
+      if (ok === cons.length - 1) n.missOne++;
+    }
+  }
+  const part = (k, d) => (d ? k / d : 0);
+  return {
+    total: questions.length,
+    single: part(n.single, questions.length),
+    eachSuffices: part(n.each, questions.length),
+    dispensable: part(n.dispensable, questions.length),
+    lureNoShare: part(n.noShare, n.lures),
+    lureMissesOne: part(n.missOne, n.lures),
+  };
+}
+
+/** Seuils de la grille du juge pédagogie (docs/juges/pedagogie.md, §2) ; `maxDispensable` à 0 pour « tous nécessaires ». */
+export function checkCluesNeeded(questions, accessors, {
+  maxSingle = 0.5, maxEachSuffices = 0.25, maxLureNoShare = 0.2, maxDispensable = 1, minLureMissesOne = 0,
+} = {}) {
+  const m = measureClues(questions, accessors);
+  const info = JSON.stringify(m);
+  assert.ok(m.single <= maxSingle, `un seul indice suffit trop souvent : ${info}`);
+  assert.ok(m.eachSuffices <= maxEachSuffices, `chaque indice suffit séparément trop souvent : ${info}`);
+  assert.ok(m.lureNoShare <= maxLureNoShare, `intrus sans aucun indice commun : ${info}`);
+  assert.ok(m.dispensable <= maxDispensable, `un indice est superflu : ${info}`);
+  assert.ok(m.lureMissesOne >= minLureMissesOne, `intrus trop éloignés des indices : ${info}`);
+  return m;
+}
+
 export { checkNoLengthShortcut, checkNoPromptEcho } from './shortcut-checks.js';
