@@ -3,294 +3,359 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Maquette — carte au trésor et zoom sur une île</title>
+<title>Maquette — carte au trésor en perspective</title>
 <!-- Maquette de discussion pour l'issue #96.
-     Deux niveaux : l'archipel, puis le ZOOM dans une île où chaque jeu est un LIEU du décor.
-     Elle réutilise les vrais tokens du projet (couleurs et polices exactes, clair et sombre).
-     Rien ici n'est du code de production : c'est la direction artistique qu'on valide. -->
+     Deux vues : l'archipel, puis le ZOOM DANS une île où chaque jeu est un LIEU du décor.
+     Direction artistique : vue 3/4, îles à falaise posées sur l'eau, volumes à trois tons
+     (dessus clair / flanc moyen / ombre), lumière constante en haut à gauche.
+     Vraies couleurs et vraies polices du projet. Rien ici n'est du code de production. -->
 <link rel="stylesheet" href="../css/fonts.css">
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="../css/base.css">
 <style>
   body { margin: 0; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: var(--space-4) var(--gutter) var(--space-7); }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: var(--space-4) var(--gutter) var(--space-7); }
   .note { color: var(--ink-soft); font-size: var(--text-s); text-align: center; margin: 0 0 var(--space-3); }
   .bar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); min-height: 56px; }
-  .bar h1 { margin: 0; font-size: var(--text-xl); color: var(--island-ink, var(--ink)); }
+  .bar h1 { margin: 0; font-size: var(--text-xl); color: var(--ink); }
   .back { display: none; align-items: center; gap: var(--space-2); min-height: 56px; padding: 0 var(--space-4);
           font-family: var(--font-title); font-weight: 600; font-size: 1.1rem; color: var(--ink);
           background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-round);
           box-shadow: 0 3px 0 var(--border); cursor: pointer; }
   body[data-view="isle"] .back { display: inline-flex; }
-
   svg.scene { display: block; width: 100%; height: auto; border-radius: var(--radius-l);
               border: 2px solid var(--rule-strong); }
   body[data-view="world"] #isle, body[data-view="isle"] #world { display: none; }
 
-  /* --- Mer, ciel, terre : des aplats superposés donnent la profondeur, sans dégradé --- */
-  .sea-deep   { fill: var(--kawaii-ciel-deep); }
-  .sea-mid    { fill: var(--kawaii-ciel); }
-  .surf       { fill: none; stroke: var(--surface-raised); stroke-width: 2.2; stroke-linecap: round; opacity: .85; }
-  .sand       { fill: var(--kawaii-creme); }
-  .sand-edge  { fill: var(--kawaii-creme-deep); }
-  .grass      { fill: var(--kawaii-menthe); }
-  .grass-dark { fill: var(--kawaii-menthe-deep); opacity: .45; }
-  .rock       { fill: var(--kawaii-lavande); }
-  .rock-dark  { fill: var(--kawaii-lavande-deep); opacity: .5; }
-  .shadow     { fill: var(--kawaii-shadow); }
-  .cloud      { fill: var(--surface-raised); opacity: .9; }
-  .bird       { fill: none; stroke: var(--ink-soft); stroke-width: 1.1; stroke-linecap: round; }
-  .trunk      { fill: var(--kawaii-peche-deep); }
-  .leaf       { fill: var(--kawaii-menthe-deep); }
-  .leaf-light { fill: var(--kawaii-menthe); }
-  .path       { fill: none; stroke: var(--kawaii-creme-deep); stroke-width: 3.4;
-                stroke-linecap: round; stroke-dasharray: 0.1 6; }
+  /* ---- Eau : trois profondeurs, du large vers les hauts-fonds ---- */
+  .w-far  { fill: var(--kawaii-ciel-deep); }
+  .w-mid  { fill: var(--kawaii-ciel); }
+  .w-near { fill: var(--surface-raised); opacity: .5; }
+  .foam   { fill: none; stroke: var(--surface-raised); stroke-width: 2.4; stroke-linecap: round; opacity: .9; }
+  /* Ondes autour d'une île : des traits fins, sinon ce sont des cerceaux. */
+  .ripple { fill: none; stroke: var(--surface-raised); stroke-width: .9; }
 
-  /* --- Les lieux : un jeu = un endroit qu'on peut toucher --- */
-  .spot { cursor: pointer; }
-  .spot:focus { outline: none; }
-  .spot:focus .halo, .spot:hover .halo { opacity: 1; }
-  .halo { fill: none; stroke: var(--surface-raised); stroke-width: 3; opacity: 0; }
-  .spot-label { font-family: var(--font-title); font-weight: 600; font-size: 4.4px; fill: var(--ink); }
-  .spot-stars { font-size: 4px; fill: var(--ink-soft); font-family: var(--font-text); }
-  .plaque { fill: var(--surface-raised); stroke: var(--border); stroke-width: .7; }
+  /* ---- Volumes : dessus clair, flanc moyen, ombre. Lumière en haut à gauche. ---- */
+  .top-grass  { fill: var(--kawaii-menthe); }
+  .top-grass2 { fill: var(--kawaii-menthe-deep); opacity: .38; }
+  .side-rock  { fill: var(--kawaii-creme-deep); }
+  .under-rock { fill: var(--kawaii-lavande-deep); opacity: .85; }
+  .sand-top   { fill: var(--kawaii-creme); }
+  .cast       { fill: var(--kawaii-shadow); }
+
+  .trunk { fill: var(--kawaii-peche-deep); }
+  .leaf-dark { fill: var(--kawaii-menthe-deep); }
+  .leaf-lit  { fill: var(--kawaii-menthe); }
+
+  .wall-lit  { fill: var(--kawaii-creme); }
+  .wall-dim  { fill: var(--kawaii-creme-deep); }
+  .roof-lit  { fill: var(--island, var(--island-mots)); }
+  .roof-dim  { fill: var(--island-ink, var(--island-mots-ink)); opacity: .85; }
+
+  .path-base { fill: none; stroke: var(--kawaii-creme-deep); stroke-width: 7; stroke-linecap: round; opacity: .5; }
+  .path-top  { fill: none; stroke: var(--kawaii-creme); stroke-width: 4.4; stroke-linecap: round;
+               stroke-dasharray: .1 7; }
+
+  /* ---- Lieux et îles cliquables ---- */
+  .spot, .isle-hit { cursor: pointer; }
+  .spot:focus, .isle-hit:focus { outline: none; }
+  .halo { fill: none; stroke: var(--surface-raised); stroke-width: 3.4; opacity: 0; }
+  .spot:hover .halo, .spot:focus .halo, .isle-hit:hover .halo, .isle-hit:focus .halo { opacity: .95; }
+
+  .plaque      { fill: var(--surface-raised); stroke: var(--border); stroke-width: .8; }
+  .plaque-shadow { fill: var(--kawaii-shadow); }
+  .spot-label  { font-family: var(--font-title); font-weight: 600; font-size: 4.6px; fill: var(--ink); }
+  .spot-stars  { font-size: 4px; fill: var(--ink-soft); font-family: var(--font-text); }
   .locked .plaque { fill: var(--surface-sunk); }
   .locked .spot-label { fill: var(--ink-faint); }
 
-  .isle-name  { font-family: var(--font-title); font-weight: 600; font-size: 6px; }
-  .isle-meta  { font-family: var(--font-text); font-size: 4px; fill: var(--ink-soft); }
-  .isle-hit   { cursor: pointer; }
-  .isle-hit:hover .isle-halo, .isle-hit:focus .isle-halo { opacity: .9; }
-  .isle-halo  { fill: none; stroke: var(--surface-raised); stroke-width: 3; opacity: 0; }
-  .fog        { fill: var(--surface-sunk); opacity: .72; }
-  .fog-edge   { fill: none; stroke: var(--border); stroke-width: 1.4; stroke-dasharray: 3 3; }
+  .isle-name { font-family: var(--font-title); font-weight: 600; font-size: 6.4px; }
+  .isle-meta { font-family: var(--font-text); font-size: 4.2px; fill: var(--ink-soft); }
+  /* Brume : les îles lointaines sont plus pâles — c'est ce qui crée la distance. */
+  .hazed { opacity: .5; }
 </style>
 </head>
 <body data-view="world">
 <div class="wrap">
-  <p class="note">Maquette de discussion — vraies couleurs et vraies polices du projet. Touche une île, puis un lieu.</p>
+  <p class="note">Maquette — vue 3/4, volumes à trois tons. Touche une île, puis un lieu.</p>
 
   <div class="bar">
-    <button class="back" type="button" onclick="document.body.dataset.view='world'">← La carte</button>
+    <button class="back" type="button" onclick="toWorld()">← La carte</button>
     <h1 id="title">Choisis une île</h1>
   </div>
 
-  <!-- ====================== NIVEAU 1 : L'ARCHIPEL ====================== -->
-  <svg id="world" class="scene" viewBox="0 0 200 118" role="img" aria-labelledby="wt wd">
+  <!-- ========================= L'ARCHIPEL ========================= -->
+  <svg id="world" class="scene" viewBox="0 0 220 130" role="img" aria-labelledby="wt wd">
     <title id="wt">Carte de l'archipel</title>
-    <desc id="wd">Cinq îles posées sur la mer. L'île aux Mots et l'île aux Nombres sont ouvertes ;
-      l'île des Mesures, l'île du Monde et l'île d'Ailleurs sont encore dans la brume.</desc>
+    <desc id="wd">Cinq îles à falaise posées sur la mer, vues de trois quarts. L'île aux Mots et
+      l'île aux Nombres sont ouvertes ; les trois autres sont plus loin, dans la brume.</desc>
 
-    <rect class="sea-deep" x="0" y="0" width="200" height="118"/>
-    <!-- Hauts-fonds : la mer s'éclaircit autour des terres. -->
-    <ellipse class="sea-mid" cx="46" cy="72" rx="36" ry="24"/>
-    <ellipse class="sea-mid" cx="128" cy="40" rx="34" ry="22"/>
-    <ellipse class="sea-mid" cx="168" cy="86" rx="26" ry="17"/>
-    <ellipse class="sea-mid" cx="96" cy="98" rx="24" ry="14"/>
-    <ellipse class="sea-mid" cx="44" cy="22" rx="24" ry="14"/>
+    <defs>
+      <!-- Un arbre : boule éclairée à gauche, flanc sombre à droite, ombre au sol. -->
+      <g id="tree">
+        <ellipse class="cast" cx="0" cy="1" rx="4.6" ry="1.5"/>
+        <rect class="trunk" x="-1" y="-5" width="2" height="6" rx="1"/>
+        <circle class="leaf-dark" cx="0" cy="-7.5" r="5"/>
+        <circle class="leaf-lit" cx="-1.6" cy="-8.8" r="3.2"/>
+      </g>
+    </defs>
 
-    <path class="surf" d="M14 60q6-4 12 0t12 0" opacity=".5"/>
-    <path class="surf" d="M160 24q6-4 12 0t12 0" opacity=".5"/>
-    <path class="surf" d="M22 104q6-4 12 0t12 0" opacity=".5"/>
-    <g class="bird"><path d="M62 16q3-3 6 0"/><path d="M68 16q3-3 6 0"/></g>
-    <g class="bird"><path d="M150 100q3-3 6 0"/></g>
-    <ellipse class="cloud" cx="98" cy="16" rx="13" ry="5"/>
-    <ellipse class="cloud" cx="106" cy="14" rx="9" ry="6"/>
-    <ellipse class="cloud" cx="178" cy="54" rx="11" ry="4.5"/>
+    <rect class="w-far" x="0" y="0" width="220" height="130"/>
+    <!-- L'eau s'éclaircit vers nous, en nappes aux bords souples : aucune ligne droite,
+         sinon on voit le procédé au lieu de voir la mer. -->
+    <path class="w-mid" d="M0 52q40-14 78-6t72 10 70-10v84H0Z" opacity=".55"/>
+    <path class="w-near" d="M0 92q46-12 86-4t64 6 70-8v44H0Z"/>
+    <!-- Ondes concentriques : elles posent chaque île sur l'eau. -->
+    <ellipse class="ripple" cx="64" cy="98" rx="52" ry="15" opacity=".35"/>
+    <ellipse class="ripple" cx="64" cy="101" rx="62" ry="18" opacity=".2"/>
+    <ellipse class="ripple" cx="146" cy="74" rx="36" ry="11" opacity=".3"/>
+    <ellipse class="ripple" cx="146" cy="77" rx="44" ry="13" opacity=".16"/>
 
-    <!-- ÎLE AUX MOTS — ouverte -->
+    <!-- ===== Îles lointaines (petites, pâles, hautes dans l'image) ===== -->
+    <g class="isle-hit hazed" tabindex="0" role="link" aria-label="L'île d'Ailleurs, verrouillée, encore 15 étoiles.">
+      <ellipse class="cast" cx="36" cy="36" rx="19" ry="4"/>
+      <path class="under-rock" d="M20 32q5 12 16 13t16-13q-6 6-16 6t-16-6Z"/>
+      <path class="side-rock" d="M19 29a17 6 0 0 0 34 0v5a17 6 0 0 1-34 0Z"/>
+      <ellipse class="sand-top" cx="36" cy="29" rx="17" ry="6"/>
+      <ellipse class="top-grass" cx="36" cy="28" rx="13.5" ry="4.4"/>
+      <text class="isle-name" x="36" y="17" text-anchor="middle" fill="var(--ink-faint)">L'île d'Ailleurs</text>
+      <text class="isle-meta" x="36" y="47" text-anchor="middle">🔒 encore 15 ⭐</text>
+    </g>
+
+    <g class="isle-hit hazed" tabindex="0" role="link" aria-label="L'île des Mesures, verrouillée, encore 3 étoiles.">
+      <ellipse class="cast" cx="180" cy="46" rx="21" ry="4.4"/>
+      <path class="under-rock" d="M162 42q6 13 18 14t18-14q-7 7-18 7t-18-7Z"/>
+      <path class="side-rock" d="M161 38a19 6.6 0 0 0 38 0v5.5a19 6.6 0 0 1-38 0Z"/>
+      <ellipse class="sand-top" cx="180" cy="38" rx="19" ry="6.6"/>
+      <ellipse class="top-grass" cx="180" cy="37" rx="15" ry="5"/>
+      <text class="isle-name" x="180" y="25" text-anchor="middle" fill="var(--ink-faint)">L'île des Mesures</text>
+      <text class="isle-meta" x="180" y="58" text-anchor="middle">🔒 encore 3 ⭐</text>
+    </g>
+
+    <!-- ===== Île aux Nombres : plan intermédiaire ===== -->
+    <g class="isle-hit" tabindex="0" role="link" aria-label="L'île aux Nombres, nombres et calcul, 4 étoiles sur 36. Ouverte.">
+      <ellipse class="cast" cx="146" cy="84" rx="30" ry="6"/>
+      <path class="foam" d="M118 78a28 9 0 0 0 56 0" opacity=".55"/>
+      <path class="under-rock" d="M120 76q9 19 26 20t26-20q-10 10-26 10t-26-10Z"/>
+      <path class="side-rock" d="M119 70a27 9 0 0 0 54 0v8a27 9 0 0 1-54 0Z"/>
+      <ellipse class="sand-top" cx="146" cy="70" rx="27" ry="9"/>
+      <ellipse class="top-grass" cx="146" cy="68" rx="22" ry="7"/>
+      <path class="top-grass2" d="M128 69q10-5 20-4t16 5q-10 4-20 4t-16-5Z"/>
+      <!-- un pic rocheux, pour la silhouette -->
+      <path class="under-rock" d="M150 64l7-12 7 12Z" opacity=".55"/>
+      <path class="side-rock" d="M157 52l7 12h-7Z"/>
+      <use href="#tree" x="132" y="68" transform="scale(.8) translate(33 17)"/>
+      <circle class="halo" cx="146" cy="70" r="30"/>
+      <text class="isle-name" x="146" y="50" text-anchor="middle" fill="var(--island-nombres-ink)">L'île aux Nombres</text>
+      <text class="isle-meta" x="146" y="94" text-anchor="middle">⭐ 4/36 · 🌼 1/10</text>
+    </g>
+
+    <!-- ===== Île aux Mots : premier plan, la plus grande et la plus saturée ===== -->
     <g class="isle-hit" tabindex="0" role="link"
        aria-label="L'île aux Mots, français, 12 étoiles sur 54, 3 gommettes sur 10. Ouverte."
-       onclick="openIsle()" onkeypress="if(event.key==='Enter')openIsle()">
-      <ellipse class="shadow" cx="46" cy="86" rx="26" ry="5"/>
-      <path class="isle-halo" d="M18 70q2-16 16-20t26 4 12 17-10 15-28 3-16-19Z"/>
-      <path class="sand" d="M18 70q2-16 16-20t26 4 12 17-10 15-28 3-16-19Z"/>
-      <path class="grass" d="M24 69q2-12 14-15t21 3 9 13-8 11-23 2-13-14Z"/>
-      <path class="grass-dark" d="M30 64q5-6 13-5t12 5-9 5-16 0-0-5Z"/>
-      <g><rect class="trunk" x="35" y="58" width="2" height="6" rx="1"/>
-         <circle class="leaf" cx="36" cy="56" r="4.4"/><circle class="leaf-light" cx="34.5" cy="55" r="2.4"/></g>
-      <g><rect class="trunk" x="55" y="62" width="2" height="5" rx="1"/>
-         <circle class="leaf" cx="56" cy="60" r="3.6"/><circle class="leaf-light" cx="55" cy="59" r="2"/></g>
-      <text class="isle-name" x="46" y="44" text-anchor="middle" fill="var(--island-mots-ink)">L'île aux Mots</text>
-      <text class="isle-meta" x="46" y="95" text-anchor="middle">⭐ 12/54 · 🌼 3/10</text>
+       onclick="toIsle()" onkeypress="if(event.key==='Enter')toIsle()">
+      <ellipse class="cast" cx="64" cy="112" rx="42" ry="7"/>
+      <path class="foam" d="M24 104a40 12 0 0 0 80 0"/>
+      <path class="under-rock" d="M26 100q12 26 38 27t38-27q-14 13-38 13t-38-13Z"/>
+      <path class="side-rock" d="M24 92a40 12 0 0 0 80 0v10a40 12 0 0 1-80 0Z"/>
+      <ellipse class="sand-top" cx="64" cy="92" rx="40" ry="12"/>
+      <ellipse class="top-grass" cx="64" cy="89" rx="33" ry="9.6"/>
+      <path class="top-grass2" d="M38 90q14-7 28-6t22 7q-14 6-28 6t-22-7Z"/>
+      <use href="#tree" x="42" y="90"/>
+      <use href="#tree" x="88" y="92" transform="scale(.85) translate(15 14)"/>
+      <!-- un toit dépasse : on devine qu'il y a des lieux à visiter -->
+      <path class="wall-lit" d="M62 86h9v6h-9Z"/>
+      <path class="wall-dim" d="M71 86h3v6h-3Z"/>
+      <path class="roof-lit" d="M60 86l6.5-6 6.5 6Z" style="--island: var(--island-mots)"/>
+      <circle class="halo" cx="64" cy="92" r="43"/>
+      <text class="isle-name" x="64" y="66" text-anchor="middle" fill="var(--island-mots-ink)">L'île aux Mots</text>
+      <text class="isle-meta" x="64" y="124" text-anchor="middle">⭐ 12/54 · 🌼 3/10</text>
     </g>
 
-    <!-- ÎLE AUX NOMBRES — ouverte -->
-    <g class="isle-hit" tabindex="0" role="link" aria-label="L'île aux Nombres, nombres et calcul, 4 étoiles sur 36. Ouverte.">
-      <ellipse class="shadow" cx="128" cy="53" rx="23" ry="4.5"/>
-      <path class="sand" d="M104 39q3-14 15-17t23 4 10 15-10 13-25 2-13-17Z"/>
-      <path class="grass" d="M110 38q3-10 12-13t18 3 8 11-8 10-20 2-10-13Z"/>
-      <path class="rock" d="M120 30q6-9 12-1t-3 7-12-6Z"/>
-      <path class="rock-dark" d="M126 28q4-5 6 0t-6 2Z"/>
-      <g><rect class="trunk" x="138" y="38" width="2" height="5" rx="1"/>
-         <circle class="leaf" cx="139" cy="36" r="3.6"/></g>
-      <text class="isle-name" x="128" y="16" text-anchor="middle" fill="var(--island-nombres-ink)">L'île aux Nombres</text>
-      <text class="isle-meta" x="128" y="62" text-anchor="middle">⭐ 4/36 · 🌼 1/10</text>
-    </g>
-
-    <!-- Îles encore dans la brume : on voit où l'on va, sans détail. -->
-    <g class="isle-hit locked" tabindex="0" role="link" aria-label="L'île des Mesures, verrouillée, encore 3 étoiles.">
-      <path class="fog" d="M150 86q3-12 14-14t20 4 8 12-9 11-21 2-12-15Z"/>
-      <path class="fog-edge" d="M150 86q3-12 14-14t20 4 8 12-9 11-21 2-12-15Z"/>
-      <text class="isle-name" x="168" y="68" text-anchor="middle" fill="var(--ink-faint)">L'île des Mesures</text>
-      <text class="isle-meta" x="168" y="94" text-anchor="middle">🔒 encore 3 ⭐</text>
-    </g>
-    <g class="isle-hit locked" tabindex="0" role="link" aria-label="L'île du Monde, verrouillée, encore 9 étoiles.">
-      <path class="fog" d="M82 98q3-10 12-11t17 3 7 10-8 9-18 2-10-13Z"/>
-      <path class="fog-edge" d="M82 98q3-10 12-11t17 3 7 10-8 9-18 2-10-13Z"/>
-      <text class="isle-name" x="97" y="84" text-anchor="middle" fill="var(--ink-faint)">L'île du Monde</text>
-      <text class="isle-meta" x="97" y="112" text-anchor="middle">🔒 encore 9 ⭐</text>
-    </g>
-    <g class="isle-hit locked" tabindex="0" role="link" aria-label="L'île d'Ailleurs, verrouillée, encore 15 étoiles.">
-      <path class="fog" d="M30 22q3-10 12-11t17 3 7 10-8 9-18 2-10-13Z"/>
-      <path class="fog-edge" d="M30 22q3-10 12-11t17 3 7 10-8 9-18 2-10-13Z"/>
-      <text class="isle-name" x="45" y="9" text-anchor="middle" fill="var(--ink-faint)">L'île d'Ailleurs</text>
-      <text class="isle-meta" x="45" y="37" text-anchor="middle">🔒 encore 15 ⭐</text>
+    <g class="isle-hit hazed" tabindex="0" role="link" aria-label="L'île du Monde, verrouillée, encore 9 étoiles.">
+      <ellipse class="cast" cx="140" cy="118" rx="22" ry="4.6"/>
+      <path class="under-rock" d="M122 114q7 14 18 15t18-15q-7 7-18 7t-18-7Z"/>
+      <path class="side-rock" d="M121 110a19 6.6 0 0 0 38 0v5.5a19 6.6 0 0 1-38 0Z"/>
+      <ellipse class="sand-top" cx="140" cy="110" rx="19" ry="6.6"/>
+      <ellipse class="top-grass" cx="140" cy="109" rx="15" ry="5"/>
+      <text class="isle-name" x="140" y="101" text-anchor="middle" fill="var(--ink-faint)">L'île du Monde</text>
+      <text class="isle-meta" x="140" y="128" text-anchor="middle">🔒 encore 9 ⭐</text>
     </g>
   </svg>
 
-  <!-- ====================== NIVEAU 2 : ZOOM DANS L'ÎLE ====================== -->
-  <svg id="isle" class="scene" viewBox="0 0 200 128" role="img" aria-labelledby="it id"
-       style="--island: var(--island-mots); --island-soft: var(--island-mots-soft); --island-ink: var(--island-mots-ink);">
+  <!-- ========================= ZOOM : L'ÎLE AUX MOTS ========================= -->
+  <svg id="isle" class="scene" viewBox="0 0 220 142" role="img" aria-labelledby="it id"
+       style="--island: var(--island-mots); --island-ink: var(--island-mots-ink);">
     <title id="it">L'île aux Mots</title>
-    <desc id="id">Six lieux posés sur l'île : la grotte des Sons, le moulin des Syllabes, les rochers
-      Jumeaux, l'arbre qui change, le phare de la Lecture éclair et la cabane aux Devinettes.
-      On peut aller où l'on veut.</desc>
+    <desc id="id">L'île vue de trois quarts. Six lieux à visiter librement : la grotte des Sons,
+      le moulin des Syllabes, les rochers Jumeaux, l'arbre qui change, le phare de la Lecture
+      éclair et la cabane aux Devinettes.</desc>
 
-    <rect class="sea-deep" x="0" y="0" width="200" height="128"/>
-    <ellipse class="sea-mid" cx="100" cy="68" rx="96" ry="58"/>
-    <path class="surf" d="M18 56q7-5 14 0t14 0"/>
-    <path class="surf" d="M160 94q7-5 14 0t14 0"/>
-    <g class="bird"><path d="M30 18q3.5-4 7 0"/><path d="M38 20q3.5-4 7 0"/></g>
-    <ellipse class="cloud" cx="158" cy="18" rx="15" ry="5.5"/>
-    <ellipse class="cloud" cx="168" cy="16" rx="10" ry="6.5"/>
-
-    <!-- La terre : sable, herbe, reliefs -->
-    <ellipse class="shadow" cx="100" cy="116" rx="74" ry="7"/>
-    <path class="sand" d="M14 70q4-34 32-42t54-6 48 14 22 34-22 30-52 10-54-6-28-34Z"/>
-    <path class="sand-edge" d="M14 70q4-34 32-42t54-6 48 14 22 34-22 30-52 10-54-6-28-34Z" opacity=".28"/>
-    <path class="grass" d="M24 70q4-28 30-35t48-5 42 13 18 28-20 25-46 8-48-5-24-29Z"/>
-    <path class="grass-dark" d="M40 44q16-10 40-9t42 10q-18 7-42 7t-40-8Z"/>
-    <path class="grass-dark" d="M44 92q20 7 46 6t40-7q-18 10-44 11t-42-10Z"/>
-
-    <!-- Collines au fond -->
-    <path class="rock" d="M58 42q14-20 28-2t-28 2Z"/>
-    <path class="rock-dark" d="M68 36q7-10 14-1t-14 1Z"/>
-    <path class="rock" d="M120 44q11-16 22-2t-22 2Z"/>
-
-    <!-- Le chemin relie les lieux sans imposer d'ordre : on va où l'on veut. -->
-    <path class="path" d="M46 84 C 60 92, 64 62, 82 58 S 108 72, 124 60 S 150 52, 158 74"/>
-    <path class="path" d="M82 58 C 88 44, 104 40, 112 44"/>
-
-    <!-- Bosquets -->
-    <g><rect class="trunk" x="35" y="60" width="2.4" height="8" rx="1.2"/>
-       <circle class="leaf" cx="36" cy="57" r="6"/><circle class="leaf-light" cx="34" cy="55" r="3.2"/></g>
-    <g><rect class="trunk" x="168" y="58" width="2.4" height="8" rx="1.2"/>
-       <circle class="leaf" cx="169" cy="55" r="5.4"/><circle class="leaf-light" cx="167" cy="53" r="2.8"/></g>
-    <g><rect class="trunk" x="100" y="96" width="2" height="6" rx="1"/>
-       <circle class="leaf" cx="101" cy="94" r="4.4"/></g>
-    <g><rect class="trunk" x="60" y="98" width="2" height="5" rx="1"/>
-       <circle class="leaf" cx="61" cy="96" r="3.6"/></g>
-
-    <!-- ---------- LES SIX LIEUX = LES SIX JEUX ---------- -->
-
-    <!-- 1. La grotte des Sons -->
-    <g class="spot" tabindex="0" role="link" aria-label="Les sons, la grotte des échos, 6 étoiles sur 9.">
-      <circle class="halo" cx="46" cy="84" r="13"/>
-      <path class="rock" d="M34 86q2-13 12-13t12 13Z"/>
-      <path class="rock-dark" d="M40 86q1-7 6-7t6 7Z"/>
-      <ellipse cx="46" cy="86" rx="4.6" ry="5.4" fill="var(--kawaii-ink)" opacity=".75"/>
-      <rect class="plaque" x="29" y="92" width="34" height="11" rx="5.5"/>
-      <text class="spot-label" x="46" y="97" text-anchor="middle">Les sons</text>
-      <text class="spot-stars" x="46" y="101.5" text-anchor="middle">⭐⭐⭐ 6/9</text>
-    </g>
-
-    <!-- 2. Le moulin des Syllabes -->
-    <g class="spot" tabindex="0" role="link" aria-label="Syllabes en folie, le moulin, 3 étoiles sur 9.">
-      <circle class="halo" cx="82" cy="56" r="13"/>
-      <rect x="78" y="52" width="8" height="12" rx="2" fill="var(--kawaii-creme)" stroke="var(--kawaii-creme-deep)" stroke-width=".8"/>
-      <path d="M74 52h16l-8-7Z" fill="var(--island)"/>
-      <g stroke="var(--island-ink)" stroke-width="1.2" stroke-linecap="round">
-        <path d="M82 46l6-5"/><path d="M82 46l-6-5"/><path d="M82 46l5 6"/><path d="M82 46l-5 6"/>
+    <defs>
+      <g id="tree2">
+        <ellipse class="cast" cx="0" cy="1" rx="5" ry="1.6"/>
+        <rect class="trunk" x="-1.1" y="-6" width="2.2" height="7" rx="1.1"/>
+        <circle class="leaf-dark" cx="0" cy="-9" r="5.6"/>
+        <circle class="leaf-lit" cx="-1.8" cy="-10.4" r="3.6"/>
       </g>
-      <rect class="plaque" x="64" y="64" width="36" height="11" rx="5.5"/>
-      <text class="spot-label" x="82" y="69" text-anchor="middle">Syllabes</text>
-      <text class="spot-stars" x="82" y="73.5" text-anchor="middle">⭐ 3/9</text>
+      <g id="bush">
+        <ellipse class="cast" cx="0" cy="1" rx="3.4" ry="1.1"/>
+        <circle class="leaf-dark" cx="0" cy="-2" r="3.2"/>
+        <circle class="leaf-lit" cx="-1" cy="-2.8" r="1.9"/>
+      </g>
+    </defs>
+
+    <rect class="w-far" x="0" y="0" width="220" height="142"/>
+    <path class="w-mid" d="M0 38q44-14 84-6t66 8 70-10v112H0Z" opacity=".6"/>
+    <path class="w-near" d="M0 110q50-12 90-4t62 6 68-10v40H0Z"/>
+    <ellipse class="ripple" cx="110" cy="100" rx="108" ry="30" opacity=".35"/>
+    <ellipse class="ripple" cx="110" cy="105" rx="122" ry="35" opacity=".18"/>
+
+    <!-- Le socle de l'île : ombre, dessous rocheux, falaise, plage, herbe -->
+    <ellipse class="cast" cx="110" cy="126" rx="96" ry="10"/>
+    <path class="under-rock" d="M18 104q24 34 92 36t92-36q-30 20-92 20t-92-20Z"/>
+    <path class="side-rock" d="M14 86a96 26 0 0 0 192 0v18a96 26 0 0 1-192 0Z"/>
+    <ellipse class="sand-top" cx="110" cy="86" rx="96" ry="26"/>
+    <ellipse class="top-grass" cx="110" cy="82" rx="84" ry="21"/>
+    <path class="top-grass2" d="M38 84q34-14 72-12t68 14q-34 12-70 12t-70-14Z"/>
+
+    <!-- Relief du fond : deux collines en volume -->
+    <path class="under-rock" d="M60 70q16-26 32 0Z" opacity=".5"/>
+    <path class="side-rock" d="M76 56q16 0 16 14H76Z"/>
+    <path class="under-rock" d="M140 72q13-20 26 0Z" opacity=".5"/>
+    <path class="side-rock" d="M153 60q13 0 13 12h-13Z"/>
+
+    <!-- Le chemin : une bande claire posée sur l'herbe, pas une ligne -->
+    <path class="path-base" d="M48 96 C 70 104, 72 76, 96 72 S 128 86, 150 74 S 182 70, 190 92"/>
+    <path class="path-top"  d="M48 96 C 70 104, 72 76, 96 72 S 128 86, 150 74 S 182 70, 190 92"/>
+
+    <use href="#tree2" x="34" y="88"/>
+    <use href="#tree2" x="196" y="86" transform="scale(.9) translate(22 10)"/>
+    <use href="#bush" x="118" y="96"/>
+    <use href="#bush" x="70" y="66"/>
+    <use href="#tree2" x="124" y="100" transform="scale(.75) translate(41 33)"/>
+
+    <!-- ========== LES SIX LIEUX ========== -->
+
+    <!-- 1 · La grotte des Sons -->
+    <g class="spot" tabindex="0" role="link" aria-label="Les sons, la grotte des échos, 6 étoiles sur 9.">
+      <circle class="halo" cx="48" cy="92" r="15"/>
+      <path class="under-rock" d="M34 94q3-18 14-18t14 18Z"/>
+      <path class="side-rock" d="M38 94q2-13 10-13t10 13Z"/>
+      <path d="M42 94q1.4-9 6-9t6 9Z" fill="var(--kawaii-ink)" opacity=".8"/>
+      <ellipse class="plaque-shadow" cx="48" cy="107" rx="18" ry="5"/>
+      <rect class="plaque" x="30" y="97" width="36" height="12" rx="6"/>
+      <text class="spot-label" x="48" y="102.4" text-anchor="middle">Les sons</text>
+      <text class="spot-stars" x="48" y="107" text-anchor="middle">⭐⭐⭐ 6/9</text>
     </g>
 
-    <!-- 3. Les rochers Jumeaux -->
+    <!-- 2 · Le moulin des Syllabes -->
+    <g class="spot" tabindex="0" role="link" aria-label="Syllabes en folie, le moulin, 3 étoiles sur 9.">
+      <circle class="halo" cx="96" cy="66" r="15"/>
+      <ellipse class="cast" cx="96" cy="73" rx="9" ry="2.4"/>
+      <path class="wall-lit" d="M91 58h7v15h-7Z"/>
+      <path class="wall-dim" d="M98 58h4v15h-4Z"/>
+      <path class="roof-lit" d="M88 58l8.5-9 8.5 9Z"/>
+      <path class="roof-dim" d="M96.5 49l8.5 9h-4Z"/>
+      <g stroke="var(--island-ink)" stroke-width="1.4" stroke-linecap="round">
+        <path d="M96 52l7-6"/><path d="M96 52l-7-6"/><path d="M96 52l6 7"/><path d="M96 52l-6 7"/>
+      </g>
+      <ellipse class="plaque-shadow" cx="96" cy="84" rx="19" ry="5"/>
+      <rect class="plaque" x="77" y="74" width="38" height="12" rx="6"/>
+      <text class="spot-label" x="96" y="79.4" text-anchor="middle">Syllabes</text>
+      <text class="spot-stars" x="96" y="84" text-anchor="middle">⭐ 3/9</text>
+    </g>
+
+    <!-- 3 · Les rochers Jumeaux -->
     <g class="spot" tabindex="0" role="link" aria-label="Lettres sœurs, les rochers jumeaux, 3 étoiles sur 9.">
-      <circle class="halo" cx="124" cy="58" r="13"/>
-      <path class="rock" d="M116 62q2-10 6-10t6 10Z"/>
-      <path class="rock" d="M124 62q2-12 7-12t7 12Z"/>
-      <path class="rock-dark" d="M127 62q2-7 4-7t4 7Z"/>
-      <rect class="plaque" x="106" y="63" width="38" height="11" rx="5.5"/>
-      <text class="spot-label" x="125" y="68" text-anchor="middle">Lettres sœurs</text>
-      <text class="spot-stars" x="125" y="72.5" text-anchor="middle">⭐ 3/9</text>
+      <circle class="halo" cx="150" cy="70" r="15"/>
+      <ellipse class="cast" cx="150" cy="78" rx="12" ry="2.6"/>
+      <path class="under-rock" d="M140 78q2-14 7-14t7 14Z"/>
+      <path class="side-rock" d="M143 78q1.6-10 4-10t4 10Z"/>
+      <path class="under-rock" d="M150 78q2-17 8-17t8 17Z"/>
+      <path class="side-rock" d="M153 78q1.8-12 5-12t5 12Z"/>
+      <ellipse class="plaque-shadow" cx="152" cy="89" rx="21" ry="5"/>
+      <rect class="plaque" x="131" y="79" width="42" height="12" rx="6"/>
+      <text class="spot-label" x="152" y="84.4" text-anchor="middle">Lettres sœurs</text>
+      <text class="spot-stars" x="152" y="89" text-anchor="middle">⭐ 3/9</text>
     </g>
 
-    <!-- 4. L'arbre qui change de couleur -->
+    <!-- 4 · L'arbre qui change -->
     <g class="spot locked" tabindex="0" role="link" aria-label="Les lettres qui changent de son, l'arbre qui change, jamais joué.">
-      <circle class="halo" cx="112" cy="42" r="12"/>
-      <rect class="trunk" x="111" y="42" width="2.6" height="9" rx="1.3"/>
-      <path d="M112 42a6 6 0 0 1 0-12Z" fill="var(--kawaii-menthe-deep)"/>
-      <path d="M112 42a6 6 0 0 0 0-12Z" fill="var(--kawaii-peche-deep)"/>
-      <rect class="plaque" x="90" y="51" width="45" height="11" rx="5.5"/>
-      <text class="spot-label" x="112.5" y="56" text-anchor="middle">Lettres qui changent</text>
-      <text class="spot-stars" x="112.5" y="60.5" text-anchor="middle">à découvrir</text>
+      <circle class="halo" cx="118" cy="48" r="14"/>
+      <ellipse class="cast" cx="118" cy="58" rx="6" ry="1.8"/>
+      <rect class="trunk" x="116.8" y="48" width="2.4" height="10" rx="1.2"/>
+      <path d="M118 48a8 8 0 0 1 0-16Z" fill="var(--kawaii-menthe-deep)"/>
+      <path d="M118 48a8 8 0 0 0 0-16Z" fill="var(--kawaii-peche-deep)"/>
+      <circle cx="115.4" cy="37" r="2.4" fill="var(--kawaii-menthe)"/>
+      <circle cx="120.6" cy="37" r="2.4" fill="var(--kawaii-peche)"/>
+      <ellipse class="plaque-shadow" cx="118" cy="68" rx="25" ry="5"/>
+      <rect class="plaque" x="93" y="58" width="50" height="12" rx="6"/>
+      <text class="spot-label" x="118" y="63.4" text-anchor="middle">Lettres qui changent</text>
+      <text class="spot-stars" x="118" y="68" text-anchor="middle">à découvrir</text>
     </g>
 
-    <!-- 5. Le phare de la Lecture éclair -->
+    <!-- 5 · Le phare de la Lecture éclair -->
     <g class="spot locked" tabindex="0" role="link" aria-label="Lecture éclair, le phare, jamais joué.">
-      <circle class="halo" cx="158" cy="74" r="13"/>
-      <path d="M155 80l1.6-14h2.8l1.6 14Z" fill="var(--surface-raised)" stroke="var(--border)" stroke-width=".7"/>
-      <rect x="155.6" y="70" width="4.8" height="3" fill="var(--island)"/>
-      <circle cx="158" cy="65" r="2.4" fill="var(--kawaii-citron)" stroke="var(--kawaii-citron-deep)" stroke-width=".6"/>
-      <path d="M160 64l7-3M160 66l7 3" stroke="var(--kawaii-citron-deep)" stroke-width=".9" stroke-linecap="round"/>
-      <rect class="plaque" x="140" y="80" width="38" height="11" rx="5.5"/>
-      <text class="spot-label" x="159" y="85" text-anchor="middle">Lecture éclair</text>
-      <text class="spot-stars" x="159" y="89.5" text-anchor="middle">à découvrir</text>
+      <circle class="halo" cx="190" cy="88" r="15"/>
+      <ellipse class="cast" cx="190" cy="95" rx="8" ry="2.2"/>
+      <path class="wall-lit" d="M187 95l2-22h2l2 22Z"/>
+      <path class="wall-dim" d="M191 73h1l2 22h-3Z"/>
+      <rect x="187.4" y="78" width="5.2" height="3.4" fill="var(--island)"/>
+      <circle cx="190" cy="70" r="3" fill="var(--kawaii-citron)" stroke="var(--kawaii-citron-deep)" stroke-width=".7"/>
+      <path d="M193 68l8-3M193 72l8 3" stroke="var(--kawaii-citron-deep)" stroke-width="1" stroke-linecap="round"/>
+      <ellipse class="plaque-shadow" cx="188" cy="106" rx="21" ry="5"/>
+      <rect class="plaque" x="167" y="96" width="42" height="12" rx="6"/>
+      <text class="spot-label" x="188" y="101.4" text-anchor="middle">Lecture éclair</text>
+      <text class="spot-stars" x="188" y="106" text-anchor="middle">à découvrir</text>
     </g>
 
-    <!-- 6. La cabane aux Devinettes -->
+    <!-- 6 · La cabane aux Devinettes -->
     <g class="spot locked" tabindex="0" role="link" aria-label="Devinettes, la cabane, jamais joué.">
-      <circle class="halo" cx="74" cy="96" r="12"/>
-      <rect x="69" y="94" width="10" height="8" rx="1.6" fill="var(--kawaii-creme)" stroke="var(--kawaii-creme-deep)" stroke-width=".8"/>
-      <path d="M66 94h16l-8-6Z" fill="var(--island)"/>
-      <text x="74" y="100.5" text-anchor="middle" font-size="5" font-family="var(--font-title)" font-weight="600" fill="var(--island-ink)">?</text>
-      <rect class="plaque" x="57" y="103" width="34" height="11" rx="5.5"/>
-      <text class="spot-label" x="74" y="108" text-anchor="middle">Devinettes</text>
-      <text class="spot-stars" x="74" y="112.5" text-anchor="middle">à découvrir</text>
+      <circle class="halo" cx="74" cy="108" r="14"/>
+      <ellipse class="cast" cx="74" cy="114" rx="9" ry="2.4"/>
+      <path class="wall-lit" d="M69 104h8v10h-8Z"/>
+      <path class="wall-dim" d="M77 104h4v10h-4Z"/>
+      <path class="roof-lit" d="M66 104l8.5-7 8.5 7Z"/>
+      <path class="roof-dim" d="M74.5 97l8.5 7h-4Z"/>
+      <text x="73" y="112" text-anchor="middle" font-size="6" font-family="var(--font-title)" font-weight="600" fill="var(--island-ink)">?</text>
+      <ellipse class="plaque-shadow" cx="74" cy="126" rx="19" ry="5"/>
+      <rect class="plaque" x="55" y="116" width="38" height="12" rx="6"/>
+      <text class="spot-label" x="74" y="121.4" text-anchor="middle">Devinettes</text>
+      <text class="spot-stars" x="74" y="126" text-anchor="middle">à découvrir</text>
     </g>
 
-    <!-- La mascotte de l'île accueille ; le compagnon marque « tu es ici ». -->
-    <g aria-hidden="true">
-      <ellipse class="shadow" cx="122" cy="102" rx="7" ry="2"/>
-      <path d="M122 86q9 0 9 9t-9 7-9-7 9-9Z" fill="var(--kawaii-rose)" stroke="var(--kawaii-rose-deep)" stroke-width="1"/>
-      <circle cx="118.6" cy="95" r="1.2" fill="var(--kawaii-ink)"/>
-      <circle cx="125.4" cy="95" r="1.2" fill="var(--kawaii-ink)"/>
-      <path d="M120.6 98q1.4 1.4 2.8 0" stroke="var(--kawaii-ink)" stroke-width=".9" fill="none" stroke-linecap="round"/>
-      <circle cx="116.4" cy="97.4" r="1.4" fill="var(--kawaii-blush)" opacity=".55"/>
-      <circle cx="127.6" cy="97.4" r="1.4" fill="var(--kawaii-blush)" opacity=".55"/>
+    <!-- La mascotte de l'île, posée au sol avec son ombre -->
+    <g aria-hidden="true" transform="translate(108 -8)">
+      <ellipse class="cast" cx="30" cy="112" rx="8" ry="2.4"/>
+      <path d="M30 96q10 0 10 10t-10 8-10-8 10-10Z" fill="var(--kawaii-rose)" stroke="var(--kawaii-rose-deep)" stroke-width="1.1"/>
+      <path d="M30 96q10 0 10 10t-5 7q4-4 4-9t-9-8Z" fill="var(--kawaii-rose-deep)" opacity=".35"/>
+      <circle cx="26.4" cy="105" r="1.3" fill="var(--kawaii-ink)"/>
+      <circle cx="33.6" cy="105" r="1.3" fill="var(--kawaii-ink)"/>
+      <path d="M28.4 108.4q1.6 1.5 3.2 0" stroke="var(--kawaii-ink)" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <circle cx="24" cy="107.6" r="1.5" fill="var(--kawaii-blush)" opacity=".55"/>
+      <circle cx="36" cy="107.6" r="1.5" fill="var(--kawaii-blush)" opacity=".55"/>
     </g>
   </svg>
 
   <p class="note" style="margin-top: var(--space-3)">
-    Libre parcours : le chemin relie les lieux sans en imposer l'ordre. Les lieux jamais joués gardent
-    leur décor, marqués « à découvrir ».
+    Perspective : falaise et dessous rocheux donnent l'épaisseur, l'ombre portée pose l'île sur l'eau,
+    et les îles lointaines sont plus petites et plus pâles. Libre parcours — le chemin ne numérote rien.
   </p>
 </div>
 
 <script>
-  function openIsle() {
+  const title = document.getElementById('title');
+  function toIsle() {
     document.body.dataset.view = 'isle';
-    document.getElementById('title').textContent = "L'île aux Mots";
-    document.getElementById('title').style.color = 'var(--island-mots-ink)';
+    title.textContent = "L'île aux Mots";
+    title.style.color = 'var(--island-mots-ink)';
   }
-  document.querySelector('.back').addEventListener('click', () => {
-    document.getElementById('title').textContent = 'Choisis une île';
-    document.getElementById('title').style.color = '';
-  });
+  function toWorld() {
+    document.body.dataset.view = 'world';
+    title.textContent = 'Choisis une île';
+    title.style.color = '';
+  }
 </script>
 </body>
 </html>
