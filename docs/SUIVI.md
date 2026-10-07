@@ -44,6 +44,7 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 | Qui | Issue | Branche |
 |---|---|---|
 | Claude (session scarlaty) | #91 coffre surprise | `feat/91-coffre` |
+| Claude (session scarlaty) | #60 La tirelire | `feat/60-tirelire` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
