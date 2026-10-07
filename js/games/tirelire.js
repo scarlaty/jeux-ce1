@@ -287,8 +287,8 @@ export default {
     'Rendre la monnaie, les centimes (sommes simples)',
   ],
   levels: [
-    { label: 'Niveau 1', hint: 'Compter jusqu\'à 50 €' },
-    { label: 'Niveau 2', hint: 'Composer jusqu\'à 100 €' },
+    { label: 'Niveau 1', hint: 'Compter jusqu\'à 50 €' },
+    { label: 'Niveau 2', hint: 'Composer jusqu\'à 100 €' },
     { label: 'Niveau 3', hint: 'Rendre la monnaie' },
   ],
   makeQuestion(level, rng, seen) {

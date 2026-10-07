@@ -26,6 +26,11 @@ const COINS = {
   100: { d: 23.3, tone: 'euro1', n: '1', u: '€' },
   200: { d: 25.7, tone: 'euro2', n: '2', u: '€' },
 };
+// À l'échelle réelle, une pièce de 1 € fait le cinquième d'un billet : illisible à côté de lui sur un
+// téléphone. On agrandit toutes les pièces du même facteur (leur ordre de taille reste juste), sans
+// dépasser la hauteur d'un billet.
+const COIN_SCALE = 1.7;
+for (const coin of Object.values(COINS)) coin.d = Math.round(coin.d * COIN_SCALE * 10) / 10;
 // Billets : largeur et hauteur réelles (mm) et teinte.
 const NOTES = {
   500: { w: 120, h: 62, tone: 'n5', n: '5' },

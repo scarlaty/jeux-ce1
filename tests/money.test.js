@@ -28,13 +28,13 @@ test('les billets passent avant les pièces, du plus grand au plus petit', () =>
   assert.deepEqual(sorted([50, 200, 500, 100, 2000]), [2000, 500, 200, 100, 50]);
 });
 
-test('la disposition : rangées de 290 mm au plus, tailles réelles, rien ne se chevauche', () => {
+test('la disposition : rangées de 290 mm au plus, tailles réelles (pièces agrandies), rien ne se chevauche', () => {
   const { width, height, items } = layout({ pieces: [2000, 2000, 1000, 500, 200, 100, 50] });
   assert.ok(width <= 290 + 1e-9);
   assert.equal(items.length, 7);
   const note20 = items.find((i) => i.value === 2000);
   const coin2 = items.find((i) => i.value === 200);
-  assert.ok(note20.w > coin2.w * 4, 'un billet de 20 € est bien plus grand qu\'une pièce');
+  assert.ok(note20.w > coin2.w * 2.5, 'un billet de 20 € est bien plus grand qu\'une pièce');
   assert.ok(items.find((i) => i.value === 200).w > items.find((i) => i.value === 100).w, '2 € plus grand que 1 €');
   for (const a of items) {
     assert.ok(a.x >= 0 && a.y >= 0 && a.x + a.w <= width + 1e-9 && a.y + a.h <= height + 1e-9);
