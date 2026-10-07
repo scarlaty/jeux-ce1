@@ -50,7 +50,26 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 | Qui | Issue | Branche |
 |---|---|---|
 
-#105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`. #102, #103 **terminés** (v29) : double anneau de focus, étoile gagnée contrastée, panneau ancré sur le haut réel de l'île, liste élargie. #97, #106 **terminés** (v30) après juge : 0 % à un seul indice, genre ≠ déterminant, liste `never` (on ne nie que ce qui est impossible). Revers : niveau 2 réduit à 12 réponses (baleine 30 %) → issue de suivi.
+#105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`. #102, #103 **terminés** (v29) : double anneau de focus, étoile gagnée contrastée, panneau ancré sur le haut réel de l'île, liste élargie. #97, #106 **terminés** (v30) après juge : 0 % à un seul indice, genre ≠ déterminant, liste `never` (on ne nie que ce qui est impossible). Revers : niveau 2 réduit à 12 réponses (baleine 30 %) → #108.
+
+#107, #108 **terminés** (v31), après **trois** passes de juge sur « La phrase » et deux sur « Devinettes ».
+**La phrase** : chaque phrase du niveau 3 est servie avec trois situations et trois signes (« Il neige » tour
+à tour constat, question, émerveillement), l'intention devient un champ séparé du texte. Un classifieur appris
+sur la phrase seule passe de 95 % à **33 %** (le hasard exact) ; le même solveur fait 100 % au niveau 1, qui
+était donc **plus facile** que le niveau 3. **Devinettes** : niveau 2 de 12 à 62 réponses (baleine 29,8 % →
+8,5 %), quatre familles de phrases fausses supprimées (« Le gâteau n'est pas vert. » sortait 218 fois sur
+18 000), et le niveau 3 reçoit sa forme propre — deux affirmations et **deux** négations, recouvrement avec le
+niveau 2 ramené à 0,00 %. Reste ouvert : **#109** (le seul prénom de la situation prédit le signe à 68 %, et la
+banque du niveau 3 est trop courte pour être re-contrainte).
+
+**Leçon de ces cinq relectures, à retenir avant d'écrire un test de raccourci.** Les trois défauts successifs
+de « La phrase » n'étaient pas dans le contenu : ils étaient dans **ce que la mesure avait le droit de voir**.
+(1) le test ne montrait au solveur qu'une projection choisie par l'auteur ; (2) le solveur ignorait les deux
+traits qui décidaient vraiment ; (3) un autre test du même fichier **imposait** le raccourci qu'il prétendait
+interdire (exiger qu'une exclamation porte un mot d'intensité rend ce lexique exclusif aux `!`) ; (4) et un
+solveur dont la banque a changé peut tomber à **0 % de couverture** et faire passer le test en mesurant le
+vide. Les quatre passaient `npm test` en vert. D'où la règle : **un solveur de raccourci doit prouver sa
+couverture**, et un test ne doit jamais rendre un marqueur exclusif à une classe de réponse.
 
 **Règle du 07/10 : aucun nouveau ticket (jeu ou amélioration) sans l'accord de l'utilisateur.**
 Règle « Mixité » (CLAUDE.md) : textes épicènes, personnages variés — le jeu est pour filles et garçons.
