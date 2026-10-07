@@ -380,3 +380,17 @@
 @media (max-width: 520px) {
   .end__mascot { width: 96px; }
 }
+
+/* Bienvenue, « Qui joue ? » : une petite rangée de mascottes au-dessus du titre. */
+.mascot-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.mascot-row .mascot { width: 88px; }
+@media (max-width: 520px) {
+  .mascot-row { gap: var(--space-2); }
+  .mascot-row .mascot { width: 72px; }
+}

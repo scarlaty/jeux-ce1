@@ -2,6 +2,7 @@
 // Côté enfant : vocabulaire simple, aucune action irréversible sans confirmation.
 import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
+import { mascotSticker } from '../core/ui/mascot.js';
 import { avatarBubble } from '../core/ui/avatar.js';
 import { listProfiles, removeProfile } from '../core/profile.js';
 import { totals } from '../core/stats.js';
@@ -49,6 +50,8 @@ export default {
       });
 
       page.replaceChildren(
+        h('div', { class: 'mascot-row', 'aria-hidden': 'true' },
+          mascotSticker('mots', { face: 'happy' }), mascotSticker('ailleurs', { face: 'joyful', loop: 'bounce' })),
         h('h1', { class: 'page-title', text: 'Qui joue ?' }),
         h('p', { class: 'profiles__lead cursive', text: 'Touche ton prénom pour continuer ta progression.' }),
         h('ul', { class: 'profile-list' }, cards),

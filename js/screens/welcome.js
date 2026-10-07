@@ -5,6 +5,7 @@
 // Toute la logique (nettoyage du prénom, liste des avatars) est dans core/profile.js.
 import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
+import { mascotSticker } from '../core/ui/mascot.js';
 import {
   AVATARS, DEFAULT_AVATAR, MAX_NAME, cleanName, isValidName,
   createProfile, listProfiles, updateIdentity,
@@ -83,7 +84,13 @@ export default {
       app.navigate('/', { replace: mode.kind === 'welcome' });
     }
 
+    // Premier lancement : trois mascottes accueillent l'enfant ; ailleurs, une seule.
+    const greeters = mode.kind === 'welcome'
+      ? [['mots', 'happy'], ['nombres', 'joyful'], ['monde', 'happy']]
+      : [['ailleurs', 'happy']];
     const form = h('form', { class: 'card identity', novalidate: true, onsubmit: save },
+      h('div', { class: 'mascot-row', 'aria-hidden': 'true' },
+        greeters.map(([island, face], i) => mascotSticker(island, { face, loop: i === 1 || greeters.length === 1 ? 'bounce' : null }))),
       h('h1', { class: 'page-title identity__title', text: mode.title }),
       h('p', { class: 'identity__lead cursive', text: mode.lead }),
       h('div', { class: 'identity__row' },
