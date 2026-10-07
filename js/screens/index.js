@@ -20,6 +20,7 @@ export const SCREENS = [
   { path: '/jeu/:id', load: () => import('./play.js') },
   { path: '/defi', load: () => import('./daily.js'), title: 'Défi du jour' },
   { path: '/album', load: () => import('./album.js'), title: 'Mon album' },
+  { path: '/compagnon', load: () => import('./compagnon.js'), title: 'Mon compagnon' },
   { path: '/parents', load: () => import('./parents.js'), title: 'Espace parents' },
   { path: '/bienvenue', load: () => import('./welcome.js'), title: 'Bienvenue !' },
   { path: '/profil', load: () => import('./profiles.js'), title: 'Qui joue ?' },

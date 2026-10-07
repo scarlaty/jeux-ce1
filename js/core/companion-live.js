@@ -1,0 +1,60 @@
+// Branchement du compagnon sur le moteur (#90), sur le modèle de rewards-live.js : on s'abonne à
+// `gameEvents` sans toucher à engine.js, et on écrit dans le profil une seule fois, à la fin.
+//
+//   companionSummary(session) → ce qui a changé à la fin de cette partie (ou null)
+import { gameEvents } from './engine.js';
+import { addRun, readCompanion, saveCompanion } from './companion.js';
+
+let context = null;   // { store, profileId }
+let last = null;      // { session, change }
+let installed = false;
+
+function onEnd({ session, result, extras }) {
+  if (!context) return;
+  let change = null;
+  try {
+    saveCompanion(context.store, context.profileId, (companion) => {
+      change = addRun(companion, { stars: result.stars });
+      return change.companion;
+    });
+  } catch (err) {
+    console.error('[companion] écriture du profil', err);
+    return;
+  }
+  last = { session, change };
+  const name = change.companion.name;
+  if (change.ready) extras.push({ icon: '🥚', text: 'Ton œuf est prêt à éclore !' });
+  else if (change.cracked) extras.push({ icon: '🥚', text: 'Ton œuf se fêle…' });
+  else if (change.grew) extras.push({ icon: '🌟', text: `${name} a grandi !` });
+}
+
+/** Installe le compagnon une fois pour toutes. `app` : le contexte de js/app.js (store, profileId). */
+export function installCompanion(app, { events = gameEvents } = {}) {
+  context = app;
+  if (installed) return;
+  installed = true;
+  events.on('end', onEnd);
+}
+
+/** Ce qui a changé pour le compagnon à la fin de `session` : `{ companion, stage, cracked, ready, grew }`. */
+export function companionSummary(session) {
+  return last && last.session === session ? last.change : null;
+}
+
+/** Compagnon actuel du profil actif. */
+export function currentCompanion() {
+  if (!context) return readCompanion(null);
+  try {
+    return readCompanion(context.store.getProfile(context.profileId));
+  } catch (err) {
+    console.error('[companion] lecture du profil', err);
+    return readCompanion(null);
+  }
+}
+
+/** Remise à zéro — pour les tests uniquement. */
+export function resetCompanionForTests() {
+  context = null;
+  last = null;
+  installed = false;
+}

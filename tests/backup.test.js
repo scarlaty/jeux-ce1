@@ -40,6 +40,7 @@ test('un aller-retour export/import conserve tous les champs du profil', () => {
     history: [{ t: Date.UTC(2026, 9, 5), game: 'sons', level: 1, score: 9, total: 10, durationMs: 60000, missed: ['son [ou]'] }],
     weekly: [{ week: Date.UTC(2026, 8, 28), game: 'sons', level: 1, games: 3, score: 24, total: 30, durationMs: 180000 }],
     rewards: normalizeRewards({ points: 1234, stickers: { nombres: ['de'] } }),
+    companion: { animal: 'bunny', name: 'Pompon', hatched: true, games: 12, stars: 31 },
   };
   store.updateProfile(id, (p) => ({ ...p, ...rich }));
   const before = store.getProfile(id);
@@ -209,4 +210,19 @@ test('describeBackup résume ce qui sera importé, avant d\'écrire', () => {
   const info = describeBackup(buildBackup(store, { now: 1 }));
   assert.equal(info.exportedAt, 1);
   assert.deepEqual(info.profiles.map((p) => [p.name, p.plays]), [['Léa', 2], ['Tom', 1]]);
+});
+
+test('un profil sans compagnon (ancienne sauvegarde) reçoit un œuf à l\'import', () => {
+  const old = { schemaVersion: SCHEMA_VERSION, id: 'p1', name: 'Léa', avatar: 'chat', createdAt: 0, progress: {}, history: [], weekly: [] };
+  const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: SCHEMA_VERSION, exportedAt: 0, activeProfileId: 'p1', profiles: [old] });
+  assert.equal(check.ok, true, check.error);
+  assert.deepEqual(check.backup.profiles[0].companion, { animal: 'cat', name: '', hatched: false, games: 0, stars: 0 });
+});
+
+test('un compagnon abîmé dans le fichier est nettoyé champ par champ', () => {
+  const hostile = { schemaVersion: SCHEMA_VERSION, id: 'p1', name: 'Léa', avatar: 'chat', createdAt: 0, progress: {}, history: [], weekly: [],
+    companion: { animal: 'dragon', name: '<img src=x>', hatched: true, games: 'beaucoup', stars: -5, extra: 'x' } };
+  const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: SCHEMA_VERSION, exportedAt: 0, activeProfileId: 'p1', profiles: [hostile] });
+  assert.equal(check.ok, true, check.error);
+  assert.deepEqual(check.backup.profiles[0].companion, { animal: 'cat', name: 'img srcx', hatched: true, games: 0, stars: 0 });
 });

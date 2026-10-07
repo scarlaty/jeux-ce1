@@ -4,6 +4,10 @@
 import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
 import { mascotSticker, islandFace } from '../core/ui/mascot.js';
+import { companionSticker } from '../core/ui/companion.js';
+import {
+  progressOf, progressText, readCompanion, readyToHatch, STAGE_LABELS, stageOf,
+} from '../core/companion.js';
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { GAMES, ISLANDS } from '../games/registry.js';
 import { getGameProgress } from '../core/history.js';
@@ -30,6 +34,21 @@ function rewardBar(rewards) {
         : h('span', { class: 'reward-bar__max', text: 'Tous les grades sont gagnés !' }),
       next && h('span', { class: 'reward-bar__next', text: `Encore ${plural(remaining, 'point')} pour devenir ${next.name}.` })),
     h('span', { class: 'reward-bar__go' }, icon('arrowRight', { size: 22 })));
+}
+
+/** Carte du compagnon (#90) : visible sur la carte, mène à « Mon compagnon ». Jamais triste, jamais pressé. */
+function companionCard(companion) {
+  const ready = readyToHatch(companion);
+  const { ratio } = progressOf(companion);
+  return h('a', { class: `pet-card${ready ? ' is-ready' : ''}`, href: '#/compagnon' },
+    companionSticker(companion, { loop: ready ? 'wobble' : null, className: 'pet-card__art' }),
+    h('span', { class: 'pet-card__body' },
+      h('span', { class: 'pet-card__name', text: companion.hatched ? companion.name : 'Mon œuf' }),
+      h('span', { class: 'pet-card__stage', text: STAGE_LABELS[stageOf(companion)] }),
+      h('span', { class: 'meter', role: 'img', 'aria-label': progressText(companion) },
+        h('span', { class: 'meter__fill', style: `--ratio: ${Math.min(1, ratio).toFixed(3)}` })),
+      h('span', { class: 'pet-card__text', text: progressText(companion) })),
+    h('span', { class: 'pet-card__go' }, icon('arrowRight', { size: 22 })));
 }
 
 /** Carte du défi du jour (#20). */
@@ -116,6 +135,7 @@ export default {
           h('span', { class: 'home__deco home__deco--right', 'aria-hidden': 'true' }, drawDeco({ shape: 'heart', face: 'joyful' }))),
         h('p', { class: 'home__subtitle cursive', text: 'Choisis une île et joue !' })),
       rewardBar(rewards),
+      companionCard(readCompanion(profile)),
       dailyCard(rewards, realGames.length > 0),
       h('div', { class: 'map' },
         h('div', { class: 'map__sea', 'aria-hidden': 'true' }),
