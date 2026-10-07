@@ -4,7 +4,7 @@ import game from '../../js/games/phrase.js';
 import {
   SIMPLE, PONCT_SHORT, PONCT_LONG, CONTEXTS, ORDER_2, ORDER_3, signOf, words, withoutSign,
 } from '../../js/data/phrases.js';
-import { checkGameShape, checkGenerator } from '../helpers/game-checks.js';
+import { checkGameShape, checkGenerator, checkNoSurfaceShortcut } from '../helpers/game-checks.js';
 import { createRng } from '../../js/core/random.js';
 import { buildQuestions } from '../../js/core/engine.js';
 
@@ -15,7 +15,8 @@ const DET = ['le', 'la', 'les', 'un', 'une', 'des', 'mon', 'ma', 'mes', 'ton', '
 // Mots qui se déplacent dans la phrase ou lient deux groupes échangeables : interdits dans les phrases à ranger.
 const MOBILE = /^(hier|demain|aujourd'hui|souvent|toujours|encore|maintenant|ensuite|puis|parfois|et|ou|mais|car|donc|aussi|tout|tous|matin|soir)$/;
 
-for (const [name, pool, min, max] of [['ORDER_2', ORDER_2, 4, 5], ['ORDER_3', ORDER_3, 6, 7]]) {
+// Niveau 2 : au moins 5 mots (3 mots du milieu ou plus → au moins 6 arrangements possibles, #107).
+for (const [name, pool, min, max] of [['ORDER_2', ORDER_2, 5, 6], ['ORDER_3', ORDER_3, 6, 7]]) {
   test(`${name} : forme des phrases à ranger`, () => {
     assert.ok(pool.length >= 30);
     assert.equal(new Set(pool).size, pool.length, 'phrases en double');
@@ -43,32 +44,77 @@ for (const [name, pool, min, max] of [['ORDER_2', ORDER_2, 4, 5], ['ORDER_3', OR
   });
 }
 
-test('les phrases à ranger de 4 à 7 mots ne se retrouvent pas d\'un niveau à l\'autre', () => {
+test('les phrases à ranger de 5 à 7 mots ne se retrouvent pas d\'un niveau à l\'autre', () => {
   assert.equal(ORDER_2.filter((s) => ORDER_3.includes(s)).length, 0);
 });
 
-test('ponctuation : signes, banques et phrases franches', () => {
-  for (const list of [PONCT_SHORT, PONCT_LONG]) {
-    for (const sign of ['.', '?', '!']) assert.ok(list.filter((p) => p.sign === sign).length >= 8, sign);
-    for (const { text, sign } of list) {
-      assert.match(text, /^[A-ZÀ-ÖÉ]/, text);
-      assert.equal(signOf(text), '', text);
-      if (sign === '?') assert.match(text, /^(Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce|\S+-(tu|il|elle|nous|vous|ils)\b)/, text);
-      if (sign === '!') assert.match(text, /^(Quel|Quelle|Comme|Que)\b/, text);
-      if (sign === '.') assert.doesNotMatch(text, /^(Quel|Quelle|Comme|Que|Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce)\b|-(tu|il|elle)\b/, text);
-    }
+test('ORDER_3 : le gabarit « Le/La nom de/du nom est adjectif » reste minoritaire (< 30 %, #107)', () => {
+  const open = ORDER_3.filter((s) => {
+    const w = words(s);
+    return (w[0] === 'Le' || w[0] === 'La') && w[2] && /^(de|du|d'|des)$/.test(w[2].toLowerCase());
+  });
+  const share = open.length / ORDER_3.length;
+  assert.ok(share < 0.3, `gabarit « Le/La N de/du... » : ${(100 * share).toFixed(1)} % (>= 30 %)`);
+});
+
+test('ponctuation niveau 1 (PONCT_SHORT) : phrases franches, le premier mot annonce le signe', () => {
+  for (const sign of ['.', '?', '!']) assert.ok(PONCT_SHORT.filter((p) => p.sign === sign).length >= 8, sign);
+  for (const { text, sign } of PONCT_SHORT) {
+    assert.match(text, /^[A-ZÀ-ÖÉ]/, text);
+    assert.equal(signOf(text), '', text);
+    if (sign === '?') assert.match(text, /^(Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce|\S+-(tu|il|elle|nous|vous|ils)\b)/, text);
+    if (sign === '!') assert.match(text, /^(Quel|Quelle|Comme|Que)\b/, text);
+    if (sign === '.') assert.doesNotMatch(text, /^(Quel|Quelle|Comme|Que|Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce)\b|-(tu|il|elle)\b/, text);
+  }
+});
+
+// Niveau 3 (PONCT_LONG) : contrairement au niveau 1, le premier mot ne doit PLUS suffire pour une bonne
+// part de la banque — « Comme » y introduit aussi une cause, « Que »/« Quel » une vraie question avec
+// verbe inversé (#107). On vérifie seulement la forme (majuscule, pas de signe déjà posé) ; le raccourci
+// du premier mot est mesuré plus bas par `checkNoSurfaceShortcut`.
+test('ponctuation niveau 3 (PONCT_LONG) : forme correcte, signes bien représentés', () => {
+  for (const sign of ['.', '?', '!']) assert.ok(PONCT_LONG.filter((p) => p.sign === sign).length >= 8, sign);
+  for (const { text } of PONCT_LONG) {
+    assert.match(text, /^[A-ZÀ-ÖÉ]/, text);
+    assert.equal(signOf(text), '', text);
   }
   const all = [...PONCT_SHORT, ...PONCT_LONG, ...CONTEXTS].map((p) => p.text);
   assert.equal(new Set(all).size, all.length, 'phrase en double entre les banques');
 });
 
-test('contextes : chaque signe est bien représenté, le contexte dit la situation', () => {
-  for (const sign of ['.', '?', '!']) assert.ok(CONTEXTS.filter((c) => c.sign === sign).length >= 10, sign);
-  for (const c of CONTEXTS) {
-    if (c.sign === '?') assert.match(c.context, /demande|veut savoir/, c.context);
-    if (c.sign === '!') assert.match(c.context, /s'écrie|surpris|étonné|content|heureuse|peur|joie|crie/, c.context);
-    if (c.sign === '.') assert.match(c.context, /raconte|explique|dit|présente/, c.context);
+test('contextes : chaque signe est bien représenté', () => {
+  for (const sign of ['.', '?', '!']) assert.ok(CONTEXTS.filter((c) => c.sign === sign).length >= 12, sign);
+});
+
+// Le défaut relevé par le juge (#107) : « demande »/« veut savoir » couvraient 35 contextes sur 36. On
+// vérifie maintenant qu'aucun verbe de parole ne domine un signe (diversité du vocabulaire du contexte).
+test('contextes : aucun verbe de parole ne domine un signe (diversité, #107)', () => {
+  const verbs = ['demande', 'veut savoir', 's\'écrie', 'crie', 'raconte', 'explique', 'questionne', 's\'interroge'];
+  for (const sign of ['.', '?', '!']) {
+    const items = CONTEXTS.filter((c) => c.sign === sign);
+    for (const v of verbs) {
+      const share = items.filter((c) => c.context.includes(v)).length / items.length;
+      assert.ok(share <= 0.3, `${sign} : « ${v} » dans ${(100 * share).toFixed(0)} % des contextes`);
+    }
   }
+});
+
+test('niveau 3 : un solveur de surface (premier mot, mot-clé) résout au plus la moitié de la ponctuation (#107)', () => {
+  function surfaceSolver({ cue }) {
+    const first = cue.split(' ')[0].toLowerCase();
+    if (['où', 'qui', 'quand', 'comment', 'pourquoi', 'combien'].includes(first)) return '?';
+    if (first === 'est-ce') return '?';
+    if (/^\S+-(tu|il|elle|nous|vous|ils)$/.test(first)) return '?';
+    if (['quel', 'quelle', 'comme', 'que'].includes(first)) return '!';
+    if (/demande|veut savoir/.test(cue)) return '?';
+    if (/s'écrie|crie|très|surpris|étonné|content|heureuse|peur|joie/.test(cue)) return '!';
+    return '.';
+  }
+  const items = [
+    ...PONCT_LONG.map(({ text, sign }) => ({ cue: text, answer: sign })),
+    ...CONTEXTS.map(({ context, sign }) => ({ cue: context, answer: sign })),
+  ];
+  checkNoSurfaceShortcut(items, surfaceSolver, { label: 'ponctuation niveau 3' });
 });
 
 test('« Est-ce une phrase ? » : les mélanges ne sont pas des phrases (début en majuscule, point final)', () => {
@@ -107,7 +153,7 @@ test('niveau 2 : ordre et recherche d\'erreur', () => {
   for (const q of questions(2)) {
     if (q.type === 'order') {
       assert.deepEqual([...q.display.items].sort(), [...q.answer].sort());
-      assert.ok(q.answer.length >= 4 && q.answer.length <= 5);
+      assert.ok(q.answer.length >= 5 && q.answer.length <= 6);
     } else {
       const t = q.display.show.text.replace(/\u00a0/g, ' ');
       const maj = /^[A-ZÀ-ÖÉ]/.test(t);
@@ -138,6 +184,16 @@ test('explications : jamais négatives, jamais vides, citent la phrase juste', (
     for (const q of questions(level, 300)) {
       assert.ok(q.explain.length > 25, q.key);
       assert.doesNotMatch(q.explain, /\bfaux\b|\bnul\b|\bmauvais/i, q.key);
+    }
+  }
+});
+
+test('explication de l\'ordre des mots : une stratégie refaisable de tête, pas juste la réponse (#107)', () => {
+  for (let level = 2; level <= 3; level++) {
+    const qs = questions(level, 300).filter((q) => q.type === 'order');
+    assert.ok(qs.length > 0, `niveau ${level} : aucune question « ordre »`);
+    for (const q of qs) {
+      assert.match(q.explain, /qui fait l'action/, q.key);
     }
   }
 });

@@ -1,7 +1,10 @@
-// La phrase (E5-T1, #35) : majuscule, signe final, types de phrases, remettre des mots dans l'ordre.
+// La phrase (E5-T1, #35 ; raccourcis corrigés #107) : majuscule, signe final, types de phrases,
+// remettre des mots dans l'ordre.
 //  Niveau 1 : « Est-ce une phrase ? » (majuscule, signe, sens) et choisir le signe de phrases très franches.
-//  Niveau 2 : remettre 4 ou 5 mots dans l'ordre ; trouver ce qui manque (majuscule, signe, rien).
-//  Niveau 3 : remettre 6 ou 7 mots dans l'ordre ; choisir . ? ! sur des phrases plus longues et en contexte.
+//  Niveau 2 : remettre 5 ou 6 mots dans l'ordre (au moins 3 mots du milieu, jamais un 50/50) ; trouver
+//             ce qui manque (majuscule, signe, rien).
+//  Niveau 3 : remettre 6 ou 7 mots dans l'ordre ; choisir . ? ! sur des phrases plus longues et en contexte,
+//             sans que le premier mot ou un mot-clé du contexte suffisent à deviner sans lire (#107).
 // Toutes les phrases sont écrites à la main (js/data/phrases.js) : jamais de phrase générée.
 import {
   SIMPLE, PONCT_SHORT, PONCT_LONG, CONTEXTS, ORDER_2, ORDER_3,
@@ -14,16 +17,29 @@ const quote = (s) => `« ${shown(s)} »`;
 const used = (seen, base) => Boolean(seen) && [...seen].some((k) => k.includes(`|${base}|`));
 const baseOf = (sentence) => withoutSign(sentence).toLowerCase();
 
-/** Indice sur le type de phrase, tiré du premier mot ou de la forme du verbe. */
+/**
+ * Indice sur le type de phrase. « Que » et « Quel » n'annoncent une exclamation QUE sans verbe inversé
+ * juste après : avec « Que fais-tu » ou « Quel gâteau préfères-tu », c'est une question (#107) — on ne
+ * classe donc plus un premier mot tout seul, on regarde s'il y a un verbe collé à « tu/il/elle/nous/
+ * vous/ils » n'importe où dans la phrase.
+ */
 function cue(text, sign) {
   const first = text.split(' ')[0].toLowerCase();
+  const hasInversion = /\S+-(tu|il|elle|nous|vous|ils)\b/i.test(text);
   if (sign === '?') {
     if (['où', 'qui', 'quand', 'comment', 'pourquoi', 'combien'].includes(first)) return ` Le mot « ${first} » annonce une question.`;
     if (first === 'est-ce') return ' « Est-ce que » annonce une question.';
-    if (/^\S+-(tu|il|elle|nous|vous|ils)$/.test(first)) return ' Le verbe est collé à « tu » (veux-tu, as-tu) : c\'est une question.';
+    if (hasInversion) {
+      return first === 'que' || first === 'quel' || first === 'quelle'
+        ? ` Il y a un verbe collé à « tu » (ou « il »…) juste après « ${text.split(' ')[0]} » : c\'est quand même une question.`
+        : ' Le verbe est collé à « tu » (veux-tu, as-tu) : c\'est une question.';
+    }
   }
-  if (sign === '!' && ['quel', 'quelle', 'comme', 'que'].includes(first)) {
+  if (sign === '!' && ['quel', 'quelle', 'comme', 'que'].includes(first) && !hasInversion) {
     return ` Le mot « ${first} » annonce souvent une exclamation.`;
+  }
+  if (sign === '.' && first === 'comme' && /,/.test(text)) {
+    return ' Ici, « Comme » veut dire « parce que » : la virgule annonce une deuxième phrase, pas une exclamation.';
   }
   return '';
 }
@@ -122,6 +138,7 @@ function order(pool, rng, seen, level) {
     display: { items, cursive: true },
     answer: right,
     explain: `La phrase commence par le mot qui a une majuscule et finit par le mot qui a ${SIGN_NAMES[sign]}. `
+      + 'Entre les deux : cherche qui fait l\'action, puis ce qu\'il fait, puis le reste. '
       + `Voilà la phrase : ${quote(sentence)}`,
     skill: 'remettre les mots dans l\'ordre',
   };
@@ -199,7 +216,7 @@ export default {
   ],
   levels: [
     { label: 'Niveau 1', hint: 'Est-ce une phrase ? Le bon signe' },
-    { label: 'Niveau 2', hint: '4 ou 5 mots à ranger, trouver ce qui manque' },
+    { label: 'Niveau 2', hint: '5 ou 6 mots à ranger, trouver ce qui manque' },
     { label: 'Niveau 3', hint: '6 ou 7 mots à ranger, . ? ! en contexte' },
   ],
   makeQuestion(level, rng, seen) {

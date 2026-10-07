@@ -1,5 +1,5 @@
-// Banque de phrases du jeu « La phrase » (E5-T1, #35). TOUT est écrit à la main et relu phrase par phrase :
-// aucune phrase n'est générée. Vocabulaire d'un enfant de 7 ans.
+// Banque de phrases du jeu « La phrase » (E5-T1, #35 ; raccourcis corrigés #107). TOUT est écrit
+// à la main et relu phrase par phrase : aucune phrase n'est générée. Vocabulaire d'un enfant de 7 ans.
 //
 // Règles de rédaction (vérifiées par tests/games/phrase.test.js) :
 //  - Remettre dans l'ordre : UNE SEULE phrase correcte avec ces mots. Le premier mot garde sa majuscule et
@@ -7,8 +7,16 @@
 //    (« hier », « ce soir »…), pas de « et / ou / mais », pas de prénom au milieu (une 2e majuscule trompe),
 //    et jamais deux groupes de mots échangeables (« Le chat griffe le canapé » → « Le canapé griffe le chat »).
 //    Pour cela : le 2e groupe nominal a un autre genre ou un autre nombre que le 1er, ou il n'y en a qu'un.
+//    Niveau 2 : au moins 5 mots (3 mots « du milieu » ou plus → au moins 6 arrangements possibles, on ne
+//    gagne plus une fois sur deux en tirant au hasard, #107). Niveau 3 : le gabarit d'ouverture
+//    « Le/La nom de/du nom est adjectif » reste minoritaire (moins de 30 % de la banque, #107).
 //  - Ponctuation : phrases franches (« Quel beau gâteau ! », « Où est mon sac ? »). Une déclarative est un fait
 //    simple, où « ! » serait étrange. En contexte (niveau 3), c'est la situation qui décide.
+//  - Niveau 3, ponctuation (#107) : un enfant qui devine le signe au premier mot ou à un mot-clé du contexte,
+//    sans lire la phrase, doit réussir au plus une fois sur deux. PONCT_LONG mélange donc des phrases franches
+//    (« Pourquoi… », « Quel… ») et des phrases où « Comme » (= parce que), « Que » ou « Quel » annoncent un
+//    AUTRE signe que d'habitude — la phrase entière tranche, jamais son premier mot seul. CONTEXTS varie ses
+//    verbes de parole (bien au-delà de « demande » et « s'écrie ») pour qu'aucun mot-clé isolé ne suffise.
 
 /** Dernier signe d'une phrase ('.', '?' ou '!'), sinon ''. */
 export const signOf = (sentence) => (/[.?!]$/.test(sentence) ? sentence.slice(-1) : '');
@@ -16,13 +24,13 @@ export const signOf = (sentence) => (/[.?!]$/.test(sentence) ? sentence.slice(-1
 /** Les signes sont collés au dernier mot par une espace insécable : on ne les sépare jamais. */
 export const typo = (sentence) => sentence.replace(/ ([?!])/g, ' $1');
 
-/** Mots d'une phrase écrite « Où est mon sac ? » → ['Où', 'est', 'mon', 'sac ?']. */
+/** Mots d'une phrase écrite « Où est mon sac ? » → ['Où', 'est', 'mon', 'sac ?']. */
 export function words(sentence) {
   return typo(sentence).split(' ');
 }
 
 /** « Le chat dort. » → « Le chat dort » (le signe est enlevé, l'espace insécable aussi). */
-export const withoutSign = (sentence) => sentence.replace(/[\s ]*[.?!]$/, '');
+export const withoutSign = (sentence) => sentence.replace(/[\s ]*[.?!]$/, '');
 
 /** Met la phrase au format affiché (espace insécable avant ? et !). */
 export const shown = typo;
@@ -92,111 +100,150 @@ export const PONCT_SHORT = [
 ];
 
 // --- Niveau 3 : ponctuation, phrases plus longues, sans contexte -----------------------------------------
+// Un solveur qui devine au premier mot (comme au niveau 1) ne doit plus suffire : « Comme » introduit ici
+// une cause (« Comme il pleut, … ») et pas une exclamation ; « Que » et « Quel » annoncent une vraie
+// question quand le verbe est inversé juste après (« Que fais-tu », « Quel gâteau préfères-tu »). La
+// virgule qui suit « Comme » au début d'une déclarative est l'indice qui tranche : une deuxième phrase
+// complète la suit, ce que ne fait jamais le « Comme » de l'exclamation.
 export const PONCT_LONG = [
   ...rows('.', [
-    'Les enfants rangent leurs affaires avant la sortie', 'Ma grand-mère habite dans une petite maison',
-    'Le facteur passe tous les jours dans notre rue', 'Nous mangeons de la soupe chaude ce soir',
-    'Mon frère apprend à nager à la piscine', 'La maîtresse corrige les cahiers de la classe',
+    'Comme prévu, le bus arrive à huit heures', 'Comme chaque matin, Tom prend son petit-déjeuner',
+    'Comme il pleut, nous restons à la maison', 'Comme elle est fatiguée, Léa se couche tôt',
+    'Comme il fait nuit, on allume la lampe', 'Comme c\'est samedi, papa ne travaille pas',
+    'Comme il fait froid dehors, je mets un manteau', 'Comme la cloche sonne, les enfants sortent',
     'Les oiseaux construisent leur nid dans l\'arbre', 'Papa répare le vélo de ma sœur',
   ]),
   ...rows('?', [
-    'Pourquoi le ciel est-il bleu', 'Où as-tu rangé ton cartable bleu', 'Est-ce que tu viens manger avec nous',
-    'Quand vas-tu chez ta grand-mère', 'Qui a laissé la porte ouverte', 'Comment fais-tu ce beau dessin',
-    'Veux-tu venir jouer chez moi', 'Combien de pommes y a-t-il dans le panier',
+    'Que fais-tu après l\'école', 'Quel gâteau préfères-tu pour ton anniversaire',
+    'Que choisis-tu comme dessert', 'Quelle couleur préfères-tu pour ta chambre',
+    'Pourquoi le ciel est-il bleu', 'Où as-tu rangé ton cartable bleu',
+    'Quand vas-tu chez ta grand-mère', 'Qui a laissé la porte ouverte',
+    'Comment fais-tu ce beau dessin', 'Combien de pommes y a-t-il dans le panier',
   ]),
   ...rows('!', [
-    'Quel beau dessin tu as fait', 'Comme ce chat est doux', 'Que cette glace est bonne',
-    'Comme tu cours vite', 'Quelle grande maison tu as', 'Comme ce petit chien est mignon',
-    'Quelle belle surprise', 'Que ce gâteau sent bon',
+    'Bravo, tu as gagné la course', 'Waouh, quel beau château de sable',
+    'Ouah, ce gâteau est énorme', 'Chouette, il neige dehors',
+    'Dis donc, quelle grande maison', 'Miam, ce gâteau sent bon',
+    'Hourra, nous avons gagné le match', 'Génial, on part en vacances',
+    'Quel beau dessin tu as fait', 'Comme tu cours vite',
   ]),
 ];
 
-// --- Niveau 3 : ponctuation en contexte. La phrase est neutre ; la situation décide du signe. ----------
+// --- Niveau 3 : ponctuation en contexte. La situation décide du signe, pas un mot-clé répété ------------
+// Chaque signe est annoncé par une bonne quinzaine de verbes différents (chuchote, questionne, rayonne,
+// sursaute, précise, énumère…) : un enfant qui n'a mémorisé que « demande » ou « s'écrie » doit lire la
+// scène en entier pour choisir, comme au niveau 1 il devait lire la phrase entière pour le sens (#107).
 const ctx = (sign, list) => list.map(([context, text]) => ({ context, text, sign }));
 
 export const CONTEXTS = [
+  ...ctx('?', [
+    ['Léa demande à sa maman si elle peut jouer.', 'Je peux jouer dehors'],
+    ['Tom se demande si son ami va venir.', 'Tu viens avec nous'],
+    ['Mia hésite puis interroge son frère.', 'Tu as vu mon sac'],
+    ['Papa veut savoir si Léa a faim.', 'Tu as faim'],
+    ['Emma chuchote sa question à la maîtresse.', 'Je peux aller aux toilettes'],
+    ['Lucas questionne son ami du regard.', 'Tu as terminé ton dessin'],
+    ['Un enfant lève la main pour savoir.', 'C\'est l\'heure de partir'],
+    ['Mamie penche la tête, curieuse du goûter.', 'Le gâteau est bon'],
+    ['Léa fixe Tom, intriguée par son animal.', 'Tu as un chat'],
+    ['Maman observe les mains des enfants et s\'interroge.', 'Vous avez lavé vos mains'],
+    ['Tom aimerait bien savoir, pour aller nager.', 'La piscine est ouverte'],
+    ['Papa regarde la chambre de Léa, dubitatif.', 'Tu as rangé ta chambre'],
+    ['Sacha n\'est pas sûr et questionne Inès.', 'Tu as fini tes devoirs'],
+    ['Nino se gratte la tête, perplexe.', 'Il reste du gâteau'],
+    ['Inès attend une réponse de sa sœur.', 'Tu veux venir avec moi'],
+  ]),
   ...ctx('.', [
     ['Léa raconte sa journée à sa maman.', 'Je suis allée à la piscine'],
     ['Papa dit simplement ce qu\'il prépare.', 'Je fais des crêpes'],
     ['La maîtresse explique la leçon.', 'Nous apprenons les tables'],
     ['Tom dit son âge à un nouvel ami.', 'J\'ai sept ans'],
-    ['Mia dit simplement ce qu\'elle voit par la fenêtre.', 'Il y a un oiseau sur le toit'],
-    ['Un enfant dit le temps qu\'il fait.', 'Il pleut ce matin'],
-    ['Mamie raconte son voyage.', 'Nous avons vu la mer'],
-    ['Lucas dit où habite son ami.', 'Mon ami habite près de l\'école'],
-    ['Léa dit simplement ce qu\'elle mange.', 'Je mange une pomme'],
-    ['Papa dit l\'heure du départ.', 'Nous partons à huit heures'],
-    ['Emma explique son jeu à sa cousine.', 'On joue avec des cartes'],
-    ['Un enfant se présente.', 'Je m\'appelle Tom'],
-    ['Le maître dit ce qu\'il voit.', 'Les enfants sont dans la cour'],
-  ]),
-  ...ctx('?', [
-    ['Léa demande à sa maman si elle peut jouer.', 'Je peux jouer dehors'],
-    ['Tom veut savoir si son ami vient.', 'Tu viens avec nous'],
-    ['Mia demande à son frère s\'il a vu son sac.', 'Tu as vu mon sac'],
-    ['Papa veut savoir si Léa a faim.', 'Tu as faim'],
-    ['Emma demande à la maîtresse si elle peut sortir.', 'Je peux aller aux toilettes'],
-    ['Lucas demande à un ami s\'il a fini.', 'Tu as terminé ton dessin'],
-    ['Un enfant demande si c\'est l\'heure de partir.', 'C\'est l\'heure de partir'],
-    ['Mamie veut savoir si le gâteau est bon.', 'Le gâteau est bon'],
-    ['Léa demande à Tom s\'il a un chat.', 'Tu as un chat'],
-    ['Maman veut savoir si les enfants ont lavé leurs mains.', 'Vous avez lavé vos mains'],
-    ['Tom demande si la piscine est ouverte.', 'La piscine est ouverte'],
-    ['Papa veut savoir si Léa a rangé sa chambre.', 'Tu as rangé ta chambre'],
+    ['Mia regarde par la fenêtre et commente.', 'Il y a un oiseau sur le toit'],
+    ['Un enfant annonce le temps qu\'il fait.', 'Il pleut ce matin'],
+    ['Mamie raconte son voyage à la mer.', 'Nous avons vu la mer'],
+    ['Lucas indique où habite son ami.', 'Mon ami habite près de l\'école'],
+    ['Léa énumère ce qu\'elle a dans son assiette.', 'Je mange une pomme'],
+    ['Papa précise l\'heure du départ.', 'Nous partons à huit heures'],
+    ['Emma montre ses cartes et explique son jeu.', 'On joue avec des cartes'],
+    ['Un enfant se présente à la classe.', 'Je m\'appelle Tom'],
+    ['Le maître décrit ce qu\'il voit dans la cour.', 'Les enfants sont dans la cour'],
+    ['Zoé raconte calmement sa matinée.', 'Nous avons fait du vélo'],
+    ['Hugo note ce que dit la maîtresse.', 'Nous lisons un livre'],
   ]),
   ...ctx('!', [
     ['Léa voit un énorme gâteau et s\'écrie.', 'C\'est un énorme gâteau'],
-    ['Tom est très content : il a gagné et crie de joie.', 'J\'ai gagné'],
-    ['Mia s\'écrie en voyant un gros chien.', 'Il est énorme'],
-    ['Léa frissonne et s\'écrie.', 'Il fait froid'],
-    ['Emma voit un arc-en-ciel et s\'écrie.', 'C\'est magnifique'],
-    ['Papa goûte le gâteau et dit sa joie.', 'Il est délicieux'],
-    ['Tom s\'écrie, tout content, en voyant la neige.', 'Il neige'],
-    ['Mamie est très heureuse de voir ses petits-enfants.', 'Vous êtes là'],
-    ['Tom a très peur d\'une grosse araignée et crie.', 'Elle est énorme'],
-    ['Emma est très contente de son cadeau.', 'Il est magnifique'],
-    ['Lucas s\'écrie en voyant un énorme poisson.', 'Il est gigantesque'],
+    ['Tom a gagné et saute de joie.', 'J\'ai gagné'],
+    ['Mia aperçoit un gros chien et sursaute.', 'Il est énorme'],
+    ['Léa frissonne tout à coup.', 'Il fait froid'],
+    ['Emma voit un arc-en-ciel et bondit.', 'C\'est magnifique'],
+    ['Papa goûte le gâteau et rayonne.', 'Il est délicieux'],
+    ['Tom applaudit en voyant la neige.', 'Il neige'],
+    ['Mamie serre ses petits-enfants dans ses bras.', 'Vous êtes là'],
+    ['Tom recule devant une grosse araignée.', 'Elle est énorme'],
+    ['Emma serre son cadeau contre elle.', 'Il est magnifique'],
+    ['Lucas écarquille les yeux devant le poisson.', 'Il est gigantesque'],
+    ['Nino pousse un cri de joie en ouvrant la boîte.', 'Il y a un chiot'],
+    ['Zoé tape des mains devant le feu d\'artifice.', 'C\'est splendide'],
+    ['Hugo bondit de son lit, tout excité.', 'C\'est le jour de son anniversaire'],
+    ['Inès pousse un cri de joie soudaine.', 'Le gâteau est énorme'],
   ]),
 ];
 
-// --- Remettre dans l'ordre : 4 ou 5 mots (niveau 2) ----------------------------------------------------
+// --- Remettre dans l'ordre : 5 ou 6 mots (niveau 2) ----------------------------------------------------
+// Au moins 5 mots : une fois le premier (majuscule) et le dernier (signe) repérés, il reste encore au
+// moins 3 mots du milieu à placer, donc au moins 6 arrangements possibles — plus moyen de trouver la
+// bonne réponse une fois sur deux par hasard (#107).
 export const ORDER_2 = [
-  'Papa lit le journal.', 'Léa mange une pomme.', 'Le chat boit du lait.', 'Maman prépare le dîner.',
-  'Nous jouons dans la cour.', 'Tom range ses jouets.', 'Mon frère a une trottinette.',
-  'Le lapin mange une carotte.', 'Ma sœur dessine un cheval.', 'Le facteur apporte une lettre.',
-  'La poule pond un œuf.', 'L\'enfant ouvre la porte.', 'Le chat attrape une souris.',
-  'Papa conduit la voiture.', 'Nous mangeons des fraises.', 'Ils lisent un livre.',
-  'Je prends mon cartable.', 'Elle porte une robe rouge.', 'Les fleurs sont belles.',
-  'La glace est froide.', 'Mon chien est gentil.', 'Mathis ouvre son cahier.', 'La vache donne du lait.',
-  'Le petit chat dort.', 'Un gros camion passe.', 'Elle cueille des fleurs jaunes.', 'Le chien ronge un os.',
-  'Nous avons un chat.', 'Tu as une belle robe.', 'Le boulanger vend du pain.', 'Lola range sa chambre.',
-  'Le singe mange une banane.', 'Les enfants dessinent un soleil.', 'Mamie tricote une écharpe.',
-  'Tom lance le ballon.', 'Papa lave la voiture.',
-  'Où est mon cartable ?', 'Où est ma trousse ?', 'Qui a pris mon crayon ?', 'Aimes-tu manger des fraises ?',
-  'Veux-tu venir jouer avec moi ?', 'As-tu un crayon rouge ?', 'Est-ce que tu as faim ?', 'Vas-tu à la grande piscine ?',
-  'Comme il fait froid !', 'Comme ce bébé est mignon !', 'Que ce chien est gros !', 'Comme tu es grand !',
-  'Comme ta robe est jolie !', 'Comme ce gâteau est bon !', 'Quelle belle glace tu manges !',
+  'Papa lit le grand journal.', 'Léa mange une pomme verte.', 'Le chat boit du lait chaud.',
+  'Maman prépare un bon dîner.', 'Nous jouons dans la grande cour.', 'Tom range ses jouets rouges.',
+  'Mon frère a une jolie trottinette.', 'Le lapin mange une grosse carotte.', 'Ma sœur dessine un beau cheval.',
+  'Le facteur apporte une longue lettre.', 'La poule pond un petit œuf.', 'L\'enfant ouvre la lourde porte.',
+  'Le chat attrape une petite souris.', 'Papa conduit la vieille voiture.', 'Nous mangeons des fraises sucrées.',
+  'Ils lisent un livre très drôle.', 'Je prends mon gros cartable.', 'Elle porte une robe rouge.',
+  'Les fleurs sont très belles.', 'La glace est très froide.', 'Mon chien est très gentil.',
+  'Mathis ouvre son cahier bleu.', 'La vache donne du lait frais.', 'Le petit chat gris dort.',
+  'Un gros camion rouge passe.', 'Elle cueille des fleurs jaunes.', 'Le chien ronge un gros os.',
+  'Nous avons un petit chat.', 'Tu as une belle robe.', 'Le boulanger vend du pain chaud.',
+  'Lola range sa petite chambre.', 'Le singe mange une grosse banane.', 'Les enfants dessinent un beau soleil.',
+  'Mamie tricote une longue écharpe.', 'Tom lance le gros ballon.', 'Papa lave la petite voiture.',
+  'Où est mon gros cartable ?', 'Où est ma petite trousse ?', 'Qui a pris mon crayon ?',
+  'Aimes-tu manger des fraises rouges ?', 'Veux-tu venir jouer avec moi ?', 'As-tu un joli crayon rouge ?',
+  'Est-ce que tu as faim ?', 'Vas-tu à la grande piscine ?',
+  'Comme il fait très froid !', 'Comme ce bébé est mignon !', 'Que ce chien est gros !',
+  'Comme tu es très grand !', 'Comme ta robe est jolie !', 'Comme ce gâteau est bon !',
+  'Quelle belle glace tu manges !',
 ];
 
 // --- Remettre dans l'ordre : 6 ou 7 mots (niveau 3) ----------------------------------------------------
+// Le gabarit « Le/La nom de/du nom est adjectif » (« Le cartable de ma sœur est rouge. ») ne dépasse plus
+// 30 % de la banque : la plupart des phrases ont une autre ouverture (sujet + verbe, négation, question,
+// exclamation…) pour qu'il ne suffise plus de reconnaître ce début pour ranger les mots sans réfléchir (#107).
 export const ORDER_3 = [
-  'Le cartable de ma sœur est rouge.', 'Le chat de ma sœur dort.', 'Le gâteau de ma tante est bon.',
-  'Le sac de ma maîtresse est lourd.', 'Le jardin de mamie est grand.', 'Le ballon de ma cousine est rond.',
-  'La poupée de mon frère est jolie.', 'La voiture de mon père est bleue.', 'La maison de mon ami est grande.',
-  'La chambre de mon frère est petite.', 'Le stylo de ma maîtresse est vert.', 'Le tableau de la classe est noir.',
-  'Le bus de l\'école est jaune.', 'Le toit de la maison est rouge.', 'Le cahier de ma sœur est bleu.',
-  'La queue du chat est longue.', 'La porte de l\'école est ouverte.', 'La couverture du livre est jaune.',
-  'La cour de l\'école est grande.', 'Le vélo de ma cousine est rouge.', 'La fenêtre du salon est ouverte.',
-  'Le gilet de mamie est rose.', 'Le chien de la voisine aboie.', 'Le bébé de ma voisine dort.',
-  'Le livre de ma sœur est drôle.', 'Le manteau de ma maman est chaud.', 'Le goûter de ma sœur est prêt.',
+  'Le cartable de ma sœur est rouge.', 'Le gâteau de ma tante est bon.',
+  'Le jardin de mamie est grand.', 'La poupée de mon frère est jolie.',
+  'La voiture de mon père est bleue.', 'La maison de mon ami est grande.',
+  'Le tableau de la classe est noir.', 'Le bus de l\'école est jaune.',
+  'La queue du chat est longue.', 'La couverture du livre est jaune.',
+  'Le vélo de ma cousine est rouge.', 'Le gilet de mamie est rose.',
+  'Le livre de ma sœur est drôle.',
+  'Mon chat gris dort sur le lit.', 'Ma cousine a un gros ballon rond.',
+  'Mon père conduit une voiture bleue.', 'Mon frère range sa petite chambre.',
+  'La classe a un grand tableau noir.', 'Ma maîtresse a un beau stylo vert.',
+  'La voisine a un chien qui aboie.', 'Ma voisine a un bébé qui dort.',
+  'Notre école a une grande cour.', 'Le salon a une fenêtre ouverte.',
   'Nous avons mangé une tarte aux pommes.', 'Mon frère a lu une histoire rigolote.',
   'Mon petit frère joue avec sa balle.', 'La petite souris mange un gros fromage.',
-  'Le chat dort sur une chaise.', 'Nous allons à la grande piscine.', 'Le facteur apporte une lettre bleue.',
-  'Papa ne mange pas de fromage.', 'Léa a mis sa robe rouge.', 'Je vais manger une pomme verte.',
-  'Tu vas jouer avec ta sœur.', 'Nous ne jouons pas dans la cour.', 'Mon chien ne mange pas ses croquettes.',
-  'Léa dessine un gros soleil jaune.',
-  'Est-ce que tu as un crayon rouge ?', 'Est-ce que tu as mangé une pomme ?', 'Est-ce que tu veux une pomme ?',
-  'Est-ce que ta sœur aime les pommes ?', 'Est-ce que tu veux manger une pomme ?',
-  'Comme ton petit chat est mignon !', 'Comme ma petite sœur est gentille !', 'Quel beau gâteau tu as fait !',
-  'Quel gros poisson tu as pêché !', 'Comme ce petit chien est drôle !', 'Que ma petite sœur est drôle !',
+  'Le chat dort sur une chaise.', 'Nous allons à la grande piscine.',
+  'Le facteur apporte une lettre bleue.', 'Papa ne mange pas de fromage.',
+  'Léa a mis sa robe rouge.', 'Je vais manger une pomme verte.',
+  'Tu vas jouer avec ta sœur.', 'Nous ne jouons pas dans la cour.',
+  'Mon chien ne mange pas ses croquettes.', 'Léa dessine un gros soleil jaune.',
+  'Zoé n\'aime pas le poisson froid.', 'Hugo ne range jamais ses billes.',
+  'Mia a perdu son gant rouge.', 'Nino a caché son dessin préféré.',
+  'Est-ce que tu as un crayon rouge ?', 'Est-ce que tu as mangé une pomme ?',
+  'Est-ce que tu veux une pomme ?', 'Est-ce que ta sœur aime les pommes ?',
+  'Pourquoi ton cartable est-il si lourd ?', 'Comment fais-tu ce très beau collier ?',
+  'Comme ton petit chat est mignon !', 'Comme ma petite sœur est gentille !',
+  'Quel beau gâteau tu as fait !', 'Quel gros poisson tu as pêché !',
+  'Comme ce petit chien est drôle !', 'Que ma petite sœur est drôle !',
 ];

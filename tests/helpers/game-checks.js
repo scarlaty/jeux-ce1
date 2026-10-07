@@ -151,4 +151,4 @@ export function checkCluesNeeded(questions, accessors, {
   return m;
 }
 
-export { checkNoLengthShortcut, checkNoPromptEcho } from './shortcut-checks.js';
+export { checkNoLengthShortcut, checkNoPromptEcho, checkNoSurfaceShortcut } from './shortcut-checks.js';

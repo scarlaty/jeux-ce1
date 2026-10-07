@@ -31,3 +31,17 @@ export function checkNoPromptEcho(items, { max = 0.1, label = 'banque' } = {}) {
   assert.ok(share <= max, `${label} : ${(100 * share).toFixed(1)} % des bonnes réponses recopient seules la consigne (${bad.map((b) => b.id).join(', ')})`);
   return share;
 }
+
+/**
+ * Un « solveur de surface » devine la réponse sans comprendre l'énoncé : premier mot, mot-clé répété,
+ * position... Mesure la part des items où `solver(item)` tombe juste par ce raccourci ; `max` est le
+ * seuil à ne pas dépasser (grille du juge pédagogie, §2 bis). Relevé sur « La phrase » (#107) : au
+ * niveau 3, un solveur ne regardant que le premier mot du contexte ou de la phrase résolvait 98 % des
+ * questions de ponctuation sans les lire.
+ */
+export function checkNoSurfaceShortcut(items, solver, { max = 0.5, label = 'banque' } = {}) {
+  const hits = items.filter((i) => solver(i) === i.answer);
+  const share = hits.length / items.length;
+  assert.ok(share <= max, `${label} : un solveur de surface résout ${(100 * share).toFixed(1)} % des items (> ${100 * max} %)`);
+  return share;
+}
