@@ -8,10 +8,10 @@ import {
   GRADES, gradeRank, gradeFor, gradeProgress, gradeGained,
   STICKERS, STICKER_ISLANDS, islandStickers, findSticker, stickersWon, nextStickers,
   defaultRewards, normalizeRewards, readRewards, stickerCount, stickerTotal, applyGameRewards,
-  DAILY_QUESTIONS, dailyKey, dailySeed, hashString, isDailyDone,
+  DAILY_QUESTIONS, dailyKey, dailySeed, hashString, isDailyDone, buildDailyPlan, DISCOVERY_MAX_PLAYS,
   gameStars, totalStars, ISLAND_UNLOCK_STARS, islandUnlocked, islandStarsLeft, islandUnlockStars,
 } from '../js/core/rewards.js';
-import { ISLANDS } from '../js/games/registry.js';
+import { ISLANDS, GAMES } from '../js/games/registry.js';
 
 // --- Points ------------------------------------------------------------------------------------
 
@@ -264,4 +264,125 @@ test('les îles s\'ouvrent au fil des étoiles, dans l\'ordre de la carte', () =
   assert.equal(islandStarsLeft(last, 1000), 0);
   // Une île inconnue n'est jamais bloquante.
   assert.equal(islandUnlocked('nulle-part', 0), true);
+});
+
+// --- Défi du jour : sélection variée (#94) ------------------------------------------------------
+//
+// Avant le correctif, une question piochait un JEU au hasard, à poids égal : avec 6 jeux de
+// français, 6 de maths, 1 d'anglais et 1 de monde, l'anglais et le monde n'apparaissaient presque
+// jamais. `buildDailyPlan` doit tirer par MATIÈRE d'abord.
+
+test('un seul jeu disponible : le défi fonctionne quand même, sans question de découverte', () => {
+  const entries = [{ id: 'a', subject: 'français', maxLevel: 3, plays: 40 }];
+  const plan = buildDailyPlan(entries, 1, { count: 5 });
+  assert.equal(plan.length, 5);
+  assert.ok(plan.every((s) => s.id === 'a' && !s.discovery));
+  assert.ok(plan.every((s) => s.level >= 1 && s.level <= 3));
+});
+
+test('même graine, même liste de jeux : toujours le même plan (le défi est stable toute la journée)', () => {
+  const entries = [
+    { id: 'a', subject: 'français', maxLevel: 2, plays: 10 },
+    { id: 'b', subject: 'maths', maxLevel: 2, plays: 10 },
+  ];
+  assert.deepEqual(buildDailyPlan(entries, 12345), buildDailyPlan(entries, 12345));
+  assert.notDeepEqual(buildDailyPlan(entries, 1), buildDailyPlan(entries, 2));
+});
+
+test('aucun jeu : pas de plan (l\'écran affiche « bientôt »)', () => {
+  assert.deepEqual(buildDailyPlan([], 1), []);
+});
+
+test('deux matières déjà bien jouées : le brassage mélange les deux sans réserver de découverte', () => {
+  const entries = [
+    { id: 'a', subject: 'français', maxLevel: 1, plays: 40 },
+    { id: 'b', subject: 'maths', maxLevel: 1, plays: 40 },
+  ];
+  for (let seed = 0; seed < 50; seed++) {
+    const plan = buildDailyPlan(entries, seed, { count: 5 });
+    assert.equal(plan.length, 5);
+    assert.ok(plan.every((s) => !s.discovery), 'tout a été beaucoup joué : pas de découverte');
+    const subjects = new Set(plan.map((s) => (s.id === 'a' ? 'français' : 'maths')));
+    assert.equal(subjects.size, 2, `défi monomatière à la graine ${seed}`);
+  }
+});
+
+test('un jeu jamais ouvert devient la question de découverte, posée au niveau 1', () => {
+  const entries = [
+    { id: 'jamais-joue', subject: 'anglais', maxLevel: 1, plays: 0 },
+    { id: 'tables', subject: 'maths', maxLevel: 3, plays: 50 },
+    { id: 'sons', subject: 'français', maxLevel: 3, plays: 50 },
+  ];
+  const plan = buildDailyPlan(entries, 7, { count: 5 });
+  const discovery = plan.filter((s) => s.discovery);
+  assert.equal(discovery.length, 1, 'une seule question de découverte');
+  assert.equal(discovery[0].id, 'jamais-joue');
+  assert.equal(discovery[0].level, 1);
+  // Le jeu jamais ouvert apparaît dans le défi : c'est exactement le bug corrigé par #94.
+  assert.ok(plan.some((s) => s.id === 'jamais-joue'));
+});
+
+test('tout a déjà été beaucoup joué : la place de découverte revient au tirage normal', () => {
+  const entries = [
+    { id: 'a', subject: 'français', maxLevel: 1, plays: DISCOVERY_MAX_PLAYS + 1 },
+    { id: 'b', subject: 'maths', maxLevel: 1, plays: DISCOVERY_MAX_PLAYS + 5 },
+  ];
+  for (let seed = 0; seed < 20; seed++) {
+    const plan = buildDailyPlan(entries, seed, { count: 5 });
+    assert.ok(plan.every((s) => !s.discovery));
+  }
+});
+
+test('profil tout neuf (aucune partie jouée) : la découverte peut jouer, rien ne plante', () => {
+  const entries = [
+    { id: 'a', subject: 'français', maxLevel: 1, plays: 0 },
+    { id: 'b', subject: 'maths', maxLevel: 1, plays: 0 },
+    { id: 'c', subject: 'anglais', maxLevel: 1, plays: 0 },
+    { id: 'd', subject: 'monde', maxLevel: 1, plays: 0 },
+  ];
+  const plan = buildDailyPlan(entries, 3, { count: 5 });
+  assert.equal(plan.length, 5);
+  assert.ok(plan.every((s) => s.level === 1));
+});
+
+test('répartition par matière, 2000 défis simulés : aucune matière écrasée par son nombre de jeux', () => {
+  // Les 14 jeux réels du registre, tous « déjà beaucoup joués » (pas de question de découverte,
+  // pour mesurer uniquement l'effet du tirage par matière) : 6 français, 6 maths, 1 anglais, 1 monde.
+  const entries = GAMES.filter((g) => !g.demo).map((g) => ({
+    id: g.id, subject: g.subject, maxLevel: 1, plays: DISCOVERY_MAX_PLAYS + 10,
+  }));
+  const subjects = [...new Set(entries.map((e) => e.subject))];
+  assert.ok(subjects.length >= 4, 'le registre doit couvrir plusieurs matières pour ce test');
+  const bySubject = Object.fromEntries(entries.map((e) => [e.id, e.subject]));
+
+  const counts = Object.fromEntries(subjects.map((s) => [s, 0]));
+  const trials = 2000;
+  let total = 0;
+  let multiSubjectDays = 0;
+  for (let seed = 0; seed < trials; seed++) {
+    const plan = buildDailyPlan(entries, seed, { count: 5 });
+    const daySubjects = new Set();
+    for (const slot of plan) {
+      counts[bySubject[slot.id]] += 1;
+      daySubjects.add(bySubject[slot.id]);
+      total += 1;
+    }
+    if (daySubjects.size >= 2) multiSubjectDays += 1;
+  }
+
+  // Avant #94 : anglais et monde (1 jeu chacun sur 14) recevaient environ 1 / 14 ≈ 7 % des
+  // questions. Le tirage par matière doit leur donner une part proche de 1 / nombre de matières,
+  // très loin de leur ancienne part écrasée.
+  const expectedShare = 1 / subjects.length;
+  for (const subject of subjects) {
+    const share = counts[subject] / total;
+    assert.ok(
+      share > expectedShare * 0.5 && share < expectedShare * 1.5,
+      `${subject} : ${(share * 100).toFixed(1)} % (attendu ≈ ${(expectedShare * 100).toFixed(1)} %)`,
+    );
+  }
+  assert.ok(counts.anglais / total > 0.15, `anglais encore écrasé : ${counts.anglais} / ${total}`);
+  assert.ok(counts.monde / total > 0.15, `monde encore écrasé : ${counts.monde} / ${total}`);
+  // Avec 4 matières disponibles, un défi monomatière ne devrait quasiment jamais arriver.
+  assert.ok(multiSubjectDays / trials > 0.95, `trop de défis monomatières : ${multiSubjectDays} / ${trials}`);
 });

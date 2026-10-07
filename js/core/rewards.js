@@ -1,6 +1,7 @@
 // Récompenses (#16 → #21) : points, bonus de série, grades, gommettes, défi du jour, ouverture
 // des îles. TOUT EST PUR ICI : aucune référence au DOM, au stockage ni au moteur.
 // Le branchement sur `gameEvents` et l'écriture dans le profil vivent dans core/rewards-live.js.
+import { createRng } from './random.js';
 
 // --- Points ----------------------------------------------------------------------------------
 //
@@ -286,6 +287,88 @@ export function dailySeed(date = new Date()) {
 
 export function isDailyDone(rewards, date = new Date()) {
   return normalizeRewards(rewards).daily?.key === dailyKey(date);
+}
+
+// --- Défi du jour : sélection variée (#94) ----------------------------------------------------
+//
+// Les jeux ne sont pas répartis également entre les matières (6 en français, 6 en maths, 1 en
+// anglais, 1 en questionner le monde) : tirer un jeu au hasard à chaque question écrase presque
+// totalement l'anglais et le monde. On tire donc par MATIÈRE d'abord (chaque matière a la même
+// chance, quel que soit son nombre de jeux), puis par jeu dans la matière retenue, en tournant
+// sur les matières pour qu'un défi ne soit jamais monomatière quand plusieurs sont possibles.
+// Une question est en plus réservée à un jeu peu ou pas joué, posée au niveau 1 : c'est elle qui
+// fait découvrir une matière qu'on n'a jamais essayée.
+//
+// Fonction pure : `entries` + `seed` redonnent toujours le même plan (le défi est le même toute
+// la journée, pour tout le monde). `entries` : [{ id, subject, maxLevel, plays }].
+
+export const DISCOVERY_MAX_PLAYS = 2;   // « peu joué » : au plus 2 parties ; au-delà, rien à découvrir
+
+/** Regroupe les entrées par matière, dans leur ordre d'apparition. */
+function groupBySubject(entries) {
+  const bySubject = new Map();
+  for (const entry of entries) {
+    if (!bySubject.has(entry.subject)) bySubject.set(entry.subject, []);
+    bySubject.get(entry.subject).push(entry);
+  }
+  return bySubject;
+}
+
+/** Le jeu le moins joué de `entries`, ou null si tout a déjà beaucoup été joué. */
+function pickDiscoveryEntry(entries, rng) {
+  if (entries.length < 2) return null;
+  const minPlays = Math.min(...entries.map((e) => e.plays || 0));
+  if (minPlays > DISCOVERY_MAX_PLAYS) return null;
+  const candidates = entries.filter((e) => (e.plays || 0) === minPlays);
+  return rng.pick(candidates);
+}
+
+/**
+ * Choisit `needed` entrées en tirant par matière puis par jeu : à chaque tour, les matières sont
+ * mélangées et on pioche un jeu (si possible inédit) dans chacune à son tour, pour répartir les
+ * questions et varier les jeux au lieu de les répéter.
+ */
+function pickBalancedEntries(entries, rng, needed) {
+  const bySubject = groupBySubject(entries);
+  const subjects = [...bySubject.keys()];
+  const used = new Set();
+  const picked = [];
+  while (picked.length < needed) {
+    const order = rng.shuffle(subjects);
+    const before = picked.length;
+    for (const subject of order) {
+      if (picked.length >= needed) break;
+      const pool = bySubject.get(subject);
+      const fresh = pool.filter((e) => !used.has(e.id));
+      const entry = rng.pick(fresh.length ? fresh : pool);
+      used.add(entry.id);
+      picked.push(entry);
+    }
+    if (picked.length === before) break;   // sécurité : n'arrive pas, `subjects` n'est jamais vide
+  }
+  return picked;
+}
+
+/**
+ * Plan du défi du jour : `count` couples `{ id, level, discovery }`, tirés par matière puis par
+ * jeu (voir en tête de section), avec une question réservée à un jeu peu ou pas joué quand c'est
+ * possible. Renvoie `[]` si `entries` est vide.
+ */
+export function buildDailyPlan(entries, seed, { count = DAILY_QUESTIONS } = {}) {
+  if (!entries.length) return [];
+  const rng = createRng(seed);
+  const levelFor = (entry) => rng.int(1, Math.max(1, entry.maxLevel || 1));
+
+  const discoveryEntry = pickDiscoveryEntry(entries, rng);
+  const needed = discoveryEntry ? count - 1 : count;
+  const chosen = pickBalancedEntries(entries, rng, Math.max(0, needed));
+  const plan = chosen.map((entry) => ({ id: entry.id, level: levelFor(entry), discovery: false }));
+
+  if (discoveryEntry) {
+    const at = rng.int(0, plan.length);   // position mélangée dans le défi, pas toujours la même
+    plan.splice(at, 0, { id: discoveryEntry.id, level: 1, discovery: true });
+  }
+  return plan;
 }
 
 // --- Étoiles et ouverture des îles -------------------------------------------------------------

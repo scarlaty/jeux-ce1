@@ -1,5 +1,9 @@
-// Défi du jour (#20) : 5 questions mélangées, tirées des jeux DÉJÀ JOUÉS, les mêmes toute la
-// journée pour tout le monde (graine = date locale). Une récompense par jour.
+// Défi du jour (#20) : 5 questions mélangées, les mêmes toute la journée pour tout le monde
+// (graine = date locale). Une récompense par jour.
+//
+// Le plan des 5 questions (quel jeu, quel niveau) est tiré par `buildDailyPlan` (core/rewards.js,
+// pur et testé) : par matière puis par jeu pour ne pas écraser les matières qui ont peu de jeux,
+// avec une question réservée à un jeu peu ou pas joué (#94). Cet écran ne fait que l'afficher.
 //
 // Le défi n'est pas enregistré dans l'historique des parties : ce n'est pas une partie d'un jeu
 // précis, et il ne doit pas fausser la progression par niveau. Les points, eux, comptent.
@@ -10,25 +14,29 @@ import { getGameProgress } from '../core/history.js';
 import { GAMES, ISLANDS, loadGame } from '../games/registry.js';
 import { rewardSummary } from '../core/rewards-live.js';
 import {
-  DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards,
+  DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards, buildDailyPlan,
 } from '../core/rewards.js';
 import { createGameView, starRow, gradeBanner, extrasList, celebrate, endCompanion, endChest, companionAction } from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 
-/** Jeux déjà joués ; à défaut, le premier jeu du registre (jamais d'écran vide). */
-function candidateGames(profile) {
+/**
+ * Tous les jeux réels sont candidats, même jamais ouverts : sinon le défi ne peut jamais faire
+ * découvrir une matière qu'on n'a pas encore essayée (#94). À défaut d'aucun jeu réel, le jeu de
+ * démonstration évite un écran vide.
+ */
+function candidateGames() {
   const real = GAMES.filter((g) => !g.demo);
-  const played = real.filter((g) => getGameProgress(profile, g.id).plays > 0);
-  if (played.length) return { games: played, discovery: false };
-  return { games: real.length ? real.slice(0, 1) : GAMES.slice(0, 1), discovery: true };
+  return real.length ? real : GAMES.slice(0, 1);
 }
 
 /**
- * Construit le « jeu » du défi : un générateur qui pioche dans les jeux retenus, au hasard mais
- * toujours de la même façon pour une même journée (la graine vient de la date locale).
+ * Construit le « jeu » du défi : ses questions suivent le plan `{ id, level, discovery }` déjà
+ * tiré (voir `buildDailyPlan`, pur et testé), toujours dans le même ordre pour une même journée.
+ * `seen.size` donne le numéro de la question en cours : c'est le compte de celles déjà acceptées
+ * par le moteur (`engine.js`), qui peut retenter plusieurs fois une même question en cas de doublon.
  */
-function buildDailyGame(entries, { key, island }) {
+function buildDailyGame(plan, byId, { key, island }) {
   return {
     id: 'defi',
     title: 'Défi du jour',
@@ -37,8 +45,9 @@ function buildDailyGame(entries, { key, island }) {
     daily: { key },
     levels: [{ label: 'Défi du jour' }],
     makeQuestion(level, rng, seen) {
-      const entry = rng.pick(entries);
-      return entry.game.makeQuestion(rng.int(1, entry.maxLevel), rng, seen);
+      const slot = plan[Math.min(seen.size, plan.length - 1)];
+      const entry = byId.get(slot.id);
+      return entry.game.makeQuestion(slot.level, rng, seen);
     },
   };
 }
@@ -55,13 +64,18 @@ export default {
     const root = h('section', { class: 'page play daily', dataset: { island: 'defi' } });
     view.append(root);
 
-    const { games, discovery } = candidateGames(profile);
-    const loaded = (await Promise.all(games.map((g) => loadGame(g.id)))).filter(Boolean);
-    const entries = loaded.map((game) => ({
-      game,
-      // On ne pose que des questions de niveaux déjà ouverts : le défi doit rester faisable.
-      maxLevel: Math.max(1, Math.min(game.levels.length, getGameProgress(profile, game.id).unlocked)),
-    }));
+    const loaded = (await Promise.all(candidateGames().map((g) => loadGame(g.id)))).filter(Boolean);
+    const entries = loaded.map((game) => {
+      const progress = getGameProgress(profile, game.id);
+      return {
+        id: game.id,
+        subject: game.subject,
+        game,
+        plays: progress.plays,
+        // On ne pose que des questions de niveaux déjà ouverts : le défi doit rester faisable.
+        maxLevel: Math.max(1, Math.min(game.levels.length, progress.unlocked)),
+      };
+    });
 
     if (!entries.length) {
       root.replaceChildren(h('div', { class: 'card soon' },
@@ -71,9 +85,14 @@ export default {
       return undefined;
     }
 
+    const byId = new Map(entries.map((e) => [e.id, e]));
+    const plan = buildDailyPlan(entries, seed, { count: DAILY_QUESTIONS });
+    const discovery = plan.some((slot) => slot.discovery);
+    const planTitles = [...new Set(plan.map((slot) => byId.get(slot.id).game.title))];
+
     // L'île de la gommette du jour : tirée de la même date, donc stable toute la journée.
     const island = createRng(seed ^ 0x5bf03635).pick(ISLANDS).id;
-    const game = buildDailyGame(entries, { key, island });
+    const game = buildDailyGame(plan, byId, { key, island });
 
     let stopConfetti = () => {};
     let chest = null;
@@ -94,14 +113,13 @@ export default {
 
     function showIntro() {
       cleanup();
-      const titles = entries.map((e) => e.game.title);
       root.replaceChildren(h('div', { class: 'card daily-intro' },
         h('span', { class: 'emoji daily-intro__icon', role: 'img', 'aria-label': 'Coffre au trésor', text: '🗝️' }),
         h('h1', { class: 'page-title', text: 'Défi du jour' }),
         h('p', { class: 'daily-intro__lead cursive', text: `${DAILY_QUESTIONS} questions mélangées, rien que pour aujourd'hui.` }),
         h('p', { class: 'daily-intro__games' },
           h('span', { class: 'daily-intro__label', text: discovery ? 'Pour découvrir : ' : 'Au programme : ' }),
-          h('span', { text: titles.join(', ') })),
+          h('span', { text: planTitles.join(', ') })),
         alreadyDone
           ? h('p', { class: 'daily-intro__done' }, icon('check', { size: 22 }),
             h('span', { text: 'Tu as déjà gagné la récompense du jour. Rejoue quand tu veux !' }))
