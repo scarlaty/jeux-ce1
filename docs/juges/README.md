@@ -48,6 +48,20 @@ et l'issue d'origine. Rien d'autre.
 Un implémenteur justifie toujours bien ses choix ; un juge qui lit ces justifications les adopte.
 L'indépendance n'est pas une politesse, c'est la condition pour que le juge serve à quelque chose.
 
+## Ce qui n'est PAS un défaut de la branche
+
+Certaines choses sont **volontairement** laissées à l'orchestrateur. Un juge qui les signale comme
+bloquantes se trompe de cible — qu'il les mentionne, mais sans en faire un grief contre la branche :
+
+- **`VERSION` de `sw.js` non incrémentée.** Les agents ont **interdiction** d'y toucher : avec
+  plusieurs branches en parallèle, chacune incrémenterait la version et toutes entreraient en conflit
+  sur la même ligne. C'est l'orchestrateur qui incrémente **une seule fois, à la fusion**.
+- **Les branches obsolètes et les issues ouvertes** : l'orchestrateur en répond.
+- **Ce qui est explicitement hors périmètre du lot**, quand l'issue le dit.
+
+Les deux juges du premier rodage ont tous deux classé l'absence d'incrément de `VERSION` en bloquant.
+C'était une lacune de ces grilles, pas une faute de la branche.
+
 ## Quand lancer quel juge
 
 Les juges coûtent cher (plusieurs centaines de milliers de jetons chacun). On ne les lance pas tous,

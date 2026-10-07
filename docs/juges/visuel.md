@@ -51,7 +51,32 @@ vérifiables :
 - [ ] **premier plan** qui cadre la scène, **recouvrement** franc, **fond teinté** jamais blanc ;
 - [ ] **du caractère** : des visages dans le décor, pas seulement sur les mascottes.
 
-## 3. L'interface ne mange pas le décor
+## 3. Les étiquettes ne recouvrent pas ce qu'elles désignent
+
+Vérifie-le **par échantillonnage**, pas à l'œil : tire des points sous chaque étiquette ou panneau et
+compte ceux qui tombent sur l'objet nommé.
+
+Piège trouvé au premier rodage : un panneau de nom recouvrait **30,5 %** de l'île qu'il désignait,
+parce qu'il était ancré sur le haut de la forme géométrique et non sur le **haut visuel**, décor
+compris. Les arbres et les toits dépassent presque toujours de la forme de base.
+
+- [ ] aucun panneau, aucune étiquette, aucune pastille ne recouvre l'objet qu'elle nomme ;
+- [ ] vérifié sur **toutes** les instances, pas seulement sur la première — c'est souvent la plus
+      grande et la plus décorée qui pose problème.
+
+## 4. L'information répétée ailleurs doit rester lisible
+
+Quand une scène délègue la lecture à une liste HTML, **cette liste devient le support principal** et
+doit être jugée comme telle, pas comme un repli.
+
+- [ ] mesure la largeur réelle de la colonne de texte dans chaque carte ;
+- [ ] aucun libellé ne se brise en trois ou quatre lignes ;
+- [ ] compare à une liste équivalente déjà réussie ailleurs dans l'appli.
+
+Piège trouvé au premier rodage : une colonne de texte de **75 px dans une carte de 255 px** brisait
+« Encore 15 étoiles pour l'ouvrir » en quatre lignes — sans troncature, donc sans alerte.
+
+## 5. L'interface ne mange pas le décor
 
 C'est le défaut majeur trouvé sur #96 : les étiquettes occupaient près de la moitié de la scène et
 masquaient l'île qu'on venait de dessiner.
@@ -62,7 +87,7 @@ masquaient l'île qu'on venait de dessiner.
       permanence dans la scène ;
 - [ ] la zone cliquable est **le décor**, pas une pastille posée dessus.
 
-## 4. Les couleurs viennent des tokens
+## 6. Les couleurs viennent des tokens
 
 - [ ] **aucune couleur en dur** dans un composant ou un dessin — uniquement les variables de
       `css/tokens.css` ;
@@ -72,7 +97,7 @@ masquaient l'île qu'on venait de dessiner.
 **Mesure à produire** : résultat d'une recherche de couleurs littérales (`#`, `rgb(`) dans les
 fichiers touchés, hors `tokens.css`.
 
-## 5. Les animations
+## 7. Les animations
 
 - [ ] `prefers-reduced-motion: reduce` **supprime les animations sans retirer aucune information** —
       le tampon, le bandeau de grade, les points restent affichés ;
@@ -81,7 +106,7 @@ fichiers touchés, hors `tokens.css`.
 
 Teste en émulant la préférence, pas en lisant le CSS.
 
-## 6. Lisibilité réelle
+## 8. Lisibilité réelle
 
 - [ ] texte de consigne ≥ 22 px en largeur tablette ;
 - [ ] aucune troncature qui perde du sens (« Centaines, d… ») ;
