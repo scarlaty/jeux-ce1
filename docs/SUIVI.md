@@ -32,7 +32,7 @@ https://github.com/users/scarlaty/projects/1.
 | E9, E10 mesures et géométrie | #58 – #67 | à faire (libre) |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
-| E15 plaisir de jouer | #88 – #91 | #88 **terminé** (kit kawaii, démo #/kawaii) ; #89 libre (voir le commentaire ⏸️) ; puis #90 compagnon, #91 coffre surprise |
+| E15 plaisir de jouer | #88 – #91 | #88, #89 **terminés** (kit kawaii et mascottes sur tous les écrans) ; puis #90 compagnon, #91 coffre surprise |
 
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54), **Lecture éclair** (#26).
@@ -43,7 +43,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #89 écrans kawaii | `feat/89-ecrans-kawaii` |
 | Claude (session scarlaty) | #27 Devinettes | `feat/27-comprehension` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
@@ -89,7 +88,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v9`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v10`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
@@ -98,7 +97,9 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
    « lion », « chien », « yeux » portent le code `yod` pour cette raison (même [j] que « fille »).
 4. **Émojis** : un émoji n'est utilisable comme image que si une enfant de 7 ans le nomme sans hésiter.
    🌬️ « vent », ⚖️ « balance », 💐 « bouquet » ont été retirés après vérification à l'écran.
-5. **Fichier importé = donnée non fiable** : les clés `__proto__` / `constructor` sont ignorées.
+5. **Service worker** : le précache télécharge avec `cache: 'reload'`. Sans cela, une nouvelle version
+   reprenait d'anciens fichiers du cache HTTP (10 min sur GitHub Pages) et mélangeait deux versions (07/10, v10).
+6. **Fichier importé = donnée non fiable** : les clés `__proto__` / `constructor` sont ignorées.
 
 ## Points laissés en suspens (décisions à trancher)
 

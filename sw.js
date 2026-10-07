@@ -14,7 +14,7 @@
    service worker attend (pas de skipWaiting automatique) : js/core/offline.js propose la mise à
    jour à l'enfant, qui l'applique quand elle ne joue pas. */
 
-const VERSION = 'v9';
+const VERSION = 'v10';
 const CACHE = `jeux-ce1-${VERSION}`;
 const INDEX = './index.html';
 
@@ -114,7 +114,11 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)));
+  // `cache: 'reload'` : on va chercher chaque fichier sur le serveur, sans passer par le cache HTTP du
+  // navigateur (10 min sur GitHub Pages). Sinon une nouvelle version pouvait garder d'anciens fichiers
+  // et mélanger deux versions (écran sans mascotte, dessin géant sans sa feuille de style…).
+  event.waitUntil(caches.open(CACHE).then((cache) =>
+    cache.addAll(PRECACHE.map((url) => new Request(url, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (event) => {
