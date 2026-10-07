@@ -8,11 +8,11 @@
 //  - createStore() : documents typés (meta, profils) avec numéro de schéma et migrations.
 
 import { defaultRewards, normalizeRewards } from './rewards.js';
-import { defaultCompanion } from './companion.js';
+import { defaultCompanion, normalizeCompanion, companionFloor } from './companion.js';
 import { defaultChest } from './chest.js';
 
 export const PREFIX = 'jeux-ce1:';
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /** Petit localStorage en mémoire (repli, et faux stockage pour les tests). */
 export function createMemoryBackend(initial = {}) {
@@ -166,6 +166,8 @@ export const metaMigrations = {
   },
   // v1 → v2 : seuls les profils changent (champ `rewards`), le document meta est inchangé.
   1: (doc) => doc,
+  // v2 → v3 : seuls les profils changent (compagnon), le document meta est inchangé.
+  2: (doc) => doc,
 };
 
 export const profileMigrations = {
@@ -182,6 +184,12 @@ export const profileMigrations = {
   },
   // v1 → v2 : ajout des récompenses (#16 → #21). La progression existante n'est pas touchée.
   1: (doc) => ({ ...doc, rewards: normalizeRewards(doc?.rewards) }),
+  // v2 → v3 (#105) : le compagnon ne cumule plus les étoiles de chaque partie, il suit celles de la carte.
+  // `companion.stars` devient un plancher (voir companionFloor) : jamais de recul pour l'enfant.
+  2: (doc) => {
+    const companion = normalizeCompanion(doc?.companion);
+    return { ...doc, companion: { ...companion, stars: companionFloor(companion, doc?.progress) } };
+  },
 };
 
 const META_KEY = 'meta';

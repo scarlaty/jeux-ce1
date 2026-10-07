@@ -445,9 +445,13 @@ draw(companion({ animal: 'bunny', stage: 3 }));   // 0 œuf · 1 œuf qui éclot
   pêche, Mesures), Pépin (boule menthe à pousse, Monde), Nuagette (nuage lavande à fleur, Ailleurs).
 - Compagnon : le kit **dessine** les stades ; les seuils appartiennent à `core/companion.js` (#90, pur) :
   profil `companion = { animal, name, hatched, games, stars }` (repris dans `normalizeProfile` ; absent → œuf).
-  Œuf fêlé après 2 parties, prêt à éclore après 3 (l'enfant choisit chat/lapin/ourson et le nom sur `#/compagnon`),
-  puis « petit » à 20 étoiles cumulées et « grand » à 60. `core/companion-live.js` (abonné à `gameEvents`, comme
-  les récompenses) cumule parties et étoiles ; `core/ui/companion.js` dessine. Un seul personnage à la fois :
+  Œuf fêlé après 2 parties, prêt à éclore après 3 (l'enfant choisit chat ou lapin, UNE fois, et le nom sur `#/compagnon` ;
+  l'ourson se débloque à 30 étoiles et s'adopte alors explicitement, `adopt()` — on ne change plus d'animal à volonté, #105),
+  puis « petit » à 20 étoiles et « grand » à 60. **Une seule monnaie d'étoiles** (#105) : celles de la carte,
+  `totalStars(progress)` = meilleur résultat de chaque niveau ; rejouer un niveau réussi n'en rapporte aucune.
+  `companion.stars` n'est qu'un plancher (jamais de recul ; `readCompanion` lit max(plancher, totalStars) ; migration
+  v2 → v3 : un compagnon gonflé garde son stade). Les POINTS (grades) ont leur icône `coin`, jamais l'étoile.
+  `core/companion-live.js` (abonné à `gameEvents`, après `record`) compte les parties ; `core/ui/companion.js` dessine. Un seul personnage à la fois :
   le compagnon (ou son œuf) remplace la mascotte de l'île dans l'en-tête de partie et en fin de partie.
 - **Décorations** (`kawaii-deco.js`, `import { draw as drawDeco }`) : `drawDeco({ shape: 'star' | 'heart' | 'cloud' | 'sparkle', color?, face? })`,
   décoratives (`aria-hidden`) sauf si `label` est donné.

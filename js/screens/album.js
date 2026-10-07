@@ -61,7 +61,8 @@ export default {
         h('span', { class: 'emoji album-top__icon', role: 'img', 'aria-label': `Grade : ${grade.name}`, text: grade.icon }),
         h('div', { class: 'album-top__body' },
           h('p', { class: 'album-top__grade', text: grade.name }),
-          h('p', { class: 'album-top__points', text: `${plural(rewards.points, 'point')} · ${owned} / ${stickerTotal()} gommettes` }),
+          h('p', { class: 'album-top__points' }, icon('coin', { size: 16, className: 'icon--points' }),
+            h('span', { text: ` ${plural(rewards.points, 'point')} · ${owned} / ${stickerTotal()} gommettes` })),
           next
             ? h('span', { class: 'meter', role: 'img', 'aria-label': `Encore ${plural(remaining, 'point')} pour devenir ${next.name}` },
               h('span', { class: 'meter__fill', style: `--ratio: ${Math.min(1, ratio).toFixed(3)}` }))

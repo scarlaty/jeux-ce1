@@ -45,11 +45,13 @@
   font-variant-numeric: tabular-nums;
   color: var(--ink);
   background: var(--surface);
-  border: 2px solid var(--star-edge);
+  border: 2px solid var(--primary);
   border-radius: var(--radius-round);
-  box-shadow: 0 2px 0 var(--star-edge);
+  box-shadow: 0 2px 0 var(--primary);
 }
-.points-chip .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
+/* Les points ont leur couleur (bleu du stylo) : le jaune est réservé aux étoiles (#105). */
+.icon--points { color: var(--primary); }
+.points-chip .icon { stroke-width: 2; }
 .points-chip__value { min-width: 2.2ch; text-align: right; }
 
 .points-chip.is-bumped { animation: points-bump 420ms var(--ease-pop) both; }
@@ -163,6 +165,7 @@
 .reward-bar__icon { font-size: 2.4rem; flex: none; }
 .reward-bar__body { display: grid; gap: var(--space-1); flex: 1; min-width: 0; }
 .reward-bar__grade { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; }
+.reward-bar__points { display: inline-flex; align-items: center; gap: var(--space-1); }
 .reward-bar__points, .reward-bar__next, .reward-bar__max { font-size: var(--text-s); color: var(--ink-soft); }
 .reward-bar__go { flex: none; color: var(--ink-faint); }
 

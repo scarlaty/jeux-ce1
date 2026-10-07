@@ -242,3 +242,26 @@ test('un coffre abîmé dans le fichier est nettoyé champ par champ', () => {
   assert.equal(check.ok, true, check.error);
   assert.deepEqual(check.backup.profiles[0].chest, { accessories: ['bow', 'star'], equipped: null, opened: 0 });
 });
+
+// #105 : une sauvegarde faite avant le changement (schéma 2) porte un compagnon gonflé par les parties rejouées.
+// À l'import, la migration le ramène aux étoiles de la carte SANS lui faire perdre son stade ; puis l'aller-retour est stable.
+test('un compagnon d’une sauvegarde v2 est recalculé sans rapetisser, et l’aller-retour est stable', () => {
+  const v2 = {
+    schemaVersion: 2, id: 'p1', name: 'Léa', avatar: 'chat', createdAt: 0,
+    progress: { sons: { unlocked: 2, best: { 1: { score: 9, total: 10, stars: 3 } }, plays: 20 } },
+    history: [], weekly: [],
+    companion: { animal: 'cat', name: 'Minou', hatched: true, games: 20, stars: 61 },   // « grand » grâce à 20 parties rejouées
+  };
+  const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: 2, exportedAt: 0, activeProfileId: 'p1', profiles: [v2] });
+  assert.equal(check.ok, true, check.error);
+  const companion = check.backup.profiles[0].companion;
+  assert.equal(companion.stars, 60, 'le stade « grand » est gardé (plancher = son seuil)');
+  assert.equal(check.backup.profiles[0].schemaVersion, SCHEMA_VERSION);
+  // Aller-retour : réexporter puis réimporter ne change plus rien.
+  const store = newStore();
+  applyBackup(store, check.backup, { mode: 'replace' });
+  const again = validateBackup(JSON.parse(serializeBackup(buildBackup(store))));
+  assert.equal(again.ok, true, again.error);
+  assert.deepEqual(again.backup.profiles[0].companion, companion);
+  assert.deepEqual(normalizeProfile(again.backup.profiles[0]).companion, companion);
+});

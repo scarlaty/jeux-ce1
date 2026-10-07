@@ -151,7 +151,7 @@ export default {
         h('p', { class: 'end__hint', text: 'Un nouveau défi t\'attend demain !' }),
         h('div', { class: 'end__actions' },
           companionAction(session),
-          h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
+          h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--secondary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
     }

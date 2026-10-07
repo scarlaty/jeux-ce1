@@ -3,7 +3,13 @@
 //
 // Données dans le profil : `companion = { animal, name, hatched, games, stars }`
 //   games : parties terminées (défi du jour compris) — elles font éclore l'œuf ;
-//   stars : étoiles gagnées, partie après partie (rejouer compte) — elles le font grandir.
+//   stars : PLANCHER d'étoiles (#105). Le compagnon grandit avec les étoiles de la carte des îles,
+//           `totalStars(progress)` de rewards.js : le MEILLEUR résultat de chaque niveau, jamais la somme des
+//           parties. Il n'y a qu'un seul compte d'étoiles ; `stars` n'en est que la mémoire, pour qu'un
+//           compagnon ne rapetisse jamais : étoiles lues = max(stars, totalStars). Rejouer un niveau déjà réussi
+//           n'ajoute donc rien, et améliorer un niveau n'ajoute que l'étoile qui manquait.
+//           (Migration v2 → v3 : les anciens profils avaient une somme gonflée par les parties rejouées ;
+//           voir `companionFloor`.)
 // Aucun compteur de « jours sans jouer » : le compagnon ne dépend jamais de la régularité de l'enfant.
 //
 // Stades (ceux du kit) : 0 œuf · 1 œuf fêlé · 2 bébé · 3 petit · 4 grand.
@@ -12,6 +18,8 @@
 //   - l'œuf se fêle après 2 parties et est prêt à éclore après 3 (la première semaine) ;
 //   - stade 3 « petit » à 20 étoiles (≈ 2 semaines), stade 4 « grand » à 60 étoiles (≈ 6 semaines).
 
+import { totalStars } from './rewards.js';
+
 export const GAMES_TO_CRACK = 2;
 export const GAMES_TO_HATCH = 3;
 /** Étoiles cumulées pour atteindre chaque stade après l'éclosion. */
@@ -19,11 +27,16 @@ export const STAGE_STARS = { 2: 0, 3: 20, 4: 60 };
 export const MAX_STAGE = 4;
 export const MAX_NAME = 12;
 
-/** Les trois animaux au choix (identifiants du kit) avec leur nom, leur couleur et un nom proposé. */
+/**
+ * Les animaux (identifiants du kit) avec leur nom, leur couleur et un nom proposé.
+ * `unlock` : étoiles au total pour le débloquer (#105). Chat et lapin sont là dès l'éclosion : l'enfant en
+ * choisit un, UNE fois. L'ourson est une récompense : il se débloque en jouant et peut alors être adopté
+ * (`adopt`), explicitement. On ne change jamais de compagnon à volonté.
+ */
 export const COMPANION_ANIMALS = [
-  { id: 'cat', label: 'Chat', color: 'peche', defaultName: 'Minou' },
-  { id: 'bunny', label: 'Lapin', color: 'rose', defaultName: 'Pompon' },
-  { id: 'bear', label: 'Ourson', color: 'citron', defaultName: 'Nougat' },
+  { id: 'cat', label: 'Chat', color: 'peche', defaultName: 'Minou', unlock: 0 },
+  { id: 'bunny', label: 'Lapin', color: 'rose', defaultName: 'Pompon', unlock: 0 },
+  { id: 'bear', label: 'Ourson', color: 'citron', defaultName: 'Nougat', unlock: 30 },
 ];
 
 export const STAGE_LABELS = ['Un œuf', 'Un œuf fêlé', 'Bébé', 'Petit', 'Grand'];
@@ -68,8 +81,43 @@ export function normalizeCompanion(raw) {
   };
 }
 
+/** Étoiles du compagnon : celles de la carte des îles, sans jamais descendre sous son plancher. */
+export function companionStars(companion, progress) {
+  return Math.max(count(companion?.stars), totalStars(progress));
+}
+
+/** Compagnon du profil, avec ses étoiles à jour (le même compte que la carte des îles). */
 export function readCompanion(profile) {
-  return normalizeCompanion(profile?.companion);
+  const c = normalizeCompanion(profile?.companion);
+  return { ...c, stars: companionStars(c, profile?.progress) };
+}
+
+/** L'animal est-il débloqué avec `stars` étoiles au total ? */
+export function animalUnlocked(id, stars = 0) {
+  const a = COMPANION_ANIMALS.find((x) => x.id === id);
+  return Boolean(a) && count(stars) >= a.unlock;
+}
+
+/** Animaux qu'on peut choisir à l'éclosion : ceux qui sont débloqués d'emblée (chat, lapin). */
+export const STARTER_ANIMALS = COMPANION_ANIMALS.filter((a) => a.unlock === 0);
+
+/** Animaux-récompenses déjà débloqués que l'enfant peut adopter à la place du sien. */
+export function adoptable(companion) {
+  const c = normalizeCompanion(companion);
+  if (!c.hatched) return [];
+  return COMPANION_ANIMALS.filter((a) => a.unlock > 0 && a.id !== c.animal && c.stars >= a.unlock);
+}
+
+/**
+ * Plancher d'un compagnon d'avant #105 : sa somme d'étoiles par partie était gonflée par les parties rejouées.
+ * On repart des étoiles réelles de la carte ; si elles sont moins nombreuses, le compagnon GARDE le stade
+ * atteint (plancher = seuil de ce stade) : il ne rapetisse jamais et la barre ne recule pas. Il reprendra sa
+ * croissance dès que les étoiles réelles dépasseront ce plancher. Un œuf non éclos n'a pas de stade : 0.
+ */
+export function companionFloor(companion, progress) {
+  const c = normalizeCompanion(companion);
+  if (!c.hatched) return 0;
+  return Math.max(STAGE_STARS[stageOf(c)] ?? 0, totalStars(progress));
 }
 
 /** Stade de croissance (0 à 4). Pure. */
@@ -117,15 +165,15 @@ export function progressText(companion) {
 }
 
 /**
- * Une partie terminée avec `stars` étoiles (0 à 3). Renvoie le nouveau compagnon et ce qui a changé :
+ * Une partie terminée ; `totalStars` : étoiles de la carte APRÈS cette partie (meilleurs résultats). Renvoie le nouveau compagnon et ce qui a changé :
  * `{ companion, stage, cracked, ready, grew }` (`ready` : l'œuf vient de devenir prêt à éclore).
  */
-export function addRun(companion, { stars = 0 } = {}) {
+export function addRun(companion, { totalStars: total = 0 } = {}) {
   const before = normalizeCompanion(companion);
   const after = {
     ...before,
     games: before.games + 1,
-    stars: before.stars + Math.min(3, count(stars)),
+    stars: Math.max(before.stars, count(total)),
   };
   const was = stageOf(before);
   const now = stageOf(after);
@@ -142,23 +190,38 @@ export function addRun(companion, { stars = 0 } = {}) {
 export function hatch(companion, { animal, name } = {}) {
   const c = normalizeCompanion(companion);
   if (c.hatched || !readyToHatch(c)) return c;
-  const chosen = animalInfo(animal).id;
+  // À l'éclosion, seuls les animaux débloqués se choisissent ; sinon le chat.
+  const wanted = animalInfo(animal);
+  const chosen = c.stars >= wanted.unlock ? wanted.id : 'cat';
   return { ...c, animal: chosen, name: nameOrDefault(name, chosen), hatched: true };
 }
 
-/** Change l'animal et/ou le nom d'un compagnon éclos (écran « Mon compagnon »). Pure. */
-export function customize(companion, { animal, name } = {}) {
+/**
+ * Adopte un animal-récompense débloqué (#105) : choix explicite et rare. Les étoiles suivent (elles ne
+ * dépendent pas de l'animal) ; le nom aussi, sauf s'il était encore le nom proposé de l'ancien animal.
+ * Sans effet si l'animal n'est pas débloqué, est déjà le sien, ou si l'œuf n'a pas éclos. Pure.
+ */
+export function adopt(companion, { animal } = {}) {
   const c = normalizeCompanion(companion);
-  if (!c.hatched) return c;
-  const chosen = animal === undefined ? c.animal : animalInfo(animal).id;
-  return { ...c, animal: chosen, name: name === undefined ? c.name : nameOrDefault(name, chosen) };
+  const target = adoptable(c).find((a) => a.id === animal);
+  if (!target) return c;
+  const keepsName = c.name !== animalInfo(c.animal).defaultName;
+  return { ...c, animal: target.id, name: keepsName ? c.name : target.defaultName };
+}
+
+/** Change le NOM d'un compagnon éclos (écran « Mon compagnon »). L'animal ne change plus ici : voir `adopt`. Pure. */
+export function customize(companion, { name } = {}) {
+  const c = normalizeCompanion(companion);
+  if (!c.hatched || name === undefined) return c;
+  return { ...c, name: nameOrDefault(name, c.animal) };
 }
 
 /** Écrit un compagnon dans le profil `profileId` du store. Renvoie le compagnon enregistré. */
-export function saveCompanion(store, profileId, update) {
+export function saveCompanion(store, profileId, update, { stored = false } = {}) {
   let saved = null;
   store.updateProfile(profileId, (profile) => {
-    saved = update(readCompanion(profile));
+    // `stored` : le compagnon tel qu'écrit (avant mise à jour des étoiles), pour mesurer ce que la partie change.
+    saved = update(stored ? normalizeCompanion(profile?.companion) : readCompanion(profile));
     return { ...profile, companion: saved };
   });
   return saved;
