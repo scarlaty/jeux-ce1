@@ -766,6 +766,13 @@
   font-size: min(1.7rem, calc((100cqi - 4px) / (var(--text-len, 1) * 0.62)));
 }
 
+/* Mot français à lire (cursive) : jamais coupé au milieu (« moustiq-ue »), réduit pour tenir sur sa ligne. */
+.choices:not(.choices--images):not(.choices--large) .choice:has(.cursive) { container-type: inline-size; }
+.choices:not(.choices--images):not(.choices--large) .choice .cursive {
+  overflow-wrap: normal;
+  font-size: max(1.15rem, min(1.7rem, calc((100cqi - 4px) / (var(--text-len, 1) * 0.62))));
+}
+
 .choice.is-picked { border-color: var(--primary); }
 .choice.is-right { background: var(--success-soft); border-color: var(--success); box-shadow: 0 4px 0 var(--success); opacity: 1; }
 .choice.is-wrong { background: var(--retry-soft); border-color: var(--retry); box-shadow: 0 4px 0 var(--retry); opacity: 1; }
