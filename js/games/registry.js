@@ -90,6 +90,13 @@ export const GAMES = [
     subject: 'maths',
     load: () => import('./tables.js'),
   },
+  {
+    id: 'heure',
+    title: 'Lire l\'heure',
+    island: 'mesures',
+    subject: 'maths',
+    load: () => import('./heure.js'),
+  },
 ];
 
 export function getIsland(id) {
