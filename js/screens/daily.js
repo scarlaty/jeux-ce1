@@ -12,7 +12,7 @@ import { rewardSummary } from '../core/rewards-live.js';
 import {
   DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards,
 } from '../core/rewards.js';
-import { createGameView, starRow, gradeBanner, extrasList, celebrate, endCompanion, companionAction } from './play.js';
+import { createGameView, starRow, gradeBanner, extrasList, celebrate, endCompanion, endChest, companionAction } from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 
@@ -76,11 +76,14 @@ export default {
     const game = buildDailyGame(entries, { key, island });
 
     let stopConfetti = () => {};
+    let chest = null;
     const player = createGameView(root, { app, game, onEnd: (result, { session }) => showEnd(result, session) });
 
     function cleanup() {
       stopConfetti();
       stopConfetti = () => {};
+      chest?.destroy();
+      chest = null;
       player.destroy();
     }
 
@@ -115,6 +118,8 @@ export default {
       const gained = rewardSummary(session);
       stopConfetti();
       stopConfetti = celebrate(stars);
+      chest?.destroy();
+      chest = endChest(session);
 
       root.replaceChildren(h('div', { class: 'end card' },
         endCompanion(stars),
@@ -122,6 +127,7 @@ export default {
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },
           h('strong', { text: String(score) }), ` ${score > 1 ? 'bonnes réponses' : 'bonne réponse'} sur ${total}`),
+        chest?.el,
         gained?.grade && gradeBanner(gained.grade),
         extrasList(result.extras),
         h('p', { class: 'end__hint', text: 'Un nouveau défi t\'attend demain !' }),
@@ -129,7 +135,7 @@ export default {
           companionAction(session),
           h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--secondary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));
-      root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
+      if (chest) chest.focus(); else root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
     }
 
     showIntro();

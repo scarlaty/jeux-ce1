@@ -19,6 +19,8 @@ import { createSession } from '../core/engine.js';
 import { getGameProgress } from '../core/history.js';
 import { rewardEvents, rewardSummary, liveTotal } from '../core/rewards-live.js';
 import { currentCompanion, companionSummary } from '../core/companion-live.js';
+import { chestSummary } from '../core/chest-live.js';
+import { chestScene } from '../core/ui/chest.js';
 import { loadGame } from '../games/registry.js';
 import * as audio from '../core/audio.js';
 
@@ -117,6 +119,16 @@ export function endCompanion(stars) {
     stars >= 2 && sparkle('left', 'citron'),
     buddy,
     stars >= 2 && sparkle('right', 'rose'));
+}
+
+/**
+ * Coffre surprise de fin de partie (#91) : à la place de la gommette remise directement. Renvoie la scène
+ * d'ouverture (`{ el, focus, destroy }`), ou null quand la partie ne donne pas de coffre (0 étoile,
+ * défi du jour déjà récompensé). Le contenu est déjà dans le profil : la scène le révèle.
+ */
+export function endChest(session) {
+  const draw = chestSummary(session);
+  return draw ? chestScene(draw, { companion: currentCompanion() }) : null;
 }
 
 /** Bouton vers « Mon compagnon » quand l'œuf est prêt à éclore ou que le compagnon vient de grandir. */
@@ -321,11 +333,14 @@ export default {
     view.append(root);
 
     let stopConfetti = () => {};
+    let chest = null;
     const player = createGameView(root, { app, game, onEnd: (result, { session }) => showEnd(result, session) });
 
     function cleanup() {
       stopConfetti();
       stopConfetti = () => {};
+      chest?.destroy();
+      chest = null;
       player.destroy();
     }
 
@@ -379,6 +394,8 @@ export default {
       const gained = rewardSummary(session);
       stopConfetti();
       stopConfetti = celebrate(stars);
+      chest?.destroy();
+      chest = endChest(session);
 
       const unlocked = result.progress?.newlyUnlocked;
       const replay = h('button', { type: 'button', class: `btn ${nextOpen ? 'btn--secondary' : 'btn--primary'}`, onclick: () => player.start(level) },
@@ -392,6 +409,7 @@ export default {
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },
           h('strong', { text: String(score) }), ` ${score > 1 ? 'bonnes réponses' : 'bonne réponse'} sur ${total}`),
+        chest?.el,
         gained?.grade && gradeBanner(gained.grade),
         unlocked && h('p', { class: 'end__unlocked' }, icon('star', { size: 22 }), h('span', { text: `Le niveau ${unlocked} est ouvert !` })),
         hasNext && !nextOpen && h('p', { class: 'end__hint', text: `Gagne 3 étoiles pour ouvrir le niveau ${level + 1}.` }),
@@ -403,7 +421,7 @@ export default {
           h('button', { type: 'button', class: 'btn btn--secondary', onclick: showLevels }, h('span', { text: 'Changer de niveau' })),
           h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte' })))));
-      root.querySelector('.end__actions .btn').focus({ preventScroll: true });
+      if (chest) chest.focus(); else root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }
 
     showLevels();

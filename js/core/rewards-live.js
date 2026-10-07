@@ -76,9 +76,6 @@ function pushExtras(extras, gained) {
   const points = gained.points - gained.dailyBonus;
   extras.push({ text: `+ ${points} points` });
   if (gained.dailyBonus) extras.push({ text: `+ ${gained.dailyBonus} points pour le défi du jour` });
-  for (const sticker of gained.stickers) {
-    extras.push({ icon: sticker.emoji, text: `Nouvelle gommette : ${sticker.name}` });
-  }
 }
 
 /**

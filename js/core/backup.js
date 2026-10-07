@@ -12,6 +12,7 @@ import { SCHEMA_VERSION, defaultProfile, migrate, profileMigrations } from './st
 import { cleanName } from './profile.js';
 import { normalizeRewards } from './rewards.js';
 import { normalizeCompanion } from './companion.js';
+import { normalizeChest } from './chest.js';
 
 export const BACKUP_APP = 'jeux-ce1';
 export const BACKUP_FORMAT = 1;
@@ -125,6 +126,7 @@ export function normalizeProfile(raw, { now = Date.now() } = {}) {
     weekly: sanitizeWeekly(doc.weekly),
     rewards: normalizeRewards(doc.rewards),
     companion: normalizeCompanion(doc.companion),
+    chest: normalizeChest(doc.chest),
   };
 }
 

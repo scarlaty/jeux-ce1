@@ -1,0 +1,175 @@
+/* Coffre surprise (#91) : le coffre de fin de partie (bois, argent, doré), son ouverture, et l'écran des
+   accessoires de « Mon compagnon ». Couleurs : variables --chest-* de tokens.css (clair + ardoise).
+   Animations : secousse, lueur, couvercle qui se lève, contenu qui jaillit. « Réduire les animations » :
+   le coffre s'ouvre d'un coup (voir core/ui/chest.js) et rien ne bouge, mais rien ne disparaît. */
+
+.chest {
+  --c-body: var(--chest-wood);
+  --c-lid: var(--chest-wood-lid);
+  --c-deep: var(--chest-wood-deep);
+  --c-band: var(--chest-iron);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+.chest--argent { --c-body: var(--chest-silver); --c-lid: var(--chest-silver-lid); --c-deep: var(--chest-silver-deep); --c-band: var(--chest-silver-deep); }
+.chest--dore { --c-body: var(--chest-gold); --c-lid: var(--chest-gold-lid); --c-deep: var(--chest-gold-deep); --c-band: var(--chest-gold-deep); }
+
+.chest__btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(220px, 62vw);
+  aspect-ratio: 140 / 120;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-l);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.chest__btn:disabled { cursor: default; }
+.chest__box { position: relative; display: block; width: 100%; transform-origin: 50% 92%; }
+.chest__art { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 3px 0 var(--sticker-rim)) drop-shadow(0 0 2px var(--sticker-rim)) drop-shadow(0 6px 5px var(--kawaii-shadow)); }
+
+/* Pièces du dessin */
+.chest__shadow { fill: var(--kawaii-shadow); }
+.chest__body, .chest__lid-shape { fill: var(--c-body); stroke: var(--c-deep); stroke-width: 3; stroke-linejoin: round; }
+.chest__lid-shape { fill: var(--c-lid); }
+.chest__plank { fill: none; stroke: var(--c-deep); stroke-width: 1.6; stroke-linecap: round; opacity: .45; }
+.chest__inside { fill: var(--chest-inside); }
+.chest__band { fill: var(--c-band); stroke: var(--c-deep); stroke-width: 1.6; stroke-linejoin: round; }
+.chest__shine { fill: none; stroke: var(--kawaii-shine); stroke-width: 4; stroke-linecap: round; opacity: .7; }
+.chest__emblem { fill: var(--chest-glow); stroke: var(--c-deep); stroke-width: 1.4; stroke-linejoin: round; }
+.chest--argent .chest__emblem { fill: var(--kawaii-shine); }
+.chest__rivet { fill: var(--c-deep); }
+.chest__lock { fill: var(--chest-gold); stroke: var(--chest-gold-deep); stroke-width: 2.4; }
+.chest--dore .chest__lock { fill: var(--chest-glow); }
+.chest__keyhole { fill: var(--chest-gold-deep); }
+
+/* Le couvercle pivote autour de sa charnière (à gauche) pour s'ouvrir. */
+.chest__lid { transform-box: view-box; transform-origin: 18px 60px; transition: transform .55s cubic-bezier(.3, 1.5, .5, 1); }
+.chest.is-open .chest__lid { transform: rotate(-28deg) translate(-2px, -2px); }
+.chest.is-open .chest__lock { opacity: .9; }
+
+/* Lueur : elle monte avant l'ouverture et reste ensuite derrière le coffre. */
+.chest__glow, .chest__rays {
+  position: absolute;
+  inset: -22% -18%;
+  pointer-events: none;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+.chest__glow { background: radial-gradient(circle, var(--chest-glow) 0%, transparent 62%); }
+.chest__rays {
+  background: repeating-conic-gradient(from 0deg, var(--chest-glow) 0 9deg, transparent 9deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+}
+.chest[data-state="glowing"] .chest__glow, .chest[data-state="open"] .chest__glow { opacity: .95; }
+.chest[data-state="open"] .chest__rays { opacity: .55; animation: chest-rays 14s linear infinite; }
+
+/* Sans animation : une lueur douce et fixe suffit à voir que le coffre est ouvert. */
+.chest[data-state="shaking"] .chest__box { animation: chest-shake .75s ease-in-out both; }
+.chest[data-state="closed"]:not(.is-open) .chest__box { animation: chest-idle 3.2s ease-in-out infinite; }
+.chest__btn:hover:not(:disabled) .chest__box, .chest__btn:focus-visible .chest__box { transform: scale(1.04); }
+.chest__btn:focus-visible { outline: 4px solid var(--focus); outline-offset: 4px; }
+
+.chest__hint { margin: 0; font-family: var(--font-title); font-weight: 600; font-size: 1.15rem; }
+
+@keyframes chest-idle {
+  0%, 82%, 100% { transform: rotate(0); }
+  86% { transform: rotate(-3deg); }
+  90% { transform: rotate(3deg); }
+  94% { transform: rotate(-2deg); }
+}
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  12% { transform: translateX(-7px) rotate(-5deg); }
+  26% { transform: translateX(7px) rotate(5deg); }
+  40% { transform: translateX(-6px) rotate(-4deg); }
+  54% { transform: translateX(6px) rotate(4deg); }
+  68% { transform: translateX(-3px) rotate(-2deg); }
+  82% { transform: translateX(3px) rotate(2deg) scale(1.04); }
+}
+@keyframes chest-rays { to { transform: rotate(360deg); } }
+
+/* Contenu révélé */
+.chest-prize { display: grid; justify-items: center; gap: var(--space-1); text-align: center; min-width: 0; }
+.chest-prize__art { width: 112px; margin-bottom: var(--space-1); animation: chest-rise .7s var(--ease-pop) both; }
+.chest-prize__emoji { width: auto; font-size: 4.2rem; line-height: 1.1; }
+.chest-prize__title { margin: 0; font-family: var(--font-title); font-weight: 600; font-size: 1.5rem; animation: chest-fade .5s .25s ease both; }
+.chest-prize__name { margin: 0; font-size: 1.2rem; font-weight: 700; animation: chest-fade .5s .35s ease both; }
+.chest-prize__hint { margin: 0; color: var(--ink-soft); animation: chest-fade .5s .45s ease both; }
+.chest-prize__link { margin-top: var(--space-1); }
+@keyframes chest-rise {
+  from { opacity: 0; transform: translateY(70px) scale(.3) rotate(-10deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes chest-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 520px) {
+  .chest__btn { width: min(180px, 56vw); }
+  .chest-prize__art { width: 92px; }
+  .chest-prize__emoji { font-size: 3.4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chest__box, .chest__rays, .chest-prize__art, .chest-prize__title, .chest-prize__name, .chest-prize__hint {
+    animation: none !important;
+  }
+  .chest__lid, .chest__glow, .chest__rays { transition: none; }
+  .chest__btn:hover:not(:disabled) .chest__box, .chest__btn:focus-visible .chest__box { transform: none; }
+}
+
+/* ---------- Accessoires du compagnon (« Mon compagnon ») ---------- */
+
+.acc { display: grid; gap: var(--space-3); }
+.acc__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.acc__title { margin: 0; font-family: var(--font-title); font-size: 1.3rem; }
+.acc__count { color: var(--ink-soft); font-weight: 700; }
+.acc__lead { margin: 0; font-size: 1.15rem; }
+.acc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.acc-item {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: 150px;
+  padding: var(--space-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: center;
+  background: var(--surface-raised);
+  border: 3px solid var(--border);
+  border-radius: var(--radius-l);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.acc-item:disabled { cursor: default; opacity: .6; }
+.acc-item.is-worn { border-color: var(--kawaii-peche-deep); background: var(--kawaii-creme); color: var(--kawaii-creme-ink); }
+.acc-item.is-locked { background: var(--surface-sunk); border-style: dashed; border-color: var(--border-strong); cursor: default; }
+.acc-item__art { width: 84px; }
+.acc-item__none { display: grid; place-items: center; width: 84px; height: 84px; font-family: var(--font-title); font-size: 2rem; color: var(--ink-soft); }
+.acc-item__hole { display: grid; place-items: center; width: 84px; height: 84px; font-family: var(--font-title); font-size: 2rem; color: var(--ink-faint); }
+.acc-item__name { font-size: .9rem; line-height: 1.2; font-weight: 700; }
+.acc-item__state { font-size: .8rem; color: inherit; opacity: .85; }
+.acc-item:focus-visible { outline: 4px solid var(--focus); outline-offset: 3px; }
+@media (max-width: 520px) {
+  .acc-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--space-2); }
+  .acc-item__art, .acc-item__none, .acc-item__hole { width: 68px; height: 68px; }
+}
+
+/* Fin de partie : le coffre prend sa place entre le score et les boutons. */
+.end .chest { margin: var(--space-2) 0; }

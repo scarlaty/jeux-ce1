@@ -14,6 +14,7 @@ export function companionSpec(companion, { face, decorative = false, stage = sta
     stage,
     color: info.color,
     face,
+    ...(companion.hatched && companion.accessory ? { accessory: companion.accessory } : {}),
     ...(companion.hatched && companion.name ? { name: companion.name } : {}),
   });
   return decorative ? { ...spec, decorative: true } : spec;

@@ -91,6 +91,19 @@
   --star-empty: #e7e0d0;
   --star-empty-edge: #c8bea8;
   --sticker-rim: #ffffff;      /* liseré blanc des gommettes */
+  /* Coffre surprise (#91) : bois, argent, doré ; chacun un corps, un couvercle, des ferrures et un reflet */
+  --chest-wood: #c9873f;
+  --chest-wood-lid: #dd9d52;
+  --chest-wood-deep: #7a4a1e;
+  --chest-silver: #b9c6d8;
+  --chest-silver-lid: #d3deec;
+  --chest-silver-deep: #6a7a93;
+  --chest-gold: #f5c518;
+  --chest-gold-lid: #ffdc55;
+  --chest-gold-deep: #a87400;
+  --chest-iron: #6f7885;
+  --chest-inside: #4a2f18;
+  --chest-glow: #fff3b0;
   --overlay: #22305b33;
 
   /* Une couleur par île (+ fond pâle + encre lisible sur ce fond) */
@@ -187,6 +200,18 @@
     --star-empty: #3e4c48;
     --star-empty-edge: #5b6b66;
     --sticker-rim: #f3f1e7;
+    --chest-wood: #b87638;
+    --chest-wood-lid: #cd8b46;
+    --chest-wood-deep: #1f1209;
+    --chest-silver: #a4b3c8;
+    --chest-silver-lid: #bccbdf;
+    --chest-silver-deep: #33405a;
+    --chest-gold: #f0c020;
+    --chest-gold-lid: #ffd84a;
+    --chest-gold-deep: #6e4a00;
+    --chest-iron: #5d6572;
+    --chest-inside: #1a0f06;
+    --chest-glow: #ffe98a;
     --overlay: #00000066;
     --island-mots: #ff8db5;
     --island-mots-soft: #4a2c3a;
@@ -258,6 +283,18 @@
   --star-empty: #3e4c48;
   --star-empty-edge: #5b6b66;
   --sticker-rim: #f3f1e7;
+  --chest-wood: #b87638;
+  --chest-wood-lid: #cd8b46;
+  --chest-wood-deep: #1f1209;
+  --chest-silver: #a4b3c8;
+  --chest-silver-lid: #bccbdf;
+  --chest-silver-deep: #33405a;
+  --chest-gold: #f0c020;
+  --chest-gold-lid: #ffd84a;
+  --chest-gold-deep: #6e4a00;
+  --chest-iron: #5d6572;
+  --chest-inside: #1a0f06;
+  --chest-glow: #ffe98a;
   --overlay: #00000066;
   --island-mots: #ff8db5;
   --island-mots-soft: #4a2c3a;

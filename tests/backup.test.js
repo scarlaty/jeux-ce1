@@ -41,6 +41,7 @@ test('un aller-retour export/import conserve tous les champs du profil', () => {
     weekly: [{ week: Date.UTC(2026, 8, 28), game: 'sons', level: 1, games: 3, score: 24, total: 30, durationMs: 180000 }],
     rewards: normalizeRewards({ points: 1234, stickers: { nombres: ['de'] } }),
     companion: { animal: 'bunny', name: 'Pompon', hatched: true, games: 12, stars: 31 },
+    chest: { accessories: ['bow', 'crown'], equipped: 'crown', opened: 9 },
   };
   store.updateProfile(id, (p) => ({ ...p, ...rich }));
   const before = store.getProfile(id);
@@ -225,4 +226,19 @@ test('un compagnon abîmé dans le fichier est nettoyé champ par champ', () => 
   const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: SCHEMA_VERSION, exportedAt: 0, activeProfileId: 'p1', profiles: [hostile] });
   assert.equal(check.ok, true, check.error);
   assert.deepEqual(check.backup.profiles[0].companion, { animal: 'cat', name: 'img srcx', hatched: true, games: 0, stars: 0 });
+});
+
+test('un profil sans coffre (ancienne sauvegarde) reçoit les valeurs par défaut à l\'import', () => {
+  const old = { schemaVersion: SCHEMA_VERSION, id: 'p1', name: 'Léa', avatar: 'chat', createdAt: 0, progress: {}, history: [], weekly: [] };
+  const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: SCHEMA_VERSION, exportedAt: 0, activeProfileId: 'p1', profiles: [old] });
+  assert.equal(check.ok, true, check.error);
+  assert.deepEqual(check.backup.profiles[0].chest, { accessories: [], equipped: null, opened: 0 });
+});
+
+test('un coffre abîmé dans le fichier est nettoyé champ par champ', () => {
+  const hostile = { schemaVersion: SCHEMA_VERSION, id: 'p1', name: 'Léa', avatar: 'chat', createdAt: 0, progress: {}, history: [], weekly: [],
+    chest: { accessories: ['star', 'dragon', 'bow', 'bow'], equipped: 'hat', opened: 'x', extra: '<img>' } };
+  const check = validateBackup({ app: 'jeux-ce1', format: 1, schemaVersion: SCHEMA_VERSION, exportedAt: 0, activeProfileId: 'p1', profiles: [hostile] });
+  assert.equal(check.ok, true, check.error);
+  assert.deepEqual(check.backup.profiles[0].chest, { accessories: ['bow', 'star'], equipped: null, opened: 0 });
 });

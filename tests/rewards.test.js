@@ -149,7 +149,8 @@ test('applyGameRewards cumule les points et remplit l\'album', () => {
   const first = applyGameRewards(start, { island: 'nombres', stars: 3, points: 150 });
   assert.equal(first.rewards.points, 150);
   assert.equal(first.gained.points, 150);
-  assert.deepEqual(first.gained.stickers.map((s) => s.id), STICKERS.nombres.slice(0, 2).map((s) => s.id));
+  assert.deepEqual(first.gained.chest, { island: 'nombres', stars: 3 }, 'un coffre, pas de gommette directe');
+  assert.equal(stickerCount(first.rewards), 0);
   assert.equal(first.gained.grade, null);
   // L'état d'origine n'est pas modifié (fonction pure).
   assert.equal(start.points, 0);
@@ -157,18 +158,15 @@ test('applyGameRewards cumule les points et remplit l\'album', () => {
 
   const second = applyGameRewards(first.rewards, { island: 'nombres', stars: 1, points: 110 });
   assert.equal(second.rewards.points, 260);
-  assert.equal(second.rewards.stickers.nombres.length, 3);
   assert.equal(second.gained.grade.id, GRADES[1].id, 'le passage de grade est signalé');
 
   // Partie ratée : des points quand même, mais pas de gommette.
   const third = applyGameRewards(second.rewards, { island: 'nombres', stars: 0, points: COMPLETION_POINTS });
   assert.equal(third.gained.points, COMPLETION_POINTS);
-  assert.deepEqual(third.gained.stickers, []);
-  assert.equal(third.rewards.stickers.nombres.length, 3);
+  assert.equal(third.gained.chest, null, 'pas de coffre sans étoile');
 
   // Île sans collection (cas d'un jeu mal déclaré) : jamais d'exception.
   const odd = applyGameRewards(third.rewards, { island: 'nulle-part', stars: 3, points: 10 });
-  assert.deepEqual(odd.gained.stickers, []);
   assert.equal(odd.rewards.points, third.rewards.points + 10);
 });
 
@@ -178,16 +176,16 @@ test('le défi du jour n\'est récompensé qu\'une fois par jour', () => {
   assert.equal(first.gained.dailyBonus, DAILY_BONUS_POINTS);
   assert.equal(first.rewards.points, 60 + DAILY_BONUS_POINTS);
   assert.equal(first.rewards.daily.key, day);
-  assert.equal(first.gained.stickers.length, 2);
+  assert.deepEqual(first.gained.chest, { island: 'monde', stars: 3 });
 
   const again = applyGameRewards(first.rewards, { island: 'monde', stars: 3, points: 60, daily: { key: day } });
   assert.equal(again.gained.dailyBonus, 0);
-  assert.deepEqual(again.gained.stickers, [], 'pas de seconde gommette le même jour');
+  assert.equal(again.gained.chest, null, 'pas de second coffre le même jour');
   assert.equal(again.rewards.points, first.rewards.points + 60, 'les points des réponses comptent toujours');
 
   const tomorrow = applyGameRewards(again.rewards, { island: 'monde', stars: 2, points: 60, daily: { key: '2026-10-07' } });
   assert.equal(tomorrow.gained.dailyBonus, DAILY_BONUS_POINTS);
-  assert.equal(tomorrow.gained.stickers.length, 1);
+  assert.deepEqual(tomorrow.gained.chest, { island: 'monde', stars: 2 });
 });
 
 // --- Défi du jour : la date LOCALE, jamais UTC --------------------------------------------------

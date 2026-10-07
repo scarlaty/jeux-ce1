@@ -4,6 +4,7 @@
 //   companionSummary(session) → ce qui a changé à la fin de cette partie (ou null)
 import { gameEvents } from './engine.js';
 import { addRun, readCompanion, saveCompanion } from './companion.js';
+import { withAccessory } from './chest.js';
 
 let context = null;   // { store, profileId }
 let last = null;      // { session, change }
@@ -41,11 +42,12 @@ export function companionSummary(session) {
   return last && last.session === session ? last.change : null;
 }
 
-/** Compagnon actuel du profil actif. */
+/** Compagnon actuel du profil actif, avec l'accessoire qu'il porte (`accessory`). */
 export function currentCompanion() {
   if (!context) return readCompanion(null);
   try {
-    return readCompanion(context.store.getProfile(context.profileId));
+    const profile = context.store.getProfile(context.profileId);
+    return withAccessory(readCompanion(profile), profile);
   } catch (err) {
     console.error('[companion] lecture du profil', err);
     return readCompanion(null);

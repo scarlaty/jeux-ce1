@@ -5,6 +5,7 @@ import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
 import { mascotSticker, islandFace } from '../core/ui/mascot.js';
 import { companionSticker } from '../core/ui/companion.js';
+import { withAccessory } from '../core/chest.js';
 import {
   progressOf, progressText, readCompanion, readyToHatch, STAGE_LABELS, stageOf,
 } from '../core/companion.js';
@@ -135,7 +136,7 @@ export default {
           h('span', { class: 'home__deco home__deco--right', 'aria-hidden': 'true' }, drawDeco({ shape: 'heart', face: 'joyful' }))),
         h('p', { class: 'home__subtitle cursive', text: 'Choisis une île et joue !' })),
       rewardBar(rewards),
-      companionCard(readCompanion(profile)),
+      companionCard(withAccessory(readCompanion(profile), profile)),
       dailyCard(rewards, realGames.length > 0),
       h('div', { class: 'map' },
         h('div', { class: 'map__sea', 'aria-hidden': 'true' }),
