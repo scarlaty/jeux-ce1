@@ -82,6 +82,7 @@ js/
     engine.js           déroulé d'une partie (10 questions, score, étoiles, niveau suivant) + gameEvents
     validate.js         vérification de la forme d'une question (utilisée par les tests des jeux)
     alphabet.js         touches du clavier de lettres
+    amount.js           composer une somme : plus petite composition (PUR, #60)
     router.js           routeur par hash
     offline.js          enregistrement du service worker + avis discret de mise à jour
     rewards.js          points, séries, grades, gommettes, défi du jour (FONCTIONS PURES)
@@ -106,6 +107,7 @@ js/
       order.js          remettre dans l'ordre
       drag.js           glisser-déposer (pointer events)
       letters.js        clavier de lettres
+      amount.js         composer un montant avec des pièces et des billets (type « amount », #60)
   games/
     registry.js         îles + liste des jeux : métadonnées + chemin d'import (chargement paresseux)
     demo.js             jeu de démonstration des 5 types de questions (#/jeu/demo)
@@ -181,7 +183,15 @@ et le matériel de numération décrit les pièces posées, pas le nombre.
 Genres existants : `clock` (cadran à aiguilles) et `base-ten` (matériel de numération :
 `{ kind: 'base-ten', hundreds, tens, units }`, de 0 à 9 pièces par sorte — plaques de cent,
 barres de dix, cubes ; partagé par les jeux de numération et de calcul), `kawaii` et `kawaii-deco`
-(personnages et décorations du kit kawaii, voir « Univers kawaii »).
+(personnages et décorations du kit kawaii, voir « Univers kawaii »), et `money` (pièces et billets en euros :
+`{ kind: 'money', pieces: [500, 500, 200, 50] }`, valeurs en **centimes** ; tailles et couleurs réelles — 5 € gris,
+10 € rouge, 20 € bleu, 50 € orange ; son `label` dit les pièces, jamais la somme ; `money(cents)` écrit « 2 € et 50 c »
+avec espaces insécables et `moneySpoken(cents)` donne la version à lire ; couleurs = tokens `--money-*`, identiques en clair et sombre).
+
+**Type `amount`** (`js/core/ui/amount.js`, composer un montant) : l'enfant touche des pièces/billets
+(`display: { options: [{ value: 5, art }], suffix: ' €', maxPieces?: 30 }`) et le composant répond par la **somme** posée ;
+`answer` est donc le total, et toute composition juste est acceptée. `validateQuestion` vérifie que le total est réalisable
+(`core/amount.js`, `fewestPieces(total, valeurs)` : plus petite composition, utile pour l'exemple de l'explication).
 
 Les réponses sont comparées
 par `sameAnswer` (nombres, textes normalisés NFC + apostrophes, listes dans l'ordre, objets clé par clé).

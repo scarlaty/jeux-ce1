@@ -3,8 +3,9 @@
 import { keyboardKeys } from './alphabet.js';
 import { sameAnswer } from './engine.js';
 import { artErrors, artLabel } from './ui/art/index.js';
+import { fewestPieces } from './amount.js';
 
-export const QUESTION_TYPES = ['choice', 'keypad', 'order', 'drag', 'letters'];
+export const QUESTION_TYPES = ['choice', 'keypad', 'order', 'drag', 'letters', 'amount'];
 
 const nonEmpty = (s) => typeof s === 'string' && s.trim().length > 0;
 
@@ -73,6 +74,20 @@ const checks = {
     const answer = q.answer || {};
     if (Object.keys(answer).sort().join() !== [...itemIds].sort().join()) errors.push('chaque élément doit avoir une cible');
     if (Object.values(answer).some((t) => !targetIds.includes(t))) errors.push('cible inconnue dans la réponse');
+  },
+
+  amount(q, errors) {
+    const options = q.display?.options || [];
+    const values = options.map((o) => o.value);
+    if (options.length < 2) errors.push('au moins 2 pièces ou billets à poser');
+    if (options.some((o) => !(Number.isInteger(o.value) && o.value > 0))) errors.push('valeur d\'option : entier positif');
+    if (options.some((o) => !shows(o))) errors.push('option sans texte ni image');
+    if (new Set(values).size !== values.length) errors.push('deux options de même valeur');
+    checkArt(options, errors);
+    if (!Number.isInteger(q.answer) || q.answer <= 0) { errors.push('réponse : total entier positif attendu'); return; }
+    const best = fewestPieces(q.answer, values.filter((v) => Number.isInteger(v) && v > 0));
+    if (!best) errors.push('le total ne peut pas être composé avec ces options');
+    else if (best.length > (q.display?.maxPieces ?? 30)) errors.push('le total demande trop de pièces');
   },
 
   letters(q, errors) {

@@ -97,6 +97,13 @@ export const GAMES = [
     subject: 'maths',
     load: () => import('./heure.js'),
   },
+  {
+    id: 'tirelire',
+    title: 'La tirelire',
+    island: 'mesures',
+    subject: 'maths',
+    load: () => import('./tirelire.js'),
+  },
 ];
 
 export function getIsland(id) {

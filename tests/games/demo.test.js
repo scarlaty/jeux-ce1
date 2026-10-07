@@ -2,7 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import game from '../../js/games/demo.js';
 import { checkGameShape, checkGenerator } from '../helpers/game-checks.js';
-import { QUESTION_TYPES } from '../../js/core/validate.js';
+import { QUESTION_TYPES as ALL_TYPES } from '../../js/core/validate.js';
+
+// La démo montre les cinq types de base ; « amount » est montré par La tirelire.
+const QUESTION_TYPES = ALL_TYPES.filter((t) => t !== 'amount');
 
 test('le jeu démo respecte le contrat', () => {
   checkGameShape(game);

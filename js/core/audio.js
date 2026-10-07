@@ -128,6 +128,10 @@ const SPOKEN_SIGNS_FR = [
   [/ − /g, ' moins '],
   [/ × /g, ' fois '],
   [/ = /g, ' égale '],
+  // Argent : « 50 c » (centimes) et « 5 € » s'écrivent avec une espace insécable (js/core/ui/art/money.js).
+  [/(?<![\d])1 €/g, '1 euro'],
+  [/ €/g, ' euros'],
+  [/(\d) c(?![\p{L}'’])/gu, '$1 centimes'],
 ];
 
 /** Texte à lire en français : les signes de calcul deviennent des mots. Fonction pure. */

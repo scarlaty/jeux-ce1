@@ -17,8 +17,9 @@ import * as baseTen from './base-ten.js';
 import * as clock from './clock.js';
 import * as kawaii from './kawaii.js';
 import * as kawaiiDeco from './kawaii-deco.js';
+import * as money from './money.js';
 
-const registry = new Map(Object.entries({ 'base-ten': baseTen, clock, kawaii, 'kawaii-deco': kawaiiDeco }));
+const registry = new Map(Object.entries({ 'base-ten': baseTen, clock, kawaii, 'kawaii-deco': kawaiiDeco, money }));
 
 export function registerArt(kind, module) {
   registry.set(kind, module);
