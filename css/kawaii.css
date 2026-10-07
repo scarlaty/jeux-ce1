@@ -363,3 +363,20 @@
   .play-intro--mascot { gap: var(--space-3); }
   .play-intro__mascot { width: 80px; }
 }
+
+/* Fin de partie : la mascotte au-dessus du tampon, encadrée de deux étincelles dès 2 étoiles. */
+.end__buddy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.end__mascot { width: 136px; }
+.end__deco { width: 36px; line-height: 0; }
+.end__deco .kw { width: 100%; height: auto; }
+.end__deco--left { align-self: flex-start; }
+.end__deco--right { align-self: flex-end; animation-delay: -1.3s; }
+@media (max-width: 520px) {
+  .end__mascot { width: 96px; }
+}

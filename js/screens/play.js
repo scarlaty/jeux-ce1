@@ -9,7 +9,8 @@ import { h, content } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
-import { mascotSticker } from '../core/ui/mascot.js';
+import { mascotSticker, hasMascot, endFace } from '../core/ui/mascot.js';
+import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
 import { getGameProgress } from '../core/history.js';
@@ -89,6 +90,23 @@ export function extrasList(extras) {
   return h('ul', { class: 'end__extras' }, extras.map((x) => h('li', {},
     x.icon && h('span', { class: 'emoji', role: 'img', 'aria-label': '', 'aria-hidden': 'true', text: x.icon }),
     h('span', { text: x.text }))));
+}
+
+/** L'île dont la mascotte accompagne une partie (le défi du jour prend celle de sa gommette). */
+export function mascotIsland(game) {
+  return hasMascot(game.island) ? game.island : game.rewardIsland;
+}
+
+/** Mascotte de fin de partie : son expression suit les étoiles, deux étincelles dès 2 étoiles. */
+export function endMascot(island, stars) {
+  const buddy = mascotSticker(island, { face: endFace(stars), loop: stars >= 2 ? 'bounce' : null, className: 'end__mascot' });
+  if (!buddy) return null;
+  const sparkle = (side, color) => h('span', { class: `end__deco end__deco--${side} kw-twinkle`, 'aria-hidden': 'true' },
+    drawDeco({ shape: 'sparkle', color }));
+  return h('div', { class: 'end__buddy' },
+    stars >= 2 && sparkle('left', 'citron'),
+    buddy,
+    stars >= 2 && sparkle('right', 'rose'));
 }
 
 /**
@@ -333,6 +351,7 @@ export default {
         h('span', { text: 'Niveau suivant' }), icon('arrowRight'));
 
       root.replaceChildren(h('div', { class: 'end card' },
+        endMascot(game.island, stars),
         h('h1', { class: 'end__title stamp stamp--static', text: END_TITLES[stars] }),
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },

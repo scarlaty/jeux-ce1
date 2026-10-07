@@ -12,7 +12,7 @@ import { rewardSummary } from '../core/rewards-live.js';
 import {
   DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards,
 } from '../core/rewards.js';
-import { createGameView, starRow, gradeBanner, extrasList, celebrate } from './play.js';
+import { createGameView, starRow, gradeBanner, extrasList, celebrate, endMascot } from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 
@@ -117,6 +117,7 @@ export default {
       stopConfetti = celebrate(stars);
 
       root.replaceChildren(h('div', { class: 'end card' },
+        endMascot(game.rewardIsland, stars),
         h('h1', { class: 'end__title stamp stamp--static', text: END_TITLES[stars] }),
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },
