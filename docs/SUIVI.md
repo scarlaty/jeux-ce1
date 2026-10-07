@@ -108,6 +108,10 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
    « lion », « chien », « yeux » portent le code `yod` pour cette raison (même [j] que « fille »).
 4. **Émojis** : un émoji n'est utilisable comme image que si une enfant de 7 ans le nomme sans hésiter.
    🌬️ « vent », ⚖️ « balance », 💐 « bouquet » ont été retirés après vérification à l'écran.
+   La liste vit désormais dans `EMOJIS_ECARTES` (`tests/helpers/game-checks.js`, + 🐔 🧄 🧈 🍈) et `checkEmojis`
+   la fait respecter : y ajouter tout émoji jugé illisible (#106).
+   **Devinettes** : le genre est séparé du déterminant (`du raisin`, `de l'ail`), et `checkCluesNeeded` /
+   `measureClues` mesurent qu'aucun indice n'est superflu (#97) ; à réutiliser par tout jeu qui empile des contraintes.
 5. **Service worker** : le précache télécharge avec `cache: 'reload'`. Sans cela, une nouvelle version
    reprenait d'anciens fichiers du cache HTTP (10 min sur GitHub Pages) et mélangeait deux versions (07/10, v10).
 6. **Fichier importé = donnée non fiable** : les clés `__proto__` / `constructor` sont ignorées.

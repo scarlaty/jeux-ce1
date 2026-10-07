@@ -1,12 +1,15 @@
-// Devinettes (E3-T6) : lire une devinette courte et choisir la bonne réponse.
-//  Niveau 1 : 2 indices très simples, 3 images.
-//  Niveau 2 : 3 indices, 4 images ; les intrus sont plausibles (ils vérifient au moins un indice).
-//  Niveau 3 : réponses en mots seulement ; 2 ou 3 indices + un indice de déduction « Je ne suis pas… ».
-// Aucune ambiguïté (voir js/data/devinettes.js) : chaque indice est vrai de la réponse, et chaque
-// intrus contredit au moins un indice sans hésitation possible. Au niveau 3, un seul intrus vérifie
-// tous les indices positifs : c'est « Je ne suis pas… » qui l'écarte.
+// Devinettes (E3-T6) : croiser des indices pour trouver la bonne réponse.
+//  Niveau 1 : 2 indices, 3 images.
+//  Niveau 2 : 3 indices, 4 images.
+//  Niveau 3 : réponses en mots seulement ; 2 indices + un indice dit à l'envers (« Je ne suis pas jaune. »).
+// Règle d'or (#97) : CHAQUE INDICE EST NÉCESSAIRE. À chaque indice correspond un intrus qui vérifie tous les
+// autres indices et ne contredit que celui-là : en retirer un seul rend la devinette ambiguë. Aucun intrus ne
+// vient d'une autre catégorie « pour faire nombre » ; aucun indice ne nomme un choix affiché.
+// Aucune ambiguïté : la réponse vérifie tout avec certitude, chaque intrus contredit un indice sans hésitation
+// (voir js/data/devinettes.js : `is` / `maybe`).
 import {
-  THINGS, KIND_RANK, TAGS, confusable, clueText, whyNot, definite, indefinite, contradicted, fitsAll,
+  THINGS, KIND_RANK, TAGS, NEGATIONS, confusable, clueText, negationText, whyNot, definite, indefinite,
+  holds, fails, couldHold,
 } from '../data/devinettes.js';
 
 const kind = (tag) => TAGS[tag].kind;
@@ -26,91 +29,84 @@ function pickClues(tags, count, rng) {
 /** Des images qui ne se ressemblent pas et qu'on ne confond pas avec les images déjà choisies. */
 const compatible = (t, chosen) => chosen.every((c) => c.emoji !== t.emoji && !confusable(c.word, t.word));
 
-function pickWrong(candidates, count, chosen, rng, preferred = () => false) {
-  const out = [];
-  const pool = rng.shuffle([...candidates]);
-  const sorted = [...pool.filter(preferred), ...pool.filter((t) => !preferred(t))];
-  for (const t of sorted) {
-    if (out.length === count) break;
-    if (compatible(t, [...chosen, ...out])) out.push(t);
+/**
+ * Un intrus par contrainte : il vérifie TOUTES les autres avec certitude et contredit celle-là avec certitude.
+ * Renvoie [{ thing, missed }] ou null si la banque n'offre pas un tel intrus.
+ */
+function pickLures(answer, constraints, rng) {
+  const chosen = [answer];
+  const lures = [];
+  for (const missed of rng.shuffle([...constraints])) {
+    const others = constraints.filter((c) => c !== missed);
+    const base = THINGS.filter((t) => compatible(t, chosen) && fails(t, missed));
+    // De préférence un intrus qui vérifie les autres indices avec certitude ; sinon, qui pourrait les vérifier.
+    const sure = base.filter((t) => others.every((c) => holds(t, c)));
+    const candidates = sure.length ? sure : base.filter((t) => others.every((c) => couldHold(t, c)));
+    if (!candidates.length) return null;
+    const thing = rng.pick(candidates);
+    chosen.push(thing);
+    lures.push({ thing, missed });
   }
-  return out.length === count ? out : null;
+  return lures;
 }
 
-/** Le premier indice sert d'explication : celui que le plus d'intrus contredisent (le plus évident d'abord). */
-function decisiveClue(clues, wrong) {
-  const score = (c) => wrong.filter((w) => contradicted(w, [c]).length).length * 10 - KIND_RANK[kind(c)];
-  return [...clues].sort((a, b) => score(b) - score(a))[0];
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+
+/** Dit pourquoi cet intrus ne convient pas, par l'indice qui le trahit (toujours vrai de l'intrus). */
+function lureReason(answer, { thing, missed }) {
+  if (!missed.neg) return whyNot(missed.tag, thing);
+  return `${cap(definite(thing))} dit : « ${clueText(missed.tag, thing)} » Ce n'est pas moi.`;
 }
 
-const END = { picture: 'Qui suis-je ? Touche la bonne image.' };
+const clueSentence = (c, answer) => (c.neg ? negationText(c.tag, answer) : clueText(c.tag, answer));
 
-function pictureQuestion(level, rng) {
-  const need = level === 1 ? 2 : 3;
-  const answer = rng.pick(THINGS.filter((t) => t.is.size >= need));
-  const clues = pickClues(answer.is, need, rng);
-  if (!clues) return null;
-  const others = THINGS.filter((t) => t !== answer && !fitsAll(t, clues));
-  const shares = (t) => clues.some((c) => t.fits.has(c));
-  // Niveau 2 : intrus plausibles (au moins un indice vérifié) ; niveau 1 : n'importe quelle image différente.
-  const wrong = pickWrong(others, need === 2 ? 2 : 3, [answer], rng, level === 2 ? shares : () => false);
-  if (!wrong) return null;
-  const key = decisiveClue(clues, wrong);
-  const why = wrong.filter((w) => contradicted(w, [key]).length).slice(0, 2).map((w) => whyNot(key, w));
-  const text = `${clues.map((c) => clueText(c, answer)).join(' ')} ${END.picture}`;
-  const choices = rng.shuffle([answer, ...wrong]).map((t) => ({ value: t.word, emoji: t.emoji, label: t.word }));
+function buildQuestion(level, answer, constraints, lures, rng) {
+  const ordered = [...constraints.filter((c) => !c.neg), ...constraints.filter((c) => c.neg)];
+  const words = level === 3;
+  const end = words ? 'Qui suis-je ? Touche le bon mot.' : 'Qui suis-je ? Touche la bonne image.';
+  const text = `${ordered.map((c) => clueSentence(c, answer)).join(' ')} ${end}`;
+  const choices = rng.shuffle([answer, ...lures.map((l) => l.thing)]).map((t) => (words
+    ? { value: t.word, text: t.word }
+    : { value: t.word, emoji: t.emoji, label: t.word }));
+  const reasons = lures.sort((a, b) => ordered.indexOf(a.missed) - ordered.indexOf(b.missed))
+    .map((l) => lureReason(answer, l));
   return {
-    key: `devinettes:${level}:${answer.word}:${clues.join('+')}`,
+    key: `devinettes:${level}:${answer.word}:${ordered.map((c) => (c.neg ? '!' : '') + c.tag).join('+')}`,
     type: 'choice',
     prompt: text,
     speak: text,
-    display: { choices },
+    display: words ? { choices, cursive: true } : { choices },
     answer: answer.word,
-    explain: `C'est ${indefinite(answer)} ! L'indice qui aide : « ${clueText(key, answer)} » ${why.join(' ')}`.trim(),
+    explain: `C'est ${indefinite(answer)} ! Il faut lire tous les indices. ${reasons.join(' ')}`,
     skill: 'comprendre une devinette',
-    riddle: { answer: answer.word, clues, wrong: wrong.map((w) => w.word) },
+    riddle: {
+      answer: answer.word,
+      clues: constraints.filter((c) => !c.neg).map((c) => c.tag),
+      not: (constraints.find((c) => c.neg) || {}).tag || null,
+      wrong: lures.map((l) => l.thing.word),
+    },
   };
 }
 
-function deductionQuestion(rng) {
+function question(level, rng) {
   const answer = rng.pick(THINGS);
-  const twins = rng.shuffle(THINGS.filter((t) => t !== answer && compatible(t, [answer])
-    && [...answer.is].filter((tag) => t.is.has(tag)).length >= 2));
-  for (const twin of twins) {
-    const shared = [...answer.is].filter((tag) => twin.is.has(tag));
-    const clues = pickClues(shared, Math.min(3, shared.length) === 3 && rng.chance(0.6) ? 3 : 2, rng);
-    if (!clues) continue;
-    const others = THINGS.filter((t) => t !== answer && t !== twin && !fitsAll(t, clues));
-    const wrong = pickWrong(others, 2, [answer, twin], rng, (t) => clues.some((c) => t.fits.has(c)));
-    if (!wrong) continue;
-    const text = `${clues.map((c) => clueText(c, answer)).join(' ')} Je ne suis pas ${indefinite(twin)}. Qui suis-je ?`;
-    const choices = rng.shuffle([answer, twin, ...wrong]).map((t) => ({ value: t.word, text: t.word }));
-    const reason = clues.map((c) => clueText(c, answer)).join(' ');
-    return {
-      key: `devinettes:3:${answer.word}:${twin.word}:${clues.join('+')}`,
-      type: 'choice',
-      prompt: `${text} Touche le bon mot.`,
-      speak: `${text} Touche le bon mot.`,
-      display: { choices, cursive: true },
-      answer: answer.word,
-      explain: `« ${reason} » : ça pourrait être ${definite(twin)} ou ${definite(answer)}. `
-        + `Mais « Je ne suis pas ${indefinite(twin)} », donc c'est ${indefinite(answer)} !`,
-      skill: 'comprendre une devinette',
-      riddle: { answer: answer.word, clues, twin: twin.word, wrong: wrong.map((w) => w.word) },
-    };
+  const positives = level === 1 ? 2 : level === 2 ? 3 : 2;
+  if (answer.is.size < positives) return null;
+  const clues = pickClues(answer.is, positives, rng);
+  if (!clues) return null;
+  const constraints = clues.map((tag) => ({ tag }));
+  if (level === 3) {
+    const negatable = Object.keys(NEGATIONS).filter((tag) => holds(answer, { tag, neg: true }));
+    if (!negatable.length) return null;
+    constraints.push({ tag: rng.pick(negatable), neg: true });
   }
-  return null;
+  const lures = pickLures(answer, constraints, rng);
+  return lures ? buildQuestion(level, answer, constraints, lures, rng) : null;
 }
 
-const MAKE = {
-  1: (rng) => pictureQuestion(1, rng),
-  2: (rng) => pictureQuestion(2, rng),
-  3: (rng) => deductionQuestion(rng),
-};
-
 function draw(level, rng) {
-  for (let i = 0; i < 200; i++) {
-    const q = MAKE[level](rng);
+  for (let i = 0; i < 3000; i++) {
+    const q = question(level, rng);
     if (q) return q;
   }
   throw new Error(`devinettes : aucune question possible au niveau ${level}`);
@@ -124,9 +120,9 @@ export default {
   issue: 27,
   skills: ['Comprendre un texte court', 'Relier des indices pour trouver une réponse', 'Raisonner par déduction'],
   levels: [
-    { label: 'Niveau 1', hint: '2 indices, 3 images' },
-    { label: 'Niveau 2', hint: '3 indices, 4 images' },
-    { label: 'Niveau 3', hint: 'Des mots et un indice de déduction' },
+    { label: 'Niveau 1', hint: '2 indices à croiser, 3 images' },
+    { label: 'Niveau 2', hint: '3 indices à croiser, 4 images' },
+    { label: 'Niveau 3', hint: 'Des mots et un indice « Je ne suis pas… »' },
   ],
   makeQuestion(level, rng, seen) {
     for (let i = 0; i < 12; i++) {
