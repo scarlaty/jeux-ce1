@@ -375,25 +375,35 @@ const MILL = () => [
   // Les ailes : quatre pales, chacune avec sa toile
   n('g', { class: 'sc-mill-sails', transform: 'translate(0 -23)' },
     [0, 90, 180, 270].map((a) => n('g', { transform: `rotate(${a})` },
-      path('M-1 -2L-1.4 -13h2.8L1 -2Z', 'sc-sail'),
-      ln('M-1 -2L-1.4 -13h2.8L1 -2Z'),
-      dt('M0 -3v-9.4'))),
+      path('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z', 'sc-sail'),
+      path('M-1.4 -2.4L-2.4 -14h2L0 -2.4Z', 'sc-wall-lt'),
+      ln('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z'),
+      dt('M0 -2.8V-13.6M-2 -6h4M-2.2 -9.6h4.4'))),
     circ(0, 0, 1.8, 'sc-gold'),
     ln('M0 0a1.8 1.8 0 1 0 .01 0')),
 ];
 
 const TWIN_ROCKS = () => [
   ground(15, 3.6),
+  // Deux rochers jumeaux : même silhouette, même bande claire, mêmes mousses — ils vont par paire,
+  // comme les lettres sœurs.
   path('M-13 0.4C-14 -5 -11 -11.6 -6.6 -12.6C-2.6 -12 0.2 -6 -0.4 0.4Z', 'sc-stone'),
   path('M-13 0C-13.6 -5.4 -10.8 -11.6 -6.6 -12.6C-5 -10 -6.6 -4.6 -9 0.2Z', 'sc-stone-lt'),
+  path('M-5.4 -11.4C-3 -9 -1.4 -4.6 -1.6 0.4H-5C-4.6 -4 -5 -8 -6.4 -11Z', 'sc-stone-dk'),
+  path('M-12.6 -5.6C-9 -7 -5 -7 -1.4 -5.6L-1.2 -3C-5 -4.4 -9 -4.4 -12.8 -3Z', 'sc-stone-lt'),
   ln('M-13 0.4C-14 -5 -11 -11.6 -6.6 -12.6C-2.6 -12 0.2 -6 -0.4 0.4Z'),
-  dt('M-10.6 -9.6Q-7.6 -6.4 -8 -1M-4.4 -10.6Q-2.4 -6 -3 -0.6'),
+  path('M-10.4 -11.8q3.4-2.6 6.6 0.4q-3.4 1.6 -6.6 -0.4Z', 'sc-leaf'),
+  ln('M-10.4 -11.8q3.4-2.6 6.6 0.4q-3.4 1.6 -6.6 -0.4Z'),
   path('M1.4 0.4C0.4 -6.6 3.4 -14.4 7.6 -15.6C11.6 -14.8 14.4 -7 13.4 0.4Z', 'sc-stone'),
   path('M1.4 0C0.6 -7 3.6 -14.6 7.6 -15.6C9 -12.6 7.4 -6 5.4 0.2Z', 'sc-stone-lt'),
+  path('M9 -14.6C11.8 -11.4 13.4 -5.6 13.4 0.4H10C10.4 -5 10.2 -10 8.4 -14Z', 'sc-stone-dk'),
+  path('M1.2 -6.4C5 -8 9.6 -8 13 -6.4L13.4 -3.8C9.6 -5.4 5 -5.4 1 -3.8Z', 'sc-stone-lt'),
   ln('M1.4 0.4C0.4 -6.6 3.4 -14.4 7.6 -15.6C11.6 -14.8 14.4 -7 13.4 0.4Z'),
-  dt('M4.4 -12Q7.4 -7.6 7 -0.6M10.6 -12.4Q12.4 -7 11.8 -0.4'),
-  gloss(-9.6, -9.4, 1.8, 1),
-  gloss(4.6, -12.4, 1.8, 1),
+  path('M4.4 -14.8q3.4-2.6 6.6 0.4q-3.4 1.6 -6.6 -0.4Z', 'sc-leaf'),
+  ln('M4.4 -14.8q3.4-2.6 6.6 0.4q-3.4 1.6 -6.6 -0.4Z'),
+  dt('M-10.6 -9.6Q-7.6 -6.4 -8 -1M4.4 -11.4Q7.4 -7 7 -0.6'),
+  gloss(-10, -9.6, 1.6, 0.9),
+  gloss(4.2, -12.4, 1.6, 0.9),
 ];
 
 /** L'arbre qui change de son : une moitié menthe, une moitié pêche, et des feuilles qui tombent. */

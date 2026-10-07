@@ -167,8 +167,10 @@ function plaque({ x, y, width, height, lines, meta, stars = null, max = 0, dim =
   const lh = r2(height * 0.33);
   const top = r2(-(lines.length - 1) * lh / 2 - height * 0.12);
   const starRow = stars === null ? null : n('g', {},
+    // Trois étoiles pour résumer neuf : la première se gagne dès la première étoile, pas au tiers.
+    // Une enfant qui vient de réussir un niveau doit VOIR quelque chose s'allumer.
     [0, 1, 2].map((i) => starMark(r2(x - 15 + i * 5), r2(y + height * 0.3), r2(height * 0.105),
-      stars >= (i + 1) * (max / 3))),
+      stars >= (i * max) / 3 + 1)),
     n('text', {
       x: r2(x + 9), y: r2(y + height * 0.36), class: 'sc-plaque-meta', 'text-anchor': 'middle', text: meta,
     }));
