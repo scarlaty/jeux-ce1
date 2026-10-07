@@ -51,8 +51,7 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 |---|---|---|
 | Claude (session scarlaty) | #97 + #106 Devinettes (niveau trop faible, « un ail », émojis) | `feat/97-106-devinettes` |
 
-#105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles.
-| Claude (session scarlaty) | #87 tables : défilement horizontal | `feat/87-tables-debordement` |
+#105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`.
 
 Ensuite, sur demande de l'utilisateur (« traite les bugs ») : #102 / #103 (contraste, carte).
 **Règle du 07/10 : aucun nouveau ticket (jeu ou amélioration) sans l'accord de l'utilisateur.**
@@ -101,7 +100,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v27`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v28`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
