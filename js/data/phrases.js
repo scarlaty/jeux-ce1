@@ -10,13 +10,27 @@
 //    Niveau 2 : au moins 5 mots (3 mots « du milieu » ou plus → au moins 6 arrangements possibles, on ne
 //    gagne plus une fois sur deux en tirant au hasard, #107). Niveau 3 : le gabarit d'ouverture
 //    « Le/La nom de/du nom est adjectif » reste minoritaire (moins de 30 % de la banque, #107).
-//  - Ponctuation : phrases franches (« Quel beau gâteau ! », « Où est mon sac ? »). Une déclarative est un fait
-//    simple, où « ! » serait étrange. En contexte (niveau 3), c'est la situation qui décide.
-//  - Niveau 3, ponctuation (#107) : un enfant qui devine le signe au premier mot ou à un mot-clé du contexte,
-//    sans lire la phrase, doit réussir au plus une fois sur deux. PONCT_LONG mélange donc des phrases franches
-//    (« Pourquoi… », « Quel… ») et des phrases où « Comme » (= parce que), « Que » ou « Quel » annoncent un
-//    AUTRE signe que d'habitude — la phrase entière tranche, jamais son premier mot seul. CONTEXTS varie ses
-//    verbes de parole (bien au-delà de « demande » et « s'écrie ») pour qu'aucun mot-clé isolé ne suffise.
+//  - Tout texte adressé à l'enfant qui joue (« tu es… ») est ÉPICÈNE : le jeu est pour les filles et les
+//    garçons, et on ne sait pas qui joue. « Comme tu es grand ! » est donc interdit ; `checkEpicene`
+//    (tests/helpers/epicene.js) le vérifie sur toutes les banques et sur les questions tirées, 0 toléré.
+//
+// Ponctuation — pourquoi les niveaux diffèrent vraiment (#107) :
+//  - Niveau 1 (PONCT_SHORT) : la FORME de la phrase donne le signe (mot interrogatif, inversion du verbe,
+//    « Quel/Comme » exclamatif). C'est la compétence visée à ce niveau, et elle est légitimement
+//    résoluble « à la forme ».
+//  - Niveau 3 (CONTEXTS) : la forme ne suffit plus. Il n'y a PLUS de banque de phrases longues sans
+//    contexte : elle se résolvait à 96,5 % par la seule typographie (virgule, trait d'union, premier mot),
+//    c'est-à-dire exactement la compétence du niveau 1 avec des phrases plus longues — une fausse
+//    difficulté. Au niveau 3, l'enfant lit une situation ET une phrase, et doit croiser les deux.
+//
+// Comment CONTEXTS résiste aux raccourcis de surface (mesuré, pas supposé) :
+//  - la moitié des questions de niveau 3 ne se laisse résoudre NI par la typographie de la phrase, NI par
+//    le verbe de la situation ;
+//  - les situations qui NOMMENT l'intention (« demande », « veut savoir »…) sont minoritaires : partout
+//    ailleurs, la situation décrit la scène sans dire l'acte de parole, et c'est la PHRASE qui tranche ;
+//  - les phrases exclamatives sans « Quel/Comme » portent leur force dans un mot à lire (énorme,
+//    magnifique, incroyable…) : l'enfant doit lire la phrase, pas repérer un signe typographique ;
+//  - les signes restent équilibrés : répondre toujours pareil ne mène nulle part.
 
 /** Dernier signe d'une phrase ('.', '?' ou '!'), sinon ''. */
 export const signOf = (sentence) => (/[.?!]$/.test(sentence) ? sentence.slice(-1) : '');
@@ -76,7 +90,8 @@ export const SIMPLE = [
   ['Mon chien est gentil.', 'Gentil est chien mon.'],
 ];
 
-// --- Ponctuation franche (sans contexte) : la phrase, sans son signe, et le signe attendu -----------------
+// --- Niveau 1 : ponctuation « à la forme ». La phrase, sans son signe, et le signe attendu --------------
+// Ici le premier mot ou l'inversion du verbe DOIT donner le signe : c'est la compétence du niveau 1.
 const rows = (sign, list) => list.map((text) => ({ text, sign }));
 
 export const PONCT_SHORT = [
@@ -92,100 +107,120 @@ export const PONCT_SHORT = [
     'Aimes-tu les fraises', 'Où vas-tu', 'As-tu un frère', 'Qui veut un bonbon', 'Est-ce que tu viens',
   ]),
   ...rows('!', [
-    'Quel beau gâteau', 'Comme il fait froid', 'Que ce chien est gros', 'Comme tu es grand',
+    'Quel beau gâteau', 'Comme il fait froid', 'Que ce chien est gros', 'Comme tu es rapide',
     'Quelle belle journée', 'Comme ce bébé est mignon', 'Quel gros camion', 'Comme la mer est belle',
     'Que ta robe est jolie', 'Comme j\'ai faim', 'Quelle jolie fleur', 'Comme ce gâteau est bon',
     'Que ce film est drôle',
   ]),
 ];
 
-// --- Niveau 3 : ponctuation, phrases plus longues, sans contexte -----------------------------------------
-// Un solveur qui devine au premier mot (comme au niveau 1) ne doit plus suffire : « Comme » introduit ici
-// une cause (« Comme il pleut, … ») et pas une exclamation ; « Que » et « Quel » annoncent une vraie
-// question quand le verbe est inversé juste après (« Que fais-tu », « Quel gâteau préfères-tu »). La
-// virgule qui suit « Comme » au début d'une déclarative est l'indice qui tranche : une deuxième phrase
-// complète la suit, ce que ne fait jamais le « Comme » de l'exclamation.
-export const PONCT_LONG = [
-  ...rows('.', [
-    'Comme prévu, le bus arrive à huit heures', 'Comme chaque matin, Tom prend son petit-déjeuner',
-    'Comme il pleut, nous restons à la maison', 'Comme elle est fatiguée, Léa se couche tôt',
-    'Comme il fait nuit, on allume la lampe', 'Comme c\'est samedi, papa ne travaille pas',
-    'Comme il fait froid dehors, je mets un manteau', 'Comme la cloche sonne, les enfants sortent',
-    'Les oiseaux construisent leur nid dans l\'arbre', 'Papa répare le vélo de ma sœur',
-  ]),
-  ...rows('?', [
-    'Que fais-tu après l\'école', 'Quel gâteau préfères-tu pour ton anniversaire',
-    'Que choisis-tu comme dessert', 'Quelle couleur préfères-tu pour ta chambre',
-    'Pourquoi le ciel est-il bleu', 'Où as-tu rangé ton cartable bleu',
-    'Quand vas-tu chez ta grand-mère', 'Qui a laissé la porte ouverte',
-    'Comment fais-tu ce beau dessin', 'Combien de pommes y a-t-il dans le panier',
-  ]),
-  ...rows('!', [
-    'Bravo, tu as gagné la course', 'Waouh, quel beau château de sable',
-    'Ouah, ce gâteau est énorme', 'Chouette, il neige dehors',
-    'Dis donc, quelle grande maison', 'Miam, ce gâteau sent bon',
-    'Hourra, nous avons gagné le match', 'Génial, on part en vacances',
-    'Quel beau dessin tu as fait', 'Comme tu cours vite',
-  ]),
-];
-
-// --- Niveau 3 : ponctuation en contexte. La situation décide du signe, pas un mot-clé répété ------------
-// Chaque signe est annoncé par une bonne quinzaine de verbes différents (chuchote, questionne, rayonne,
-// sursaute, précise, énumère…) : un enfant qui n'a mémorisé que « demande » ou « s'écrie » doit lire la
-// scène en entier pour choisir, comme au niveau 1 il devait lire la phrase entière pour le sens (#107).
-const ctx = (sign, list) => list.map(([context, text]) => ({ context, text, sign }));
+// --- Niveau 3 : la situation ET la phrase. Aucune des deux ne suffit seule (#107) -----------------------
+// `why` est l'aide donnée après une erreur : elle cite ce qui, dans la situation ou dans la phrase,
+// décide du signe — jamais « la règle puis la réponse ».
+//
+// Trois familles, voulues dans ces proportions (c'est ce qui casse les solveurs de surface) :
+//  (a) situation qui NOMME l'intention + phrase de forme ordinaire → c'est la situation qui tranche ;
+//  (b) situation neutre + phrase de forme interrogative → c'est la forme de la phrase qui tranche ;
+//  (c) situation neutre + phrase qui porte un mot de forte intensité → c'est le MOT qu'il faut lire.
+// La famille (c) échappe aux deux solveurs : ni typographie, ni verbe de la situation.
+const ctx = (sign, list) => list.map(([context, text, why]) => ({ context, text, why, sign }));
 
 export const CONTEXTS = [
-  ...ctx('?', [
-    ['Léa demande à sa maman si elle peut jouer.', 'Je peux jouer dehors'],
-    ['Tom se demande si son ami va venir.', 'Tu viens avec nous'],
-    ['Mia hésite puis interroge son frère.', 'Tu as vu mon sac'],
-    ['Papa veut savoir si Léa a faim.', 'Tu as faim'],
-    ['Emma chuchote sa question à la maîtresse.', 'Je peux aller aux toilettes'],
-    ['Lucas questionne son ami du regard.', 'Tu as terminé ton dessin'],
-    ['Un enfant lève la main pour savoir.', 'C\'est l\'heure de partir'],
-    ['Mamie penche la tête, curieuse du goûter.', 'Le gâteau est bon'],
-    ['Léa fixe Tom, intriguée par son animal.', 'Tu as un chat'],
-    ['Maman observe les mains des enfants et s\'interroge.', 'Vous avez lavé vos mains'],
-    ['Tom aimerait bien savoir, pour aller nager.', 'La piscine est ouverte'],
-    ['Papa regarde la chambre de Léa, dubitatif.', 'Tu as rangé ta chambre'],
-    ['Sacha n\'est pas sûr et questionne Inès.', 'Tu as fini tes devoirs'],
-    ['Nino se gratte la tête, perplexe.', 'Il reste du gâteau'],
-    ['Inès attend une réponse de sa sœur.', 'Tu veux venir avec moi'],
-  ]),
+  // --- Déclaratives : situation neutre, phrase ordinaire, aucun mot d'intensité ---
   ...ctx('.', [
-    ['Léa raconte sa journée à sa maman.', 'Je suis allée à la piscine'],
-    ['Papa dit simplement ce qu\'il prépare.', 'Je fais des crêpes'],
-    ['La maîtresse explique la leçon.', 'Nous apprenons les tables'],
-    ['Tom dit son âge à un nouvel ami.', 'J\'ai sept ans'],
-    ['Mia regarde par la fenêtre et commente.', 'Il y a un oiseau sur le toit'],
-    ['Un enfant annonce le temps qu\'il fait.', 'Il pleut ce matin'],
-    ['Mamie raconte son voyage à la mer.', 'Nous avons vu la mer'],
-    ['Lucas indique où habite son ami.', 'Mon ami habite près de l\'école'],
-    ['Léa énumère ce qu\'elle a dans son assiette.', 'Je mange une pomme'],
-    ['Papa précise l\'heure du départ.', 'Nous partons à huit heures'],
-    ['Emma montre ses cartes et explique son jeu.', 'On joue avec des cartes'],
-    ['Un enfant se présente à la classe.', 'Je m\'appelle Tom'],
-    ['Le maître décrit ce qu\'il voit dans la cour.', 'Les enfants sont dans la cour'],
-    ['Zoé raconte calmement sa matinée.', 'Nous avons fait du vélo'],
-    ['Hugo note ce que dit la maîtresse.', 'Nous lisons un livre'],
+    ['C\'est l\'heure du goûter dans la cuisine.', 'Je mange une pomme',
+      'Rien d\'extraordinaire ici : c\'est le goûter, tout simplement.'],
+    ['Les élèves sont assis en classe.', 'Nous apprenons les tables',
+      'La classe travaille calmement : la phrase donne une information.'],
+    ['Tom est à côté d\'un nouvel ami dans la cour.', 'J\'ai sept ans',
+      'Tom donne son âge, sans plus : c\'est une information.'],
+    ['Mia est devant la fenêtre de sa chambre.', 'Il y a un oiseau sur le toit',
+      'Mia parle de ce qu\'elle voit par la fenêtre, sans surprise.'],
+    ['Zoé regarde le ciel gris par la vitre.', 'Il pleut ce matin',
+      'Zoé parle du temps qu\'il fait : un point suffit.'],
+    ['Mamie revient de vacances avec ses photos.', 'Nous avons vu la mer',
+      'Mamie parle de son voyage tranquillement.'],
+    ['Lucas marche avec sa classe dans le quartier.', 'Mon ami habite près de l\'école',
+      'Lucas donne un renseignement sur son ami.'],
+    ['La famille prépare les sacs dans l\'entrée.', 'Nous partons à huit heures',
+      'C\'est l\'heure du départ : une information simple.'],
+    ['Emma est assise par terre avec ses cartes.', 'On joue avec des cartes',
+      'Emma parle de son jeu, calmement.'],
+    ['Un nouvel élève arrive devant la classe.', 'Je m\'appelle Tom',
+      'Il donne son prénom : c\'est une information.'],
+    ['Le maître traverse la cour de l\'école.', 'Les enfants sont dans la cour',
+      'Le maître parle de ce qu\'il voit, sans surprise.'],
+    ['Hugo range son vélo dans le garage.', 'Nous avons fait du vélo',
+      'Hugo parle de sa journée, tranquillement.'],
   ]),
+
+  // --- (a) Questions : la SITUATION dit qu'on attend une réponse ; la phrase a une forme ordinaire ---
+  ...ctx('?', [
+    ['Léa demande à sa maman si elle peut sortir.', 'Je peux jouer dehors',
+      'Léa demande quelque chose : elle attend une réponse.'],
+    ['Tom se demande si son ami va venir.', 'Tu viens avec nous',
+      'Tom veut une réponse de son ami.'],
+    ['Mia interroge son frère au sujet de son sac.', 'Tu as vu mon sac',
+      'Mia interroge son frère : c\'est une question.'],
+    ['Papa veut savoir si Léa a faim.', 'Tu as faim',
+      'Papa veut savoir : il attend la réponse de Léa.'],
+    ['Emma chuchote sa question à la maîtresse.', 'Je peux aller aux toilettes',
+      'Emma pose une question à la maîtresse.'],
+    ['Lucas questionne son ami sur son dessin.', 'Tu as terminé ton dessin',
+      'Lucas questionne son ami : il attend une réponse.'],
+    ['Maman veut savoir si les enfants se sont lavé les mains.', 'Vous avez lavé vos mains',
+      'Maman veut savoir : c\'est une question.'],
+    ['Sacha n\'est pas sûr et questionne Inès.', 'Tu as fini tes devoirs',
+      'Sacha questionne Inès pour en être sûr.'],
+    // --- (b) Questions : la situation est neutre, c'est la FORME de la phrase qui interroge ---
+    ['Mia cherche partout dans sa chambre.', 'Où est mon sac',
+      'Le mot « Où » attend une réponse : c\'est une question.'],
+    ['Nino regarde la table après le goûter.', 'Qui a mangé la dernière part',
+      'Le mot « Qui » attend une réponse : c\'est une question.'],
+    ['Inès est sur le pas de la porte, son manteau à la main.', 'Quand allons-nous partir',
+      'Le mot « Quand » attend une réponse : c\'est une question.'],
+    ['Zoé tient deux crayons dans sa main.', 'Lequel préfères-tu',
+      'Le verbe collé à « tu » (préfères-tu) attend une réponse.'],
+    ['Hugo est devant la carte du monde.', 'Comment s\'appelle ce pays',
+      'Le mot « Comment » attend une réponse : c\'est une question.'],
+    ['Léa compte les billes au fond du sac.', 'Combien y en a-t-il',
+      'Le mot « Combien » attend une réponse : c\'est une question.'],
+  ]),
+
+  // --- (c) Exclamations : situation neutre, c'est un MOT de la phrase qui porte la force ---
   ...ctx('!', [
-    ['Léa voit un énorme gâteau et s\'écrie.', 'C\'est un énorme gâteau'],
-    ['Tom a gagné et saute de joie.', 'J\'ai gagné'],
-    ['Mia aperçoit un gros chien et sursaute.', 'Il est énorme'],
-    ['Léa frissonne tout à coup.', 'Il fait froid'],
-    ['Emma voit un arc-en-ciel et bondit.', 'C\'est magnifique'],
-    ['Papa goûte le gâteau et rayonne.', 'Il est délicieux'],
-    ['Tom applaudit en voyant la neige.', 'Il neige'],
-    ['Mamie serre ses petits-enfants dans ses bras.', 'Vous êtes là'],
-    ['Tom recule devant une grosse araignée.', 'Elle est énorme'],
-    ['Emma serre son cadeau contre elle.', 'Il est magnifique'],
-    ['Lucas écarquille les yeux devant le poisson.', 'Il est gigantesque'],
-    ['Nino pousse un cri de joie en ouvrant la boîte.', 'Il y a un chiot'],
-    ['Zoé tape des mains devant le feu d\'artifice.', 'C\'est splendide'],
-    ['Hugo bondit de son lit, tout excité.', 'C\'est le jour de son anniversaire'],
-    ['Inès pousse un cri de joie soudaine.', 'Le gâteau est énorme'],
+    ['Léa n\'a jamais vu un gâteau aussi gros.', 'Il est énorme',
+      'Le mot « énorme » dit la surprise de Léa : on met un point d\'exclamation.'],
+    ['Un chien plus grand que Mia passe devant elle.', 'Il est immense',
+      'Le mot « immense » dit l\'étonnement de Mia.'],
+    ['Emma lève les yeux vers l\'arc-en-ciel.', 'C\'est magnifique',
+      'Le mot « magnifique » dit l\'admiration d\'Emma.'],
+    ['Papa goûte enfin le gâteau sorti du four.', 'Il est délicieux',
+      'Le mot « délicieux » dit le plaisir de Papa.'],
+    ['Mamie retrouve ses petits-enfants après un long voyage.', 'C\'est formidable',
+      'Le mot « formidable » dit la force du moment.'],
+    ['Lucas sort de l\'eau un poisson plus long que son bras.', 'Il est gigantesque',
+      'Le mot « gigantesque » dit la surprise de Lucas.'],
+    ['Nino ouvre la boîte posée devant lui.', 'C\'est un cadeau extraordinaire',
+      'Le mot « extraordinaire » dit la force du moment.'],
+    ['Zoé regarde le feu d\'artifice depuis le balcon.', 'C\'est splendide',
+      'Le mot « splendide » dit l\'admiration de Zoé.'],
+    ['Hugo descend l\'escalier le matin de ses sept ans.', 'C\'est mon plus beau jour',
+      'Les mots « plus beau » disent la force du moment.'],
+    ['Inès découvre la table du goûter.', 'Le gâteau est superbe',
+      'Le mot « superbe » dit l\'admiration d\'Inès.'],
+    ['Sacha voit la neige tomber pour la première fois.', 'C\'est incroyable',
+      'Le mot « incroyable » dit l\'étonnement de Sacha.'],
+    ['Mia goûte sa glace au bord de la mer.', 'Cette glace est délicieuse',
+      'Le mot « délicieuse » dit le plaisir de Mia.'],
+    ['Tom arrive le premier au bout de la course.', 'C\'est une victoire extraordinaire',
+      'Le mot « extraordinaire » dit la force du moment.'],
+    ['Léa ouvre son livre sur une grande image.', 'Ce dessin est magnifique',
+      'Le mot « magnifique » dit l\'admiration de Léa.'],
+    ['Papa soulève une valise remplie à ras bord.', 'Elle est énorme',
+      'Le mot « énorme » dit la surprise de Papa.'],
+    ['Emma pose le pied sur la plus haute marche.', 'La vue est splendide',
+      'Le mot « splendide » dit l\'admiration d\'Emma.'],
   ]),
 ];
 
@@ -210,7 +245,7 @@ export const ORDER_2 = [
   'Aimes-tu manger des fraises rouges ?', 'Veux-tu venir jouer avec moi ?', 'As-tu un joli crayon rouge ?',
   'Est-ce que tu as faim ?', 'Vas-tu à la grande piscine ?',
   'Comme il fait très froid !', 'Comme ce bébé est mignon !', 'Que ce chien est gros !',
-  'Comme tu es très grand !', 'Comme ta robe est jolie !', 'Comme ce gâteau est bon !',
+  'Comme tu es très rapide !', 'Comme ta robe est jolie !', 'Comme ce gâteau est bon !',
   'Quelle belle glace tu manges !',
 ];
 

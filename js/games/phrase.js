@@ -1,13 +1,16 @@
 // La phrase (E5-T1, #35 ; raccourcis corrigés #107) : majuscule, signe final, types de phrases,
 // remettre des mots dans l'ordre.
-//  Niveau 1 : « Est-ce une phrase ? » (majuscule, signe, sens) et choisir le signe de phrases très franches.
+//  Niveau 1 : « Est-ce une phrase ? » (majuscule, signe, sens) et choisir le signe de phrases très franches,
+//             où la FORME donne le signe (mot interrogatif, inversion du verbe, « Quel/Comme »).
 //  Niveau 2 : remettre 5 ou 6 mots dans l'ordre (au moins 3 mots du milieu, jamais un 50/50) ; trouver
 //             ce qui manque (majuscule, signe, rien).
-//  Niveau 3 : remettre 6 ou 7 mots dans l'ordre ; choisir . ? ! sur des phrases plus longues et en contexte,
-//             sans que le premier mot ou un mot-clé du contexte suffisent à deviner sans lire (#107).
+//  Niveau 3 : remettre 6 ou 7 mots dans l'ordre ; choisir . ? ! EN SITUATION. La banque de phrases longues
+//             sans contexte a été retirée (#107) : mesurée, elle se résolvait à 96,5 % par la seule
+//             typographie (virgule, trait d'union, premier mot), c'est-à-dire la compétence du niveau 1
+//             déguisée en niveau 3.
 // Toutes les phrases sont écrites à la main (js/data/phrases.js) : jamais de phrase générée.
 import {
-  SIMPLE, PONCT_SHORT, PONCT_LONG, CONTEXTS, ORDER_2, ORDER_3,
+  SIMPLE, PONCT_SHORT, CONTEXTS, ORDER_2, ORDER_3,
   signOf, withoutSign, lowerFirst, shown, words, SIGN_NAMES,
 } from '../data/phrases.js';
 
@@ -38,10 +41,36 @@ function cue(text, sign) {
   if (sign === '!' && ['quel', 'quelle', 'comme', 'que'].includes(first) && !hasInversion) {
     return ` Le mot « ${first} » annonce souvent une exclamation.`;
   }
-  if (sign === '.' && first === 'comme' && /,/.test(text)) {
-    return ' Ici, « Comme » veut dire « parce que » : la virgule annonce une deuxième phrase, pas une exclamation.';
-  }
   return '';
+}
+
+/**
+ * Stratégie à redire de tête pour ranger les mots. Une seule phrase pour tous les cas ne valait rien :
+ * « cherche qui fait l'action » ne mène nulle part sur « Le gâteau de ma tante est bon. » (aucune action),
+ * soit 60 % de la banque du niveau 3 (#107). On distingue donc quatre familles, reconnaissables au signe
+ * final et au verbe de la phrase. `checkOrderStrategy` (tests) vérifie qu'aucune phrase ne reçoit la
+ * consigne « qui fait l'action » sans action.
+ */
+export function orderStrategy(sentence) {
+  const sign = signOf(sentence);
+  const body = withoutSign(sentence);
+  if (sign === '?') {
+    return 'Dans une question, le mot qui interroge (où, qui, est-ce que, comment…) se met en premier.';
+  }
+  if (sign === '!') {
+    return 'Dans une exclamation, le mot qui s\'étonne (quel, comme, que) se met en premier.';
+  }
+  // Passé composé : « a mangé », « avons lu » — il y a bien une action, malgré l'auxiliaire « avoir ».
+  if (/\b(a|ai|as|avons|avez|ont)\s+\S*(é|ée|és|ées|i|is|it|u|us|ue)\b/.test(body)) {
+    return 'Ici, quelqu\'un fait quelque chose : cherche qui fait l\'action, puis l\'action, puis le reste.';
+  }
+  if (/\b(est|sont|es|suis|sommes|êtes)\b/.test(body)) {
+    return 'Ici, la phrase dit comment est quelque chose : d\'abord de quoi on parle, puis « est », puis le mot qui dit comment.';
+  }
+  if (/\b(a|ai|as|avons|avez|ont)\b/.test(body)) {
+    return 'Ici, la phrase dit ce que quelqu\'un a : d\'abord qui, puis « a », puis ce qu\'il a.';
+  }
+  return 'Ici, quelqu\'un fait quelque chose : cherche qui fait l\'action, puis l\'action, puis le reste.';
 }
 
 const SIGN_RULE = {
@@ -104,8 +133,10 @@ function pickSign(item, { context = '' }) {
     speak: `${intro}${item.text}. Quel signe faut-il à la fin de la phrase ?`,
     display: { show: { text: `${shown(item.text)} …`, cursive: true }, choices: SIGN_CHOICES },
     answer: item.sign,
+    // En situation, l'aide CITE ce qui tranche (le `why` de la banque : le verbe de la scène ou le mot
+    // fort de la phrase). Sans situation, c'est l'indice de forme. Jamais « la règle puis la réponse » (#107).
     explain: `${SIGN_RULE[item.sign]} ${quote(`${item.text}${item.sign === '.' ? '.' : ` ${item.sign}`}`)}`
-      + (context ? '' : cue(item.text, item.sign)),
+      + (context ? ` ${item.why}` : cue(item.text, item.sign)),
     skill: 'choisir le bon signe de ponctuation',
   };
 }
@@ -138,7 +169,7 @@ function order(pool, rng, seen, level) {
     display: { items, cursive: true },
     answer: right,
     explain: `La phrase commence par le mot qui a une majuscule et finit par le mot qui a ${SIGN_NAMES[sign]}. `
-      + 'Entre les deux : cherche qui fait l\'action, puis ce qu\'il fait, puis le reste. '
+      + `${orderStrategy(sentence)} `
       + `Voilà la phrase : ${quote(sentence)}`,
     skill: 'remettre les mots dans l\'ordre',
   };
@@ -188,11 +219,9 @@ function findError(rng, seen) {
 const MAKE = {
   1: (rng, seen) => (rng.chance(0.5) ? isSentence(rng, seen) : punctuation(PONCT_SHORT, rng, seen)),
   2: (rng, seen) => (rng.chance(0.5) ? order(ORDER_2, rng, seen, 2) : findError(rng, seen)),
-  3: (rng, seen) => {
-    const r = rng.next();
-    if (r < 0.5) return order(ORDER_3, rng, seen, 3);
-    return r < 0.8 ? inContext(rng, seen) : punctuation(PONCT_LONG, rng, seen);
-  },
+  // Au niveau 3, la ponctuation est TOUJOURS en situation : une phrase longue sans contexte se résolvait
+  // à la seule typographie, donc ne demandait rien de plus que le niveau 1 (#107).
+  3: (rng, seen) => (rng.chance(0.5) ? order(ORDER_3, rng, seen, 3) : inContext(rng, seen)),
 };
 
 function draw(level, rng, seen) {
