@@ -56,7 +56,7 @@ css/
   base.css              reset, typographie, fond Seyès
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
   profile.css           profils, avatars, courbes, espace parents (E1)
-  map.css               carte au trésor : cadrage des scènes, matières du décor, plaques (#96)
+  map.css               carte au trésor : cadrage des scènes, matières du décor, panneau de nom (#96)
   rewards.css           récompenses : compteur de points, grades, album, carte des îles, confettis
   kawaii.css            univers kawaii : peinture des personnages, animations douces, page #/kawaii
   chest.css             coffre surprise (#91) : dessin, ouverture, grille des accessoires
@@ -316,15 +316,26 @@ Règles non négociables de ces deux scènes :
   `aspect-ratio`) : paysage sur tablette, portrait sur téléphone. Il n'y a jamais deux dessins à
   tenir à jour. Tout ce qui porte de l'information tient dans la **zone sûre** (`SAFE` de `core/map.js`),
   visible dans les deux cadrages.
-- **`core/map.js` est pur** : positions des îles, cases des lieux, découpe des noms, noms accessibles.
-  `placeLayout(n)` garantit que deux plaques — et deux zones touchables — ne se chevauchent jamais,
-  d'un à neuf lieux : un 7ᵉ jeu dans une île fait passer la grille de deux à trois rangées au lieu de
-  casser la composition. `tests/map.test.js` le vérifie ; ne jamais déplacer une case « à l'œil »
-  sans relancer ces tests.
+- **Le décor EST le lieu, et le décor EST la zone cliquable.** Un lieu ne porte pas d'étiquette
+  posée sur l'île : seulement son décor, et un petit **repère d'étoiles** planté à côté, sous la
+  ligne de sol (jamais devant le bâtiment). Le nom complet n'apparaît qu'**au survol, au focus
+  clavier et au toucher**, dans un panneau unique dessiné en dernier (SVG n'a pas de `z-index`) —
+  jamais plusieurs noms à la fois. Six plaques opaques, c'était une grille de boutons posée sur
+  une image au lieu d'une île qu'on explore.
+- **`core/map.js` est pur** : positions des îles, emplacements des lieux, découpe des noms, noms
+  accessibles. `placeLayout(n)` garantit que deux zones touchables ne se chevauchent jamais, d'un à
+  neuf lieux, qu'elles restent assez grandes pour un doigt (≥ 30 unités, soit 56 px sur un écran de
+  360 px) et que le décor comme son repère y tiennent : un 7ᵉ jeu fait passer l'île au palier
+  suivant, plus serré, au lieu de casser la composition. `tests/map.test.js` le vérifie ; ne jamais
+  déplacer un emplacement « à l'œil » sans relancer ces tests.
+- **Chaque île de l'archipel a sa côte et son semis.** `ISLAND_GEOMETRY` donne le galbe du contour
+  (`squareness`) et l'ondulation qui y creuse des baies (`wave` — elle ne fait que rentrer, donc une
+  île ne déborde jamais de la place qui lui est réservée) ; `ISLAND_TRIM` de `ui/map-scene.js` donne
+  son paysage en coordonnées relatives (tropicale, rocheuse, plateau, forêt, campement).
 - **Le décor vient de `ui/art/scenery.js`** : chaque objet est déclaré UNE fois dans le `<defs>` de la
   scène et posé par `<use>`. Ajouter un objet = une entrée dans `PROPS` + ses classes dans `css/map.css`
   (un test échoue si une classe n'existe pas, ou si une couleur est écrite en dur). Un lieu déclare en
-  plus sa `height`, pour que la scène le ramène à l'emprise de sa case.
+  plus sa `height`, pour que la scène ramène tous les lieux à la même emprise.
 - **Direction artistique « kawaii cosy »** (voir l'issue #96) : contour partout (`--kw-outline`,
   éclairci sur l'ardoise), trois tons par matière (`-light` / teinte / `-deep`) plus un reflet,
   aucune zone vide, un motif plutôt qu'un aplat, du premier plan qui cadre la scène.

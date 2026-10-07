@@ -11,7 +11,7 @@
 import { n, toNode, roundedStar } from './art/kawaii-parts.js';
 import { character, mascot } from './art/kawaii.js';
 import { propDefs, use, scatter, idsOf, propHeight } from './art/scenery.js';
-import { SCENE, PLACE_HEIGHT, BADGE, ISLAND_PLAQUE } from '../map.js';
+import { SCENE, SAFE, PLACE_HEIGHT, BADGE, ISLAND_PLAQUE } from '../map.js';
 
 const r2 = (x) => Number(Number(x).toFixed(2));
 const path = (d, cls) => n('path', { d, class: cls });
@@ -31,10 +31,7 @@ function smooth(points) {
   return d;
 }
 
-/** Arc le long du bas d'une ellipse (ligne d'eau, bord de falaise). */
-const bottomArc = ({ cx, cy, rx, ry }) => `M${r2(cx - rx)} ${cy}a${rx} ${ry} 0 0 0 ${r2(rx * 2)} 0`;
-
-/** Petite étoile pleine ou vide, pour les compteurs des plaques. */
+/** Petite étoile pleine ou vide : repère d'un lieu, plaque d'une île. */
 const starMark = (x, y, size, filled) => path(
   roundedStar(x, y, size, size * 0.46, { round: 0.3, innerRound: 0.24 }),
   filled ? 'sc-star' : 'sc-star-empty',
@@ -392,6 +389,8 @@ const ISLAND_SCATTER = [
   { id: 'tuft', x: 130, y: 90, scale: 0.8, flip: true },
   { id: 'pebble', x: 136, y: 94, scale: 0.75 },
   { id: 'mushroom', x: 128, y: 76, scale: 0.6, tint: 'ciel' },
+  { id: 'pebble', x: 88, y: 94, scale: 0.7 },
+  { id: 'flower', x: 100, y: 96, scale: 0.85, tint: 'rose' },
   // Les deux bords de l'herbe, à hauteur de la première rangée
   { id: 'lantern', x: 24, y: 92, scale: 0.78 },
   { id: 'tuft', x: 32, y: 96, scale: 0.8 },
@@ -418,6 +417,7 @@ const ISLAND_SCATTER = [
   { id: 'flower', x: 70, y: 140, scale: 0.9, tint: 'citron' },
   { id: 'tuft', x: 84, y: 142, scale: 0.85 },
   { id: 'mushroom', x: 78, y: 148, scale: 0.72, tint: 'rose' },
+  { id: 'mushroom', x: 58, y: 138, scale: 0.72, tint: 'citron' },
   { id: 'bush', x: 124, y: 130, scale: 0.8, flip: true },
   { id: 'flower', x: 132, y: 138, scale: 0.9, tint: 'lavande' },
   { id: 'tuft', x: 118, y: 142, scale: 0.85, flip: true },
@@ -607,11 +607,13 @@ function wireTips(svg, places) {
     const sub = textBox(parts.where, 5.4);
     const width = r2(Math.min(174, Math.max(top.width, sub.width, 34) + TIP_PAD.x * 2));
     const height = r2(TIP_PAD.y * 2 + top.height + TIP_GAP + sub.height);
-    // Au-dessus du décor, et replié dessous si le haut de la scène manque de place.
+    // Au-dessus du décor, et replié dessous si le haut de la scène manque de place. Le panneau
+    // reste dans la ZONE SÛRE : au-delà, le cadrage portrait d'un téléphone le couperait.
     const above = slot.y - PLACE_HEIGHT * slot.scale - height - 5;
-    const under = above < 4;
+    const under = above < SAFE.y;
     const y = r2(under ? slot.y + 15 : above);
-    const x = r2(Math.min(SCENE.width - 5 - width, Math.max(5, slot.x - width / 2)));
+    const room = SAFE.x + SAFE.width + 2 - width;
+    const x = r2(Math.min(Math.max(room, SAFE.x - 2), Math.max(SAFE.x - 2, slot.x - width / 2)));
     for (const box of [parts.shadow, parts.board, parts.line]) {
       box.setAttribute('x', x);
       box.setAttribute('y', box === parts.shadow ? r2(y + 1.4) : y);
