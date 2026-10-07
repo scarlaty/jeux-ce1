@@ -199,9 +199,11 @@ const ARCHIPELAGO_PROPS = ['sun', 'cloud', 'bird', 'palm', 'tree', 'bush', 'rock
 /** Le petit décor posé sur une île de l'archipel : il change avec sa taille, jamais vide. */
 function islandTrim(entry, scene) {
   const { cx, cy, rx, ry, id } = entry;
-  const s = Math.min(1, rx / 42) * 0.86;
+  const s = Math.min(1, rx / 42) * 0.92;
   const items = [
-    { id: id === 'mots' ? 'palm' : 'tree', x: cx - rx * 0.52, y: cy - ry * 0.34, scale: 0.9 * s },
+    // Le grand arbre reste à l'intérieur de l'île : posé trop au bord, sa cime irait recouvrir
+    // la plaque de l'île voisine, et c'est un nom qu'on ne lit plus.
+    { id: id === 'mots' ? 'palm' : 'tree', x: cx - rx * 0.4, y: cy - ry * 0.08, scale: 0.8 * s },
     { id: 'tree', x: cx + rx * 0.5, y: cy - ry * 0.2, scale: 0.78 * s, flip: true },
     { id: 'rock', x: cx - rx * 0.1, y: cy - ry * 0.5, scale: 0.7 * s },
     { id: 'bush', x: cx - rx * 0.34, y: cy + ry * 0.22, scale: 1.1 * s },
@@ -219,7 +221,7 @@ function islandTrim(entry, scene) {
 function archipelagoIsland(entry, scene) {
   const { id, unlocked, plaque: at, lines, label, starsLeft } = entry;
   const body = n('g', { class: 'sc-island-body' },
-    islandBody({ ...entry, thickness: 0.62, squareness: 2.2 }),
+    islandBody({ ...entry, thickness: 0.46, squareness: 2.3 }),
     islandTrim(entry, scene));
   const sign = unlocked
     ? plaque({
@@ -266,8 +268,9 @@ export function archipelagoScene(entries) {
   n('defs', {}, propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(foreground), 'pebble', 'starfish'])),
   sky({ horizon, scene }),
   sea({ horizon }),
-  use('boat', { scene, x: 186, y: 74, scale: 0.9, tint: 'citron' }),
-  use('boat', { scene, x: 18, y: 96, scale: 0.7, tint: 'rose' }),
+  use('boat', { scene, x: 188, y: 70, scale: 0.8, tint: 'citron' }),
+  use('boat', { scene, x: 14, y: 100, scale: 0.62, tint: 'rose' }),
+  use('boat', { scene, x: 120, y: 56, scale: 0.5, tint: 'menthe' }),
   entries.map((entry) => archipelagoIsland(entry, scene)),
   n('g', { class: 'sc-foreground' }, scatter(scene, foreground)));
   return toNode(tree);
