@@ -155,7 +155,7 @@ function clockHours(rng, t) {
     type: 'keypad',
     prompt: 'Regarde la petite aiguille et écris les heures.',
     speak: `Il est combien d'heures, et ${enLettres(t.m)} minutes ?`,
-    display: { show: { art: clockArt(t.h, t.m) }, prefix: 'Il est', suffix: `h et ${t.m} minutes`, maxLength: 2 },
+    display: { show: { art: clockArt(t.h, t.m) }, suffix: `h et ${t.m} minutes`, maxLength: 2 },
     answer: t.h,
     explain: explainClock(t.h, t.m),
     skill: SKILL.hourHand,
