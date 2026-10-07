@@ -55,7 +55,15 @@ export function orderStrategy(sentence) {
   const sign = signOf(sentence);
   const body = withoutSign(sentence);
   if (sign === '?') {
-    return 'Dans une question, le mot qui interroge (où, qui, est-ce que, comment…) se met en premier.';
+    // Toutes les questions ne commencent pas par un mot interrogatif : « As-tu un joli crayon rouge ? »
+    // n'en a aucun. Envoyer l'enfant chercher un mot qui n'existe pas, c'est le même défaut que
+    // « cherche qui fait l'action » sur une phrase sans action (#107).
+    // Comparaison mot à mot : `\b` ne marche pas après une lettre accentuée (« Où » n'était pas reconnu).
+    const INTERRO = ['où', 'qui', 'quand', 'comment', 'pourquoi', 'combien', 'est-ce', 'quel', 'quelle'];
+    const mots = body.toLowerCase().split(/[^a-zà-ÿ'-]+/).filter(Boolean);
+    return mots.some((m) => INTERRO.includes(m))
+      ? 'Dans une question, le mot qui interroge (où, qui, est-ce que, comment…) se met en premier.'
+      : 'Dans une question, le verbe collé à « tu » (as-tu, veux-tu, vas-tu) se met en premier.';
   }
   if (sign === '!') {
     return 'Dans une exclamation, le mot qui s\'étonne (quel, comme, que) se met en premier.';
@@ -130,7 +138,9 @@ function pickSign(item, { context = '' }) {
     key: `phrase:signe|${baseOf(item.text)}|${item.sign}${context ? ':ctx' : ''}`,
     type: 'choice',
     prompt: `${intro}Quel signe faut-il à la fin de la phrase ?`,
-    speak: `${intro}${item.text}. Quel signe faut-il à la fin de la phrase ?`,
+    // La phrase est lue EN DERNIER et sans point final : sinon la synthèse pose une intonation de point
+    // sur la phrase dont on demande justement le signe, et donne la réponse à l'oreille (#107).
+    speak: `${intro}Quel signe faut-il à la fin de la phrase ? Écoute : ${item.text}`,
     display: { show: { text: `${shown(item.text)} …`, cursive: true }, choices: SIGN_CHOICES },
     answer: item.sign,
     // En situation, l'aide CITE ce qui tranche (le `why` de la banque : le verbe de la scène ou le mot
@@ -206,7 +216,8 @@ function findError(rng, seen) {
     key: `phrase:erreur|${baseOf(sentence)}|${kind}`,
     type: 'choice',
     prompt: 'Regarde le début et la fin de la phrase. Que faut-il corriger ?',
-    speak: `${withoutSign(sentence)}. Regarde le début et la fin de la phrase. Que faut-il corriger ?`,
+    // Même raison que pour `pickSign` : pas de point final sur la phrase à corriger (#107).
+    speak: `Regarde le début et la fin de la phrase. Que faut-il corriger ? Écoute : ${withoutSign(sentence)}`,
     display: { show: { text: shown(text), cursive: true }, choices: ERROR_CHOICES },
     answer: kind,
     explain: why,

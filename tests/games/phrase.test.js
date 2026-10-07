@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import game, { orderStrategy } from '../../js/games/phrase.js';
 import {
-  SIMPLE, PONCT_SHORT, CONTEXTS, ORDER_2, ORDER_3, signOf, words, withoutSign,
+  SIMPLE, PONCT_SHORT, CONTEXTS, ORDER_2, ORDER_3, INTENTIONS, signOf, words, withoutSign,
 } from '../../js/data/phrases.js';
 import {
-  checkGameShape, checkGenerator, checkNoSurfaceShortcut, checkCueCoverage,
+  checkGameShape, checkGenerator, checkNoSurfaceShortcut, checkCueCoverage, visibleOfQuestion,
   checkEpicene, textsOfQuestion,
 } from '../helpers/game-checks.js';
 import { createRng } from '../../js/core/random.js';
@@ -15,10 +15,10 @@ test('contrat', () => checkGameShape(game));
 test('500 tirages par niveau, 30 questions distinctes', () => checkGenerator(game, { draws: 500, minDistinct: 30 }));
 
 const DET = ['le', 'la', 'les', 'un', 'une', 'des', 'mon', 'ma', 'mes', 'ton', 'ta', 'son', 'sa'];
-// Mots qui se déplacent dans la phrase ou lient deux groupes échangeables : interdits dans les phrases à ranger.
-const MOBILE = /^(hier|demain|aujourd'hui|souvent|toujours|encore|maintenant|ensuite|puis|parfois|et|ou|mais|car|donc|aussi|tout|tous|matin|soir)$/;
+// Mots qui se déplacent dans la phrase ou lient deux groupes échangeables : interdits dans les phrases
+// à ranger. « jamais » manquait alors que « toujours » y était (#107).
+const MOBILE = /^(hier|demain|aujourd'hui|souvent|toujours|jamais|encore|maintenant|ensuite|puis|parfois|et|ou|mais|car|donc|aussi|tout|tous|matin|soir)$/;
 
-// Niveau 2 : au moins 5 mots (3 mots du milieu ou plus → au moins 6 arrangements possibles, #107).
 for (const [name, pool, min, max] of [['ORDER_2', ORDER_2, 5, 6], ['ORDER_3', ORDER_3, 6, 7]]) {
   test(`${name} : forme des phrases à ranger`, () => {
     assert.ok(pool.length >= 30);
@@ -32,10 +32,8 @@ for (const [name, pool, min, max] of [['ORDER_2', ORDER_2, 5, 6], ['ORDER_3', OR
         assert.doesNotMatch(x, /^[A-ZÀ-ÖÉ]/, `${s} : majuscule au milieu (« ${x} »)`);
         assert.doesNotMatch(x, MOBILE, `${s} : mot déplaçable « ${x} »`);
       });
-      // Deux groupes de même déterminant seraient échangeables (« Le chat griffe le canapé »).
       const first = w[0].toLowerCase();
       if (DET.includes(first)) assert.ok(!w.slice(1).some((x) => x.toLowerCase() === first), `${s} : déterminant répété`);
-      // La phrase ne doit pas avoir de signe au milieu, ni d'espace en trop.
       assert.equal(s, s.trim());
       assert.ok(!/[.?!]./.test(withoutSign(s)));
     }
@@ -71,73 +69,140 @@ test('ponctuation niveau 1 (PONCT_SHORT) : phrases franches, la forme donne le s
   }
 });
 
-test('contextes : forme de la banque, signes équilibrés, aide présente', () => {
-  for (const sign of ['.', '?', '!']) assert.ok(CONTEXTS.filter((c) => c.sign === sign).length >= 12, sign);
-  assert.equal(new Set(CONTEXTS.map((c) => c.context)).size, CONTEXTS.length, 'contexte en double');
-  assert.equal(new Set(CONTEXTS.map((c) => c.text)).size, CONTEXTS.length, 'phrase en double');
+// ===== Le cœur de #107 : le niveau 3 est construit en M × N =========================================
+
+test('CONTEXTS : chaque phrase est servie avec plusieurs situations et plusieurs signes (#107)', () => {
+  const bySentence = new Map();
   for (const c of CONTEXTS) {
-    assert.match(c.context, /^[A-ZÀ-ÖÉ].*[.!?]$/, `contexte mal ponctué : ${c.context}`);
+    if (!bySentence.has(c.text)) bySentence.set(c.text, new Set());
+    bySentence.get(c.text).add(c.sign);
+  }
+  const appariees = [...bySentence.values()].filter((signs) => signs.size >= 2);
+  const share = appariees.length / bySentence.size;
+  assert.ok(share >= 0.5,
+    `seulement ${(100 * share).toFixed(1)} % des phrases sont servies avec deux signes ou plus : `
+    + 'un solveur « phrase seule » peut apprendre la banque');
+  // Chaque item est unique par le COUPLE (situation, phrase) — la phrase seule se répète, c'est voulu.
+  const couples = CONTEXTS.map((c) => `${c.context}||${c.text}`);
+  assert.equal(new Set(couples).size, couples.length, 'couple situation/phrase en double');
+  for (const [text, signs] of bySentence) {
+    assert.ok(signs.size >= 2, `« ${text} » n'existe qu'avec un seul signe`);
+  }
+});
+
+test('CONTEXTS : forme de la banque, intention portée par la donnée, aide présente', () => {
+  for (const sign of ['.', '?', '!']) assert.ok(CONTEXTS.filter((c) => c.sign === sign).length >= 12, sign);
+  for (const c of CONTEXTS) {
+    assert.equal(INTENTIONS[c.intention], c.sign, `intention et signe incohérents : ${c.text}`);
+    assert.match(c.context, /^[A-ZÀ-ÖÉ].*[.!?]$/, `situation mal ponctuée : ${c.context}`);
     assert.match(c.text, /^[A-ZÀ-ÖÉ]/, c.text);
     assert.equal(signOf(c.text), '', c.text);
     assert.ok(c.why && c.why.length > 20, `aide manquante : ${c.text}`);
+    // Aucune phrase de forme interrogative ou exclamative : seule la situation doit trancher.
+    assert.doesNotMatch(c.text, /^(Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce|Quel|Quelle|Comme|Que)\b/,
+      `phrase de forme marquée : « ${c.text} »`);
+    assert.doesNotMatch(c.text, /\S+-(tu|il|elle|nous|vous|ils)\b/, `verbe inversé : « ${c.text} »`);
   }
-  const all = [...PONCT_SHORT, ...CONTEXTS].map((p) => p.text);
+  const all = [...PONCT_SHORT.map((p) => p.text), ...new Set(CONTEXTS.map((c) => c.text))];
   assert.equal(new Set(all).size, all.length, 'phrase en double entre les banques');
 });
 
-// --- Le cœur de #107 : les solveurs de surface, sur les questions RÉELLEMENT tirées -------------------
-// Chaque solveur reçoit la vue rendue (consigne + phrase affichée), jamais une projection choisie ici :
-// c'était la faille de la première correction (le solveur ne voyait que le contexte → 42,7 % mesurés
-// contre 89,4 % réels).
-
-/** Solveur A : TYPOGRAPHIE de la phrase affichée (virgule, trait d'union, premier mot). */
-function typographySolver({ text }) {
+/**
+ * Le meilleur solveur « phrase seule » que l'on sache écrire. Il ne reçoit JAMAIS la situation.
+ * Au niveau 1 il doit réussir (la forme donne le signe, c'est la compétence visée) ; au niveau 3 il
+ * doit échouer, sinon la situation est décorative.
+ */
+const INTENSITY = /énorme|immense|gigantesque|magnifique|splendide|délicieu|formidable|extraordinaire|superbe|incroyable|plus beau/i;
+function sentenceOnlySolver({ text }) {
   const first = text.split(' ')[0] || '';
-  if (/,$/.test(first)) return '!';                                   // « Bravo, … »
-  if (/^Comme$/.test(first) && /,/.test(text)) return '.';            // « Comme il pleut, … »
-  if (/\S+-(tu|il|elle|nous|vous|ils)\b/.test(text)) return '?';      // inversion du verbe
-  if (/^(Où|Qui|Quand|Comment|Pourquoi|Combien|Que|Quelle|Est-ce)$/.test(first)) return '?';
-  if (/^(Quel|Comme)$/.test(first)) return '!';
+  const inversion = /\S+-(tu|il|elle|nous|vous|ils|je|on)\b/.test(text);
+  if (/^(Quel|Quelle|Comme|Que)$/.test(first) && !inversion) return '!';
+  if (INTENSITY.test(text)) return '!';
+  if (/^(Où|Qui|Quand|Comment|Pourquoi|Combien|Est-ce)$/.test(first)) return '?';
+  if (inversion) return '?';
+  if (/\b(tu|vous|ton|ta|tes)\b/i.test(text)) return '?';
   return '.';
 }
+/** Rend structurellement impossible de lire la situation : le solveur ne reçoit que la phrase. */
+const blind = (solver) => (v) => solver({ text: v.text });
 
-/** Solveur B : CLASSE SÉMANTIQUE du verbe de la situation (la consigne). */
-const ASK = /demande|interroge|questionne|savoir|curieu|intrigu|perplex|dubitatif|hésite|question/i;
-const EXCL = /écrie|crie|exclame|bondit|applaudit|saute|sursaute|rayonne|joie|excité|ravi|content|heureu|émerveill/i;
-const TELL = /raconte|explique|annonce|\bdit\b|décrit|précise|indique|commente|énumère|montre|note|présente|répond/i;
-function intentionMarker({ prompt }) {
-  if (ASK.test(prompt)) return '?';
-  if (EXCL.test(prompt)) return '!';
-  if (TELL.test(prompt)) return '.';
-  return null;
-}
-const semanticSolver = (v) => intentionMarker(v) || '.';
-
-function questions(level, n = 1500) {
-  const rng = createRng(77 + level);
+function questions(level, n = 1500, seed = 77) {
+  const rng = createRng(seed + level);
   const out = [];
   while (out.length < n) out.push(...buildQuestions(game, level, rng, 10));
   return out;
 }
+const signQuestions = (level, n, seed) => questions(level, n, seed).filter((q) => q.key.startsWith('phrase:signe'));
 
-const signQuestions = (level, n) => questions(level, n).filter((q) => q.key.startsWith('phrase:signe'));
+/** Taux de réussite d'un solveur sur un niveau (0 à 1). */
+function rate(level, solver, n = 6000, seed = 77) {
+  const views = signQuestions(level, n, seed).map(visibleOfQuestion);
+  return views.filter((v) => solver(v) === v.answer).length / views.length;
+}
 
-test('niveau 3 : la TYPOGRAPHIE seule ne résout pas la moitié de la ponctuation (#107)', () => {
-  const share = checkNoSurfaceShortcut(signQuestions(3, 6000), typographySolver,
-    { label: 'ponctuation niveau 3, typographie' });
-  assert.ok(share > 0.2, `solveur suspect : ${share} — il devrait tomber juste parfois`);
+test('niveau 3 : un solveur « PHRASE SEULE » ne dépasse pas le hasard (#107)', () => {
+  // Défaut de la 2e itération : 93 % — la situation était décorative dans 40 cas sur 42.
+  for (const seed of [31337, 90210, 55555]) {
+    checkNoSurfaceShortcut(signQuestions(3, 6000, seed), blind(sentenceOnlySolver),
+      { label: `niveau 3, phrase seule (graine ${seed})` });
+  }
 });
 
-test('niveau 3 : la CLASSE SÉMANTIQUE du verbe ne résout pas la moitié de la ponctuation (#107)', () => {
-  checkNoSurfaceShortcut(signQuestions(3, 6000), semanticSolver,
-    { label: 'ponctuation niveau 3, verbe de la situation' });
+test('PROGRESSION : le même solveur de surface perd au moins 25 points du niveau 1 au niveau 3 (#107)', () => {
+  // Un test par niveau ne dit rien de la progression. C'est l'ÉCART qui dit que le niveau 3 est
+  // vraiment plus dur — à la 2e itération, le niveau 3 était PLUS facile que le niveau 1 (93 % / 65 %).
+  const n1 = rate(1, blind(sentenceOnlySolver));
+  const n3 = rate(3, blind(sentenceOnlySolver));
+  const ecart = 100 * (n1 - n3);
+  assert.ok(ecart >= 25,
+    `la forme de la phrase donne le signe à ${(100 * n1).toFixed(1)} % au niveau 1 et `
+    + `${(100 * n3).toFixed(1)} % au niveau 3 : écart de ${ecart.toFixed(1)} points (< 25)`);
 });
 
-test('niveau 3 : les situations qui NOMMENT l\'intention restent minoritaires (#107)', () => {
-  // Défaut d'origine : 44 contextes sur 45 portaient un verbe d'intention, juste 43 fois sur 44.
-  // Aucun mot ne dépassait 30 % — c'est la CLASSE qui couvrait tout, d'où une mesure de couverture.
-  checkCueCoverage(signQuestions(3, 6000), intentionMarker,
-    { maxCoverage: 0.5, label: 'ponctuation niveau 3' });
+test('niveau 3 : aucun lexique n\'est réservé à une classe de réponse (#107)', () => {
+  // La 2e itération exigeait qu'une exclamation porte un mot d'intensité : ce test FABRIQUAIT un
+  // raccourci parfait (couverture 38 %, précision 100 %). Il est remplacé par son inverse.
+  checkCueCoverage(signQuestions(3, 6000), (v) => (INTENSITY.test(v.text) ? '!' : null),
+    { maxCoverage: 0.3, label: 'niveau 3, lexique d\'intensité' });
+});
+
+test('niveau 3 : aucun MOT de la banque n\'annonce un signe à lui seul (#107)', () => {
+  // Généralisation du test précédent : on ne protège pas un lexique en particulier, on vérifie que
+  // le vocabulaire des phrases est réparti sur les trois signes.
+  const bySign = new Map();
+  for (const c of CONTEXTS) {
+    for (const w of withoutSign(c.text).toLowerCase().split(/[^a-zà-ÿ']+/).filter((x) => x.length >= 4)) {
+      if (!bySign.has(w)) bySign.set(w, []);
+      bySign.get(w).push(c.sign);
+    }
+  }
+  const exclusifs = [];
+  for (const [w, signs] of bySign) {
+    if (signs.length < 3) continue;
+    const top = Math.max(...['.', '?', '!'].map((s) => signs.filter((x) => x === s).length));
+    if (top / signs.length > 0.6) exclusifs.push(`${w} (${top}/${signs.length})`);
+  }
+  assert.deepEqual(exclusifs, [], 'mots réservés à un signe');
+});
+
+test('niveau 3 : les deux solveurs de la 1re relecture restent sous le seuil', () => {
+  const typographySolver = ({ text }) => {
+    const first = text.split(' ')[0] || '';
+    if (/,$/.test(first)) return '!';
+    if (/^Comme$/.test(first) && /,/.test(text)) return '.';
+    if (/\S+-(tu|il|elle|nous|vous|ils)\b/.test(text)) return '?';
+    if (/^(Où|Qui|Quand|Comment|Pourquoi|Combien|Que|Quelle|Est-ce)$/.test(first)) return '?';
+    if (/^(Quel|Comme)$/.test(first)) return '!';
+    return '.';
+  };
+  const ASK = /demande|interroge|questionne|savoir|curieu|intrigu|perplex|dubitatif|hésite|question/i;
+  const EXCL = /écrie|crie|exclame|bondit|applaudit|saute|sursaute|rayonne|joie|excité|ravi|content|heureu|émerveill/i;
+  const TELL = /raconte|explique|annonce|\bdit\b|décrit|précise|indique|commente|énumère|montre|note|présente|répond/i;
+  const marker = ({ prompt }) => (ASK.test(prompt) ? '?' : EXCL.test(prompt) ? '!' : TELL.test(prompt) ? '.' : null);
+  const qs = signQuestions(3, 6000);
+  checkNoSurfaceShortcut(qs, blind(typographySolver), { label: 'niveau 3, typographie' });
+  checkNoSurfaceShortcut(qs, (v) => marker(v) || '.', { label: 'niveau 3, verbe de la situation' });
+  checkCueCoverage(qs, marker, { maxCoverage: 0.5, label: 'niveau 3, situations qui nomment l\'intention' });
 });
 
 test('niveau 3 : répondre toujours le même signe ne mène nulle part', () => {
@@ -148,22 +213,7 @@ test('niveau 3 : répondre toujours le même signe ne mène nulle part', () => {
   }
 });
 
-test('contextes : une exclamation porte sa force dans la phrase, pas seulement dans la situation (#107)', () => {
-  // Défaut relevé : « Tom applaudit en voyant la neige. » + « Il neige » — un point se défend très bien.
-  // Une exclamation doit donc être exclamative par sa FORME (Quel/Comme/Que) ou par un mot d'intensité.
-  const INTENSITY = /énorme|immense|gigantesque|magnifique|splendide|délicieu|formidable|extraordinaire|superbe|incroyable|plus beau/i;
-  for (const c of CONTEXTS.filter((c) => c.sign === '!')) {
-    const exclamativeForm = /^(Quel|Quelle|Comme|Que)\b/.test(c.text);
-    assert.ok(exclamativeForm || INTENSITY.test(c.text),
-      `exclamation sans marque dans la phrase : « ${c.text} » (${c.context})`);
-  }
-  // Et une déclarative ne doit pas porter ces mots-là : elle deviendrait défendable en exclamation.
-  for (const c of CONTEXTS.filter((c) => c.sign === '.')) {
-    assert.doesNotMatch(c.text, INTENSITY, `déclarative avec un mot d'intensité : « ${c.text} »`);
-  }
-});
-
-// --- Mixité ------------------------------------------------------------------------------------------
+// ===== Mixité ========================================================================================
 
 test('mixité : aucun accord genré adressé à l\'enfant, dans les banques (#107)', () => {
   checkEpicene([
@@ -180,7 +230,39 @@ test('mixité : aucun accord genré dans les questions tirées, tous niveaux (#1
   }
 });
 
-// --- Le reste de la grille ---------------------------------------------------------------------------
+test('mixité : les objets prêtés à l\'enfant sont variés (#107)', () => {
+  // Le helper ne voit rien ici : ce sont des noms, pas des accords. Mais supposer quatre fois que
+  // l'enfant porte une robe, c'est supposer qui elle est.
+  const textes = [...PONCT_SHORT.map((p) => p.text), ...ORDER_2, ...ORDER_3];
+  const objets = [];
+  for (const t of textes) {
+    for (const m of t.matchAll(/\b(?:ton|ta|tes)\s+([a-zà-ÿ']+)/gi)) objets.push(m[1].toLowerCase());
+    for (const m of t.matchAll(/\btu\s+as\s+(?:un|une)\s+(?:[a-zà-ÿ']+\s+)?([a-zà-ÿ']+)/gi)) objets.push(m[1].toLowerCase());
+  }
+  assert.ok(new Set(objets).size >= 4, `objets prêtés à l'enfant trop peu variés : ${objets.join(', ')}`);
+  const counts = {};
+  for (const o of objets) counts[o] = (counts[o] || 0) + 1;
+  const top = Math.max(...Object.values(counts));
+  assert.ok(top / objets.length <= 0.4,
+    `un même objet est prêté à l'enfant dans ${(100 * top / objets.length).toFixed(0)} % des cas : ${JSON.stringify(counts)}`);
+});
+
+test('mixité : Papa et Maman sont aussi présents l\'un que l\'autre, et leurs rôles se croisent (#107)', () => {
+  const textes = [...SIMPLE.flat(), ...PONCT_SHORT.map((p) => p.text),
+    ...CONTEXTS.flatMap((c) => [c.context, c.text]), ...ORDER_2, ...ORDER_3];
+  const count = (who) => textes.filter((t) => new RegExp(`\\b${who}\\b`).test(t)).length;
+  const papa = count('Papa');
+  const maman = count('Maman');
+  assert.ok(papa > 0 && maman > 0);
+  const ratio = Math.max(papa, maman) / Math.min(papa, maman);
+  assert.ok(ratio <= 2, `déséquilibre Papa ${papa} / Maman ${maman} (rapport ${ratio.toFixed(1)} > 2)`);
+  // Les rôles ne sont pas assignés par genre : chacun conduit et chacun cuisine quelque part.
+  const fait = (who, verbe) => textes.some((t) => new RegExp(`\\b${who}\\b.*\\b${verbe}`).test(t));
+  assert.ok(fait('Maman', 'conduit') || fait('Maman', 'lave'), 'Maman n\'a aucun rôle hors du foyer');
+  assert.ok(fait('Papa', 'prépare') || fait('Papa', 'cuisine'), 'Papa n\'a aucun rôle au foyer');
+});
+
+// ===== Le reste de la grille =========================================================================
 
 test('« Est-ce une phrase ? » : les mélanges ne sont pas des phrases (début en majuscule, point final)', () => {
   assert.ok(SIMPLE.length >= 30);
@@ -199,7 +281,7 @@ test('niveau 1 : mélange de « phrase ? » et de signes, réponses exactes', ()
   const sig = qs.filter((q) => q.key.startsWith('phrase:signe'));
   assert.ok(isS.length > 400 && sig.length > 400);
   for (const q of isS) {
-    const text = q.display.show.text.replace(/ /g, ' ');
+    const text = q.display.show.text.replace(/ /g, ' ');
     const good = /^[A-ZÀ-ÖÉŒ]/.test(text) && /[.?!]$/.test(text) && !q.key.endsWith('|ordre');
     assert.equal(q.answer, good ? 'oui' : 'non', q.key);
   }
@@ -213,7 +295,7 @@ test('niveau 2 : ordre et recherche d\'erreur', () => {
       assert.deepEqual([...q.display.items].sort(), [...q.answer].sort());
       assert.ok(q.answer.length >= 5 && q.answer.length <= 6);
     } else {
-      const t = q.display.show.text.replace(/ /g, ' ');
+      const t = q.display.show.text.replace(/ /g, ' ');
       const maj = /^[A-ZÀ-ÖÉ]/.test(t);
       const sign = /[.?!]$/.test(t);
       assert.equal(q.answer, maj && sign ? 'rien' : !maj && !sign ? 'les-deux' : !maj ? 'maj' : 'signe', q.key);
@@ -225,7 +307,6 @@ test('niveau 3 : 6 ou 7 mots à ranger, ponctuation toujours en situation', () =
   const qs = questions(3);
   assert.ok(qs.some((q) => q.type === 'order'));
   for (const q of qs.filter((x) => x.type === 'order')) assert.ok(q.answer.length >= 6 && q.answer.length <= 7);
-  // Plus aucune phrase longue sans contexte : elle ne demandait rien de plus que le niveau 1 (#107).
   assert.equal(qs.filter((q) => q.key.startsWith('phrase:signe') && !q.key.endsWith(':ctx')).length, 0);
 });
 
@@ -239,6 +320,16 @@ test('une même phrase ne revient jamais dans une partie', () => {
   }
 });
 
+test('la voix ne donne pas la réponse : pas de point final sur la phrase lue (#107)', () => {
+  // La synthèse posait une intonation de point sur la phrase dont on demande justement le signe.
+  for (const q of questions(3, 600).filter((x) => x.key.startsWith('phrase:signe'))) {
+    assert.doesNotMatch(q.speak, /[.?!]\s*$/, `la phrase lue finit par un signe : ${q.speak}`);
+  }
+  for (const q of questions(2, 600).filter((x) => x.key.startsWith('phrase:erreur'))) {
+    assert.doesNotMatch(q.speak, /[.?!]\s*$/, `la phrase lue finit par un signe : ${q.speak}`);
+  }
+});
+
 test('explications : jamais négatives, jamais vides, citent la phrase juste', () => {
   for (let level = 1; level <= 3; level++) {
     for (const q of questions(level, 300)) {
@@ -249,21 +340,32 @@ test('explications : jamais négatives, jamais vides, citent la phrase juste', (
 });
 
 test('explication de l\'ordre : une stratégie adaptée à la phrase, pas une formule unique (#107)', () => {
-  // Défaut relevé : « cherche qui fait l'action » sur « Le gâteau de ma tante est bon. » (aucune action),
-  // soit 60,4 % de ORDER_3. Quatre familles, et « l'action » n'est proposée que s'il y en a une.
   const seenStrategies = new Set();
   for (const s of [...ORDER_2, ...ORDER_3]) {
     const hint = orderStrategy(s);
     seenStrategies.add(hint);
     const body = withoutSign(s);
-    const isAction = /\b(a|ai|as|avons|avez|ont)\s+\S*(é|ée|és|ées|i|is|it|u|us|ue)\b/.test(body)
-      || !/\b(est|sont|es|suis|sommes|êtes|a|ai|as|avons|avez|ont)\b/.test(body);
+    // « Cherche l'action » est interdit sur une phrase sans action (être, avoir possessif).
     if (/qui fait l'action/.test(hint)) {
-      assert.ok(signOf(s) === '.' && isAction, `« ${s} » : on propose de chercher l'action alors qu'il n'y en a pas`);
+      const passeCompose = /\b(a|ai|as|avons|avez|ont)\s+\S*(é|ée|és|ées|i|is|it|u|us|ue)\b/.test(body);
+      const sansVerbeDEtat = !/\b(est|sont|es|suis|sommes|êtes|a|ai|as|avons|avez|ont)\b/.test(body);
+      assert.ok(signOf(s) === '.' && (passeCompose || sansVerbeDEtat),
+        `« ${s} » : on propose de chercher l'action alors qu'il n'y en a pas`);
+    }
+    // Et « cherche le mot qui interroge » est interdit s'il n'y en a aucun (#107, 2e relecture).
+    // Comparaison mot à mot : `\b` ne reconnaît pas « Où » (la limite de mot échoue après « ù »).
+    if (/mot qui interroge/.test(hint)) {
+      const mots = body.toLowerCase().split(/[^a-zà-ÿ'-]+/).filter(Boolean);
+      const INTERRO = ['où', 'qui', 'quand', 'comment', 'pourquoi', 'combien', 'est-ce', 'quel', 'quelle'];
+      assert.ok(mots.some((m) => INTERRO.includes(m)),
+        `« ${s} » : on fait chercher un mot interrogatif qui n'existe pas`);
+    }
+    if (/verbe collé à/.test(hint)) {
+      assert.match(body, /\S+-(tu|il|elle|nous|vous|ils)\b/,
+        `« ${s} » : on fait chercher un verbe inversé qui n'existe pas`);
     }
   }
-  assert.ok(seenStrategies.size >= 4, `une seule formule pour tout : ${seenStrategies.size} variante(s)`);
-  // Chaque question « ordre » tirée porte bien l'une des stratégies, et la bonne pour SA phrase.
+  assert.ok(seenStrategies.size >= 5, `trop peu de variantes : ${seenStrategies.size}`);
   const byLevel = { 2: ORDER_2, 3: ORDER_3 };
   for (let level = 2; level <= 3; level++) {
     const qs = questions(level, 300).filter((q) => q.type === 'order');
@@ -271,11 +373,9 @@ test('explication de l\'ordre : une stratégie adaptée à la phrase, pas une fo
     for (const q of qs) {
       const sentence = byLevel[level].find((s) => withoutSign(s).toLowerCase() === q.key.split('|')[1]);
       assert.ok(sentence, q.key);
-      assert.ok(q.explain.includes(orderStrategy(sentence)),
-        `la stratégie ne correspond pas à la phrase : ${q.key}`);
+      assert.ok(q.explain.includes(orderStrategy(sentence)), `stratégie inadaptée : ${q.key}`);
     }
   }
-  // Et aucune des quatre n'écrase les autres : la répartition sur ORDER_3 reste contrastée.
   const counts = {};
   for (const s of ORDER_3) counts[orderStrategy(s)] = (counts[orderStrategy(s)] || 0) + 1;
   const top = Math.max(...Object.values(counts)) / ORDER_3.length;
@@ -283,24 +383,12 @@ test('explication de l\'ordre : une stratégie adaptée à la phrase, pas une fo
 });
 
 test('explication en situation : elle cite ce qui tranche, jamais la règle seule (#107)', () => {
-  // Défaut relevé : `pickSign` n'ajoutait AUCUN indice aux questions en contexte — la famille la plus
-  // fréquente du niveau 3 n'avait droit qu'à « la règle, puis la réponse ».
   const qs = signQuestions(3, 2000);
   assert.ok(qs.length > 0);
   for (const q of qs) {
-    const why = CONTEXTS.find((c) => q.key.includes(withoutSign(c.text).toLowerCase()));
-    assert.ok(why, q.key);
-    assert.ok(q.explain.includes(why.why), `l'aide de la situation manque : ${q.key}`);
-  }
-});
-
-test('contextes : un seul signe défendable (juge pédagogie, #35)', () => {
-  // « Mia demande où est son sac » + « Il est dans ta chambre » : le texte RÉPOND à la question, un « . » se défend.
-  // « C'est déjà l'heure » : « déjà » marque la surprise, un « ! » se défend.
-  for (const c of CONTEXTS.filter((c) => c.sign === '?')) {
-    assert.doesNotMatch(c.text, /^(Il|Elle) est (dans|sur|sous|à)\b|\bdéjà\b/, c.text);
-  }
-  for (const c of CONTEXTS.filter((c) => c.sign === '!')) {
-    assert.doesNotMatch(c.context, /étonn|surpri/, c.context);
+    const item = CONTEXTS.find((c) => q.prompt.startsWith(c.context)
+      && q.key.includes(withoutSign(c.text).toLowerCase()));
+    assert.ok(item, q.key);
+    assert.ok(q.explain.includes(item.why), `l'aide de la situation manque : ${q.key}`);
   }
 });
