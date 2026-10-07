@@ -58,6 +58,7 @@ css/
   profile.css           profils, avatars, courbes, espace parents (E1)
   rewards.css           récompenses : compteur de points, grades, album, carte des îles, confettis
   kawaii.css            univers kawaii : peinture des personnages, animations douces, page #/kawaii
+  chest.css             coffre surprise (#91) : dessin, ouverture, grille des accessoires
 js/
   app.js                démarrage : stockage, profil actif, réglages, barre du haut, routeur
   screens/
@@ -86,12 +87,15 @@ js/
     rewards.js          points, séries, grades, gommettes, défi du jour (FONCTIONS PURES)
     rewards-live.js     branchement des récompenses sur gameEvents + écriture dans le profil
     companion.js        compagnon : stades, seuils, noms (PUR) ; companion-live.js : branchement sur gameEvents (#90)
+    chest.js            coffre surprise : paliers, tirage à graine, accessoires, données du profil (PUR, #91)
+    chest-live.js       branchement du coffre sur gameEvents (après les récompenses)
     audio.js            sons (Web Audio) + voix (speechSynthesis fr-FR / en-GB)
     random.js           RNG avec graine (mulberry32), shuffle, pick, sample sans remise
     ui/                 composants d'affichage réutilisables (un fichier par type de question)
       index.js          registre des composants (registerQuestionUI pour un type nouveau)
       dom.js, icons.js  h() pour créer des éléments, icônes SVG d'interface, pastilles ✓/✗
       svg.js            s() et figure() pour construire un SVG (aucun import : pas de cycle)
+      chest.js          dessin du coffre (bois, argent, doré) et scène d'ouverture (#91)
       confetti.js       confettis de fin de partie (sans effet si « réduire les animations »)
       art/              dessins demandés par les jeux (index.js = registre, un fichier par genre) ;
                         kawaii.js (+ kawaii-parts.js, kawaii-deco.js) = kit de personnages kawaii
@@ -248,8 +252,9 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
 - **Récompenses** (`rewards.js`, tout est pur) : `answerPoints({ correct, streak })` et `runPoints(résultats)`
   (10 points par bonne réponse, bonus aux séries de 3, 5, 7 et 10, +5 pour avoir terminé — une partie
   ne rapporte jamais 0) ; `GRADES` et `gradeFor/gradeProgress/gradeGained(avant, après)` ;
-  `STICKERS` (10 gommettes par île, gagnées dans l'ordre : 1 par partie réussie, 2 avec 3 étoiles) ;
-  `applyGameRewards(rewards, { island, stars, points, daily })` → `{ rewards, gained }` ;
+  `STICKERS` (10 gommettes par île, gagnées dans l'ordre, par le coffre surprise) ;
+  `applyGameRewards(rewards, { island, stars, points, daily })` → `{ rewards, gained }` (points, grade et `gained.chest`
+  = `{ island, stars }` quand la partie donne un coffre ; elle ne remet plus de gommette) ;
   `dailyKey/dailySeed(date)` (date **locale** : le défi change à minuit pour l'enfant) ;
   `totalStars(progress)` et `islandUnlocked/islandStarsLeft(île, étoiles)` pour la carte.
   `rewards-live.js` fait le lien avec le moteur et le profil : `installRewards(app)` une fois au
@@ -374,6 +379,26 @@ ne disparaît. Poser l'animation sur le **conteneur** du dessin (les pieds reste
 - ❌ Pas d'animation en boucle à côté d'une consigne à lire (elle distrait) : les boucles sont pour
   l'accueil, la fin de partie, l'album. ❌ Pas d'image externe ni de bibliothèque. ❌ Pas de kawaii
   sur l'espace parents (sobre). ❌ Ne pas déformer un dessin (largeur seule, `height: auto`).
+
+## Coffre surprise (E15, #91)
+
+Une partie réussie (≥ 1 étoile) ne donne plus la gommette directement : elle donne un **coffre** (bois 1 étoile,
+argent 2, doré 3) que l'enfant touche à l'écran de fin ; il se secoue, brille, s'ouvre et révèle le contenu.
+0 étoile : pas de coffre. Défi du jour : un seul coffre par jour (comme avant pour la gommette).
+- **`core/chest.js` (pur)** : `drawChest({ stars, island, ownedStickers, ownedAccessories, rng })` →
+  `{ tier, rarity, prize }`. Raretés : gommette de l'île (commune), accessoire du compagnon (peu commun),
+  accessoire doré (rare) ; chances par coffre dans `ODDS`. Pas de doublon : une sorte épuisée cède la place
+  à une autre, et seul un enfant qui a TOUT reçu retrouve une gommette déjà collée (`duplicate: true`, rien stocké).
+  `createRng(seed)` rend le tirage testable (`tests/chest.test.js`, fréquences sur 20 000 tirages).
+- **Données** : profil `chest = { accessories, equipped, opened }` (repris dans `normalizeProfile` ; absent → vide).
+  Un seul accessoire porté, ou aucun. Les accessoires sont ceux du kit kawaii (`ACCESSORIES`).
+- **`core/chest-live.js`** : abonné à `gameEvents` APRÈS `installRewards` (qui dit si la partie donne un coffre) ;
+  tire, range gommette ou accessoire dans le profil tout de suite, `chestSummary(session)` pour l'écran.
+- **Affichage** : `core/ui/chest.js` (`chestScene`, `chestArt`), `css/chest.css`, `endChest(session)` dans
+  `screens/play.js` (réutilisé par `daily.js`). Écran « Mon compagnon » : section « Mes accessoires ».
+  Le compagnon porte son accessoire partout (`withAccessory`, lu par `currentCompanion()` et `companionSpec`) ; l'œuf n'en porte pas.
+- **Animation** : CSS (secousse, lueur, couvercle qui se lève, contenu qui jaillit). Avec « réduire les animations »,
+  le coffre s'ouvre d'un coup et montre son contenu, sans mouvement.
 
 ## Tests et vérification
 

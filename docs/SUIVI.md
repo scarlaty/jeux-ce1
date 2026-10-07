@@ -32,7 +32,7 @@ https://github.com/users/scarlaty/projects/1.
 | E9, E10 mesures et géométrie | #58 – #67 | #58 **terminé** ; #59 – #67 libres |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | à faire (libre) |
 | E14 qualité | #82 – #85, #87 | en continu (#87 : bug de débordement dans Les tables) |
-| E15 plaisir de jouer | #88 – #91 | #88, #89, #90 **terminés** (kit kawaii, mascottes, compagnon : éclosion après 3 parties, stades à 20 et 60 étoiles) ; reste #91 coffre surprise |
+| E15 plaisir de jouer | #88 – #91 | #88, #89, #90 **terminés** (kit kawaii, mascottes, compagnon : éclosion après 3 parties, stades à 20 et 60 étoiles) ; #91 coffre surprise **fait** sur `feat/91-coffre` (à relire) |
 
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54), **Lecture éclair** (#26), **Devinettes** (#27), **Lire l'heure** (#58).
