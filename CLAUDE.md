@@ -56,6 +56,7 @@ css/
   base.css              reset, typographie, fond Seyès
   components.css        boutons, cartes, pavé numérique, bulles de feedback…
   profile.css           profils, avatars, courbes, espace parents (E1)
+  map.css               carte au trésor : cadrage des scènes, matières du décor, plaques (#96)
   rewards.css           récompenses : compteur de points, grades, album, carte des îles, confettis
   kawaii.css            univers kawaii : peinture des personnages, animations douces, page #/kawaii
   chest.css             coffre surprise (#91) : dessin, ouverture, grille des accessoires
@@ -64,6 +65,7 @@ js/
   screens/
     index.js            TABLE DES ÉCRANS (point d'extension) : chemin → module d'écran
     home.js             accueil : carte au trésor des îles (avancement, défi du jour, grade)
+    island.js           zoom DANS une île (#/ile/<id>) : chaque jeu est un lieu du décor (#96)
     play.js             choix du niveau, partie, fin de partie ; exporte createGameView (réutilisé)
     compagnon.js        « Mon compagnon » : éclosion, croissance, nom et animal (#/compagnon, #90)
     album.js            album de gommettes et échelle des grades (#/album)
@@ -76,6 +78,7 @@ js/
     storage.js          lecture/écriture localStorage versionnée (préfixe « jeux-ce1: »), migrations
     profile.js          profils, prénom, avatar, profil actif
     history.js          historique des parties, progression par jeu, agrégats pour les courbes
+    map.js              carte au trésor : géométrie des îles et des lieux, noms, zone sûre (PUR)
     stats.js            agrégats de l'espace parents (semaines, notions ratées, géométrie des courbes)
     backup.js           export/import d'une sauvegarde JSON versionnée et validée (#14)
     gate.js             opération de contrôle à l'entrée de l'espace parents (#15)
@@ -99,9 +102,11 @@ js/
       chest.js          dessin du coffre (bois, argent, doré) et scène d'ouverture (#91)
       confetti.js       confettis de fin de partie (sans effet si « réduire les animations »)
       art/              dessins demandés par les jeux (index.js = registre, un fichier par genre) ;
+        scenery.js      bibliothèque d'objets de décor de la carte, posés par <use> (#96)
                         kawaii.js (+ kawaii-parts.js, kawaii-deco.js) = kit de personnages kawaii
       avatar.js         pastille d'avatar (barre du haut, listes de profils)
       chart.js          courbe SVG + tableau des valeurs (aucune bibliothèque)
+      map-scene.js      dessin des deux scènes de la carte (archipel, intérieur d'une île)
       choice.js         QCM texte / image
       keypad.js         pavé numérique
       order.js          remettre dans l'ordre
@@ -295,6 +300,38 @@ Exigences par jeu (critères des issues) : 3 niveaux progressifs, **au moins 30 
 par niveau** (générées ou en banque), correction expliquée, jouable au doigt et à la souris,
 tests unitaires du générateur (`tests/games/<id>.test.js` : 500 tirages par niveau → question valide,
 une seule bonne réponse, réponse présente parmi les choix, pas de choix en double).
+
+## Carte au trésor (#96)
+
+Deux écrans, une seule façon de dessiner :
+
+- **l'archipel** (`#/`) : les cinq îles posées sur la mer, vues de trois quarts. Une île ouverte
+  est un lien vers son intérieur ; une île fermée reste visible, plus pâle, avec son seuil d'étoiles.
+- **l'intérieur d'une île** (`#/ile/<id>`) : chaque jeu de l'île est un **lieu du décor** (la grotte,
+  le moulin, le phare…). **Libre parcours** : le chemin relie les lieux, il ne les numérote pas.
+
+Règles non négociables de ces deux scènes :
+
+- **Une seule image de 200 × 180**, cadrée par la feuille de style (`preserveAspectRatio="slice"` +
+  `aspect-ratio`) : paysage sur tablette, portrait sur téléphone. Il n'y a jamais deux dessins à
+  tenir à jour. Tout ce qui porte de l'information tient dans la **zone sûre** (`SAFE` de `core/map.js`),
+  visible dans les deux cadrages.
+- **`core/map.js` est pur** : positions des îles, cases des lieux, découpe des noms, noms accessibles.
+  `placeLayout(n)` garantit que deux plaques — et deux zones touchables — ne se chevauchent jamais,
+  d'un à neuf lieux : un 7ᵉ jeu dans une île fait passer la grille de deux à trois rangées au lieu de
+  casser la composition. `tests/map.test.js` le vérifie ; ne jamais déplacer une case « à l'œil »
+  sans relancer ces tests.
+- **Le décor vient de `ui/art/scenery.js`** : chaque objet est déclaré UNE fois dans le `<defs>` de la
+  scène et posé par `<use>`. Ajouter un objet = une entrée dans `PROPS` + ses classes dans `css/map.css`
+  (un test échoue si une classe n'existe pas, ou si une couleur est écrite en dur). Un lieu déclare en
+  plus sa `height`, pour que la scène le ramène à l'emprise de sa case.
+- **Direction artistique « kawaii cosy »** (voir l'issue #96) : contour partout (`--kw-outline`,
+  éclairci sur l'ardoise), trois tons par matière (`-light` / teinte / `-deep`) plus un reflet,
+  aucune zone vide, un motif plutôt qu'un aplat, du premier plan qui cadre la scène.
+  `use()` compense l'échelle pour que l'épaisseur du contour reste la même partout.
+- **Jamais une information portée par la seule position** : les deux écrans doublent la scène d'une
+  liste HTML (comme `ui/chart.js` double sa courbe d'un tableau), et chaque île comme chaque lieu
+  est un lien atteignable au clavier, au nom accessible complet.
 
 ## Stockage (localStorage)
 
