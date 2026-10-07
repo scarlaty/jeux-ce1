@@ -9,7 +9,7 @@
 // (voir js/data/devinettes.js : `is` / `maybe`).
 import {
   THINGS, KIND_RANK, TAGS, NEGATIONS, confusable, clueText, negationText, whyNot, definite, indefinite,
-  holds, fails, couldHold,
+  holds, fails, couldHold, colourClosed,
 } from '../data/devinettes.js';
 
 const kind = (tag) => TAGS[tag].kind;
@@ -38,7 +38,7 @@ function pickLures(answer, constraints, rng) {
   const lures = [];
   for (const missed of rng.shuffle([...constraints])) {
     const others = constraints.filter((c) => c !== missed);
-    const base = THINGS.filter((t) => compatible(t, chosen) && fails(t, missed));
+    const base = THINGS.filter((t) => compatible(t, chosen) && fails(t, missed) && !(missed.neg && TAGS[missed.tag].kind === 'colour' && !colourClosed(t)));
     // De préférence un intrus qui vérifie les autres indices avec certitude ; sinon, qui pourrait les vérifier.
     const sure = base.filter((t) => others.every((c) => holds(t, c)));
     const candidates = sure.length ? sure : base.filter((t) => others.every((c) => couldHold(t, c)));
@@ -71,7 +71,7 @@ function buildQuestion(level, answer, constraints, lures, rng) {
   const reasons = lures.sort((a, b) => ordered.indexOf(a.missed) - ordered.indexOf(b.missed))
     .map((l) => lureReason(answer, l));
   return {
-    key: `devinettes:${level}:${answer.word}:${ordered.map((c) => (c.neg ? '!' : '') + c.tag).join('+')}`,
+    key: `devinettes:${level}:${answer.word}:${ordered.map((c) => (c.neg ? '!' : '') + c.tag).join('+')}:${lures.map((l) => l.thing.word).sort().join('+')}`,
     type: 'choice',
     prompt: text,
     speak: text,

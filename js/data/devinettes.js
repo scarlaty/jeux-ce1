@@ -112,10 +112,10 @@ const TAG_ROWS = [
   ['mains', 'sign', 'On me met aux mains.', 'ne se met pas aux mains.'],
   ['jambes', 'sign', 'On me met sur les jambes.', 'ne se met pas sur les jambes.'],
   ['froid', 'sign', 'Je protège du froid.', 'ne protège pas du froid.'],
-  ['roi', 'sign', 'Un roi me porte.', "n'est pas porté par un roi."],
+  ['roi', 'sign', 'Un roi me porte.', "n'est pas {porté|portée} par un roi."],
   ['boulangerie', 'sign', "On m'achète à la boulangerie.", "ne s'achète pas à la boulangerie."],
   ['coquille', 'sign', "J'ai une coquille.", "n'a pas de coquille."],
-  ['pond', 'sign', 'Une poule me pond.', "n'est pas pondu par une poule."],
+  ['pond', 'sign', 'Une poule me pond.', "n'est pas {pondu|pondue} par une poule."],
   ['tartine', 'sign', 'On me tartine sur du pain.', 'ne se tartine pas sur du pain.'],
   ['papier', 'sign', "On m'enlève un papier avant de me manger.", "n'a pas de papier à enlever."],
   ['lune', 'sign', 'Je ressemble à la lune quand elle est toute fine.', 'ne ressemble pas à la lune toute fine.'],
@@ -131,7 +131,7 @@ const TAG_ROWS = [
   ['chauffe', 'sign', 'Je chauffe la Terre.', 'ne chauffe pas la Terre.'],
   ['brille_nuit', 'sign', 'Je brille la nuit.', 'ne brille pas la nuit.'],
   ['cheminee', 'sign', "J'ai une cheminée.", "n'a pas de cheminée."],
-  ['rois', 'sign', 'Des rois ont habité chez moi.', "n'a pas été habité par des rois."],
+  ['rois', 'sign', 'Des rois ont habité chez moi.', "n'a pas été {habité|habitée} par des rois."],
   ['camping', 'sign', 'On dort dedans en camping.', 'ne sert pas à dormir en camping.'],
   ['noel', 'sign', 'On me décore à Noël.', 'ne se décore pas à Noël.'],
   ['petales', 'sign', "J'ai des pétales.", "n'a pas de pétales."],
@@ -214,7 +214,7 @@ const RAW = [
   ['camion', 'un', 'm', '🚚', 'vehicule roues route transporte grand', 'orange blanc passagers jaune rouge vert rose marron gris noir bleu violet'],
   ['tracteur', 'un', 'm', '🚜', 'vehicule roues champs grand ferme', 'route rouge vert transporte jaune orange passagers rose marron gris blanc noir bleu violet'],
   ['train', 'un', 'm', '🚂', 'vehicule roues rails grand passagers', 'transporte noir gris rouge bleu jaune orange vert rose marron blanc violet'],
-  ['avion', 'un', 'm', '✈️', 'vehicule vole ailes grand passagers', 'transporte blanc bleu gris jaune rouge orange vert rose marron noir violet'],
+  ['avion', 'un', 'm', '✈️', 'vehicule vole ailes grand passagers', 'transporte roues blanc bleu gris jaune rouge orange vert rose marron noir violet'],
   // Objets, maisons, nature
   ['cloche', 'une', 'f', '🔔', 'sonne jaune', 'orange main rond rouge vert rose marron gris blanc noir bleu violet'],
   ['réveil', 'un', 'm', '⏰', 'sonne heure matin main', 'rouge rond blanc noir jaune orange vert rose marron gris bleu violet'],
@@ -228,7 +228,7 @@ const RAW = [
   ['tente', 'une', 'f', '⛺', 'habiter camping', 'toit blanc orange vert rouge grand jaune rose marron gris noir bleu violet'],
   ['sapin', 'un', 'm', '🎄', 'arbre vert noel foret grand', 'marron'],
   ['fleur', 'une', 'f', '🌼', 'petales jaune parfum', 'blanc main rouge orange vert rose marron gris noir bleu violet'],
-  ['girafe', 'une', 'f', '🦒', 'animal pattes4 cou grand', 'jaune marron poils'],
+  ['girafe', 'une', 'f', '🦒', 'animal pattes4 cou grand', 'jaune marron poils cornes'],
   ['tortue', 'une', 'f', '🐢', 'animal pattes4 carapace', 'vert marron rampe nage rond ecailles'],
   ['escargot', 'un', 'm', '🐌', 'animal rampe coquille main', 'marron jaune gris minuscule aliment'],
   ['coccinelle', 'une', 'f', '🐞', 'animal insecte vole ailes rouge noir main minuscule', ''],
@@ -245,7 +245,7 @@ const RAW = [
   ['vélo', 'un', 'm', '🚲', 'vehicule roues pedales', 'route rouge bleu noir passagers jaune orange vert rose marron gris blanc violet'],
   ['bus', 'un', 'm', '🚌', 'vehicule roues route passagers grand', 'jaune rouge bleu blanc orange vert rose marron gris noir violet'],
   ['bateau', 'un', 'm', '⛵', 'vehicule flotte passagers', 'nage blanc bleu grand transporte jaune rouge orange vert rose marron gris noir violet'],
-  ['hélicoptère', 'un', 'm', '🚁', 'vehicule vole passagers', 'rouge blanc jaune bleu gris grand ailes orange vert rose marron noir violet'],
+  ['hélicoptère', 'un', 'm', '🚁', 'vehicule vole passagers', 'rouge blanc jaune bleu gris grand ailes roues orange vert rose marron noir violet'],
   ['moto', 'une', 'f', '🏍️', 'vehicule roues route', 'rouge noir bleu passagers jaune orange vert rose marron gris blanc violet'],
   ['casquette', 'une', 'f', '🧢', 'vetement tete', 'bleu rouge noir blanc main jaune orange vert rose marron gris violet'],
   ['t-shirt', 'un', 'm', '👕', 'vetement manches', 'blanc bleu rouge jaune vert main orange rose marron gris noir violet'],
@@ -293,8 +293,9 @@ export const confusable = (a, b) => CONFUSE.has([a, b].sort().join('|'));
 export const indefinite = (t) => (t.det.endsWith("'") ? `${t.det}${t.word}` : `${t.det} ${t.word}`);
 /** « le chat » / « la pomme » / « l'ail ». */
 export function definite(t) {
-  const aspirated = ['hibou'];
-  if (/^[aeiouyéèêœ]/i.test(t.word) && !aspirated.includes(t.word)) return `l'${t.word}`;
+  // h muet (l'hélicoptère) ou voyelle : élision ; h aspiré (le hibou) : liste explicite.
+  const aspirated = ['hibou', 'hérisson', 'homard', 'hamster', 'hippopotame'];
+  if (/^([aeiouyéèêœ]|h)/i.test(t.word) && !aspirated.includes(t.word)) return `l'${t.word}`;
   return (t.gender === 'f' ? 'la ' : 'le ') + t.word;
 }
 
@@ -334,18 +335,66 @@ export const NEGATIONS = Object.freeze({
   pattes4: 'Je ne marche pas sur quatre pattes.',
   roues: "Je n'ai pas de roues.",
   ailes: "Je n'ai pas d'ailes.",
-  pepins: "Je n'ai pas de pépins.",
-  epluche: "On ne m'épluche pas.",
-  sucre: 'Je ne suis pas {sucré|sucrée}.',
   habiter: 'On ne peut pas habiter chez moi.',
 });
 export const negationText = (tag, thing) => render(NEGATIONS[tag], thing.gender);
 
 // Une contrainte d'énoncé : { tag } (« Je suis… ») ou { tag, neg: true } (« Je ne suis pas… »).
-/** Vérifiée avec certitude par la chose (les indices `maybe` ne comptent pas). */
-export const holds = (t, c) => (c.neg ? !t.fits.has(c.tag) : t.is.has(c.tag));
+// « N'est JAMAIS X » (#97/#106) : « X n'est pas dans fits » ne suffit pas, la banque n'est pas exhaustive
+// (un ours peut être blanc ou gris, un oiseau jaune). On n'affirme « n'est pas X » que si X est dans `never` :
+//  - une catégorie (animal, fruit, véhicule…) absente de `fits` ;
+//  - un trait « ferme » (vole, ailes, roues…) absent de `fits` ;
+//  - la taille opposée (ce qui est très grand ne tient pas dans la main, et réciproquement) ;
+//  - une couleur listée explicitement pour cette chose. Les choses multicolores (bonbon, cuillère, chapeau,
+//    poisson, oiseau, serpent, couronne, chien…) n'y figurent pas : jamais de négation ni d'intrus de couleur.
+const FIRM = new Set(['vole', 'nage', 'pattes4', 'ailes', 'roues', 'plumes', 'bec', 'cornes', 'ecailles', 'aliment', 'habiter']);
+const NEVER_COLOURS = {
+  banane: 'rouge bleu rose violet orange gris noir', citron: 'rouge bleu rose violet noir gris marron',
+  carotte: 'bleu rose violet noir gris', pomme: 'bleu rose violet noir gris orange marron',
+  poire: 'bleu rose violet noir gris orange', fraise: 'bleu violet noir gris marron orange',
+  cerise: 'bleu rose violet gris orange vert marron', orange: 'bleu rose violet noir gris blanc rouge',
+  pêche: 'bleu violet noir gris', kiwi: 'bleu rose violet noir gris rouge orange',
+  pastèque: 'bleu violet gris orange marron noir', raisin: 'bleu rose gris orange marron',
+  brocoli: 'bleu rose violet noir gris orange rouge jaune blanc marron',
+  concombre: 'bleu rose violet noir gris orange rouge jaune blanc marron',
+  pomme_de_terre: 'bleu rose violet gris noir orange', poivron: 'bleu rose violet noir gris marron blanc',
+  ananas: 'bleu rose violet noir gris blanc rouge',
+  éléphant: 'bleu rose violet rouge orange jaune vert', girafe: 'bleu rose violet rouge gris vert noir',
+  crocodile: 'bleu rose violet rouge orange jaune blanc', abeille: 'bleu rose violet rouge vert blanc gris',
+  coccinelle: 'bleu rose violet vert gris', fourmi: 'bleu rose violet vert', panda: 'bleu rose violet rouge orange jaune vert marron gris',
+  baleine: 'rouge rose violet orange jaune vert marron', dauphin: 'rouge rose violet orange jaune vert marron noir',
+  requin: 'rose violet rouge orange jaune vert marron', loup: 'bleu rose violet rouge orange jaune vert',
+  lion: 'bleu rose violet rouge vert noir blanc gris', cochon: 'bleu violet rouge orange jaune vert gris',
+  mouton: 'bleu rose violet rouge orange vert jaune', lapin: 'bleu rose violet rouge orange vert jaune',
+  chèvre: 'bleu rose violet rouge orange vert jaune', hibou: 'bleu rose violet rouge orange jaune vert',
+  ours: 'bleu rose violet rouge orange jaune vert', chat: 'bleu rose violet rouge vert',
+  cheval: 'bleu rose violet rouge vert orange', vache: 'bleu rose violet rouge orange jaune vert',
+  singe: 'bleu rose violet rouge vert orange jaune', souris: 'bleu rose violet rouge vert orange jaune',
+  kangourou: 'bleu rose violet rouge vert', chameau: 'bleu rose violet rouge vert orange',
+  zèbre: 'bleu rose violet rouge vert orange jaune', araignée: 'bleu rose violet',
+  feu: 'rose violet', chocolat: 'bleu rose violet rouge orange vert gris jaune',
+  pain: 'bleu rose violet rouge vert gris noir', croissant: 'bleu rose violet rouge vert gris noir',
+  œuf: 'bleu rose violet rouge vert gris noir orange', sapin: 'bleu rose violet rouge orange gris',
+};
+const NEVER = new Map(Object.entries(NEVER_COLOURS).map(([w, s]) => [w.replace(/_/g, ' '), new Set(s.split(' '))]));
+/** Sa couleur est connue sans doute possible (pas un bonbon, un poisson ou un oiseau multicolores). */
+export const colourClosed = (t) => NEVER.has(t.word);
+/** La chose n'est-elle JAMAIS (sans aucun doute possible) cette propriété ? */
+export function never(t, tag) {
+  const kind = TAGS[tag].kind;
+  if (kind === 'cat' || FIRM.has(tag)) return !t.fits.has(tag);
+  if (tag === 'main') return t.is.has('grand');
+  if (tag === 'grand') return t.is.has('main');
+  if (kind === 'colour') return Boolean(NEVER.get(t.word) && NEVER.get(t.word).has(tag));
+  return false;
+}
+/** Propriétés dont on peut dire « X n'est pas … » (indice dit à l'envers ou phrase de correction). */
+export const canDeny = (tag) => TAGS[tag].kind === 'colour' || TAGS[tag].kind === 'cat' || FIRM.has(tag) || tag === 'main' || tag === 'grand';
+
+/** Vérifiée avec certitude par la chose (un `maybe` ne compte pas ; « pas X » exige que X soit `never`). */
+export const holds = (t, c) => (c.neg ? never(t, c.tag) : t.is.has(c.tag));
 /** Contredite avec certitude par la chose (un `maybe` laisse un doute : ni vérifiée, ni contredite). */
-export const fails = (t, c) => (c.neg ? t.is.has(c.tag) : !t.fits.has(c.tag));
+export const fails = (t, c) => (c.neg ? t.is.has(c.tag) : never(t, c.tag));
 /** La chose pourrait-elle, avec un peu de bonne volonté, vérifier la contrainte ? (sert à mesurer l'ambiguïté) */
 export const couldHold = (t, c) => !fails(t, c);
 

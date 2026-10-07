@@ -65,6 +65,24 @@ export function checkGenerator(game, { draws = 500, minDistinct = 30, checks } =
 export const EMOJIS_ECARTES = ['🌬️', '⚖️', '💐', '🐔', '🧄', '🧈', '🍈'];
 const bare = (e) => String(e).replace(/️/g, '');
 
+/**
+ * Affirmations fausses dans le monde réel, relevées par le juge pédagogie sur les devinettes (#97/#106) :
+ * [chose, propriété] = on ne doit jamais dire « la chose n'est pas <propriété> » ni l'utiliser comme intrus
+ * de cette propriété. Les choses multicolores le sont pour TOUTES les couleurs.
+ */
+const COULEURS = ['jaune', 'rouge', 'orange', 'vert', 'rose', 'marron', 'gris', 'blanc', 'noir', 'bleu', 'violet'];
+export const AFFIRMATIONS_FAUSSES = [
+  ['ours', 'blanc'], ['ours', 'gris'], ['chocolat', 'blanc'], ['chocolat', 'noir'],
+  ...['bonbon', 'cuillère', 'chapeau', 'poisson', 'oiseau', 'serpent', 'couronne', 'ballon', 'chaussette', 'gant'].flatMap(
+    (w) => COULEURS.map((c) => [w, c])),
+  ['cerise', 'noir'], ['requin', 'blanc'], ['raisin', 'blanc'], ['raisin', 'noir'], ['mouton', 'noir'], ['lapin', 'noir'],
+  ['chèvre', 'noir'], ['cochon', 'blanc'], ['cochon', 'noir'], ['cochon', 'marron'], ['hibou', 'blanc'], ['feu', 'vert'],
+  ['avion', 'roues'], ['coccinelle', 'rond'], ['panda', 'rond'], ['abeille', 'rond'], ['kiwi', 'poils'], ['pêche', 'poils'],
+  ['écureuil', 'bonds'], ['chien', 'bonds'], ['raisin', 'acide'], ['serpent', 'foret'],
+  ['cheval', 'passagers'], ['chameau', 'passagers'], ['éléphant', 'passagers'], ['œuf', 'epluche'],
+  ['moto', 'transporte'], ['vélo', 'transporte'],
+];
+
 /** Tous les émojis affichés par une question (choix, éléments à ranger, illustration). */
 function emojisOf(q) {
   const d = q.display || {};

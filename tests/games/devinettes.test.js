@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import game from '../../js/games/devinettes.js';
 import {
   THINGS, TAGS, NEGATIONS, findThing, confusable, render, clueText, negationText, whyNot, definite, indefinite,
-  holds, fails, couldHold,
+  holds, fails, couldHold, never,
 } from '../../js/data/devinettes.js';
 import {
-  checkGameShape, checkGenerator, checkEmojis, checkCluesNeeded, measureClues, EMOJIS_ECARTES,
+  checkGameShape, checkGenerator, checkEmojis, checkCluesNeeded, measureClues, EMOJIS_ECARTES, AFFIRMATIONS_FAUSSES,
 } from '../helpers/game-checks.js';
 
 let cached;
-const draws = () => (cached ||= checkGenerator(game, { draws: 2000, minDistinct: 30 }));
+const draws = () => (cached ||= checkGenerator(game, { draws: 3000, minDistinct: 30 }));
 const CATEGORIES = ['animal', 'fruit', 'legume', 'vetement', 'vehicule'];
 
 // Les indices d'une question tirée, sous forme de contraintes { tag, neg? }.
@@ -170,7 +170,7 @@ for (const level of [1, 2, 3]) {
     const m = checkCluesNeeded(rng[level], accessors, {
       maxSingle: 0, maxEachSuffices: 0, maxLureNoShare: 0, maxDispensable: 0, minLureMissesOne: 1,
     });
-    assert.equal(m.total, 2000);
+    assert.equal(m.total, 3000);
   });
 }
 
@@ -178,7 +178,7 @@ test('le mesureur détecte une devinette dont un indice est décoratif', () => {
   const chien = findThing('chien');
   const q = {
     answer: 'chien',
-    riddle: { clues: ['animal', 'aboie'], wrong: ['poisson', 'château'], not: null },
+    riddle: { clues: ['animal', 'pattes4'], wrong: ['poisson', 'château'], not: null },
     display: { choices: ['chien', 'poisson', 'château'].map((value) => ({ value })) },
   };
   const m = measureClues([q], accessors);
@@ -241,6 +241,55 @@ test('voix, énoncé et explication bienveillante', () => {
 test('mixité : aucun accord genré adressé ou prêté à l\'enfant', () => {
   const text = all(draws()).map((q) => `${q.prompt} ${q.explain}`).join(' ');
   assert.ok(!/\btu es (prêt|content|fier)|je suis (content|fier|prêt|mêlé)|\bbravo, (il|elle)\b/i.test(text));
+});
+
+test('h muet et h aspiré : « l\'hélicoptère », « le hibou » (juge, B1)', () => {
+  assert.equal(definite(findThing('hélicoptère')), "l'hélicoptère");
+  assert.equal(definite(findThing('hibou')), 'le hibou');
+  for (const q of all(draws())) {
+    assert.ok(!/\b[Ll]e h(?!ibou)[éeiouèê]/.test(q.explain), q.explain);
+    assert.ok(!/\b[Ll]a h[aeiouéè]/.test(q.explain), q.explain);
+  }
+});
+
+test('on ne nie que ce qui est certain : jamais une affirmation fausse du monde réel (juge, B2 B3)', () => {
+  const bad = new Set(AFFIRMATIONS_FAUSSES.map(([w, t]) => `${w}|${t}`));
+  let phrases = 0;
+  for (const q of all(draws())) {
+    const answer = findThing(q.answer);
+    if (q.riddle.not) {
+      assert.ok(!bad.has(`${answer.word}|${q.riddle.not}`), `négation fausse : ${q.key}`);
+      assert.ok(never(answer, q.riddle.not), `négation non certaine : ${q.key}`);
+    }
+    for (const w of q.riddle.wrong) {
+      const t = findThing(w);
+      for (const c of constraintsOf(q)) {
+        if (!fails(t, c)) continue;
+        assert.ok(!bad.has(`${w}|${c.tag}`), `intrus défendable « ${w} » sur ${c.tag} : ${q.key}`);
+        if (!c.neg) assert.ok(never(t, c.tag), `contradiction non certaine : ${q.key}`);
+        phrases++;
+      }
+    }
+    for (const [w, tag] of AFFIRMATIONS_FAUSSES) {
+      if (TAGS[tag]) assert.ok(!q.explain.includes(whyNot(tag, findThing(w))), q.explain);
+    }
+  }
+  assert.ok(phrases > 5000);
+});
+
+test('banque : une propriété « jamais » n\'est jamais possible', () => {
+  for (const t of THINGS) {
+    for (const tag of Object.keys(TAGS)) {
+      if (never(t, tag)) assert.ok(!t.fits.has(tag), `${t.word} : ${tag} à la fois jamais et possible`);
+    }
+  }
+});
+
+test('participes accordés dans les phrases de correction (juge, C3)', () => {
+  assert.equal(whyNot('pond', findThing('banane')), "La banane n'est pas pondue par une poule.");
+  assert.equal(whyNot('pond', findThing('chocolat')), "Le chocolat n'est pas pondu par une poule.");
+  assert.equal(whyNot('roi', findThing('couronne')), "La couronne n'est pas portée par un roi.");
+  assert.equal(whyNot('rois', findThing('maison')), "La maison n'a pas été habitée par des rois.");
 });
 
 test('questions distinctes : au moins 30 par niveau avec la banque seule', () => {
