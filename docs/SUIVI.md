@@ -29,7 +29,7 @@ https://github.com/users/scarlaty/projects/1.
 | E3 lecture | #22 – #25 | **terminés** (#26 compris) ; #86 libre |
 | E3 compréhension | #27 – #29 | #27 **terminé** ; #28, #29 libres |
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
-| E5 grammaire et conjugaison | #35 – #41 | à faire (libre) |
+| E5 grammaire et conjugaison | #35 – #41 | #35 **terminé** (juge : à corriger, raccourcis du niveau 3) ; #36 – #41 libres |
 | E6 orthographe | #42 – #46 | à faire (libre) |
 | E7 nombres | #47, #50 | **terminés** ; #48, #49, #51 libres |
 | E8 calcul | #52, #54 | **terminés** ; #53, #55 – #57 libres |
@@ -49,7 +49,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #35 La phrase | `feat/35-la-phrase` |
 | Claude (session scarlaty) | #80 Les règles de vie | `feat/80-regles-de-vie` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
@@ -95,7 +94,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v17`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v24`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
