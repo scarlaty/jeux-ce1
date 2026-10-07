@@ -53,7 +53,7 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 #105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`.
 
-Ensuite, sur demande de l'utilisateur (« traite les bugs ») : #102 / #103 (contraste, carte).
+| Claude (session scarlaty) | #102 + #103 contraste et carte | `feat/102-103-carte-contraste` |
 **Règle du 07/10 : aucun nouveau ticket (jeu ou amélioration) sans l'accord de l'utilisateur.**
 Règle « Mixité » (CLAUDE.md) : textes épicènes, personnages variés — le jeu est pour filles et garçons.
 
