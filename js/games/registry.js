@@ -125,6 +125,13 @@ export const GAMES = [
     subject: 'monde',
     load: () => import('./besoins-vivant.js'),
   },
+  {
+    id: 'regles-de-vie',
+    title: 'Les règles de vie',
+    island: 'ailleurs',
+    subject: 'emc',
+    load: () => import('./regles-de-vie.js'),
+  },
 ];
 
 export function getIsland(id) {
