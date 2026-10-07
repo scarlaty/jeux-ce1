@@ -1,0 +1,3 @@
+# Réglages locaux de l'outillage : propres à une machine, jamais partagés.
+# (Les permissions accordées à un agent ne doivent pas suivre le dépôt.)
+.claude/
