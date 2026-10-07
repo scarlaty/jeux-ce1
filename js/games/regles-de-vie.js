@@ -7,7 +7,7 @@
 // La clé d'une question ne dépend pas des mauvaises réponses tirées : un même item ne revient pas
 // deux fois dans une partie, même avec d'autres choix.
 import {
-  SKILLS, LEVEL1, LEVEL2, EMOTIONS, STORIES, FACES, GESTURES, RULES, PREFERENCES, RIGHTS,
+  SKILLS, LEVEL1, LEVEL2, EMOTIONS, FACE_EMOJI, STORIES, FACES, GESTURES, SENTENCES, RIGHTS,
 } from '../data/regles-de-vie.js';
 
 const textChoices = (items) => items.map((text) => ({ value: text, text }));
@@ -28,19 +28,24 @@ function fromItem(rng, item) {
 }
 
 const label = (emotion, fem) => (fem ? emotion.f : emotion.m);
-const emotionChoice = (emotion, fem) => ({ value: emotion.id, emoji: emotion.emoji, text: label(emotion, fem) });
+
+/** Deux mauvaises émotions, jamais proches de la bonne (un enfant pourrait hésiter). */
+function otherEmotions(rng, right, pool) {
+  const ok = pool.filter((e) => e.id !== right.id && !right.near.includes(e.id));
+  return rng.sample(ok, 2);
+}
 
 function story(rng) {
   const s = rng.pick(STORIES);
   const right = EMOTIONS.find((e) => e.id === s.feel);
-  const wrong = rng.sample(EMOTIONS.filter((e) => e.id !== s.feel), 2);
+  const wrong = otherEmotions(rng, right, EMOTIONS);
   const prompt = `${s.story} Comment ${s.who} se sent-${s.fem ? 'elle' : 'il'} ?`;
   return {
     key: `regles-de-vie:histoire:${s.id}`,
     type: 'choice',
     prompt,
     speak: prompt,
-    display: { choices: rng.shuffle([right, ...wrong].map((e) => emotionChoice(e, s.fem))) },
+    display: { choices: rng.shuffle([right, ...wrong].map((e) => ({ value: e.id, text: label(e, s.fem) }))) },
     answer: s.feel,
     explain: s.explain,
     skill: SKILLS.emotion,
@@ -50,7 +55,7 @@ function story(rng) {
 function face(rng) {
   const f = rng.pick(FACES);
   const right = EMOTIONS.find((e) => e.id === f.feel);
-  const wrong = rng.sample(EMOTIONS.filter((e) => e.id !== f.feel), 2);
+  const wrong = otherEmotions(rng, right, EMOTIONS.filter((e) => FACE_EMOJI[e.id]));
   const prompt = `${f.who} a ce visage. Comment se sent-${f.fem ? 'elle' : 'il'} ?`;
   return {
     key: `regles-de-vie:visage:${f.id}`,
@@ -58,35 +63,35 @@ function face(rng) {
     prompt,
     speak: prompt,
     display: {
-      show: { emoji: right.emoji },
+      show: { emoji: FACE_EMOJI[f.feel] },
       choices: rng.shuffle([right, ...wrong].map((e) => ({ value: e.id, text: label(e, f.fem) }))),
     },
     answer: f.feel,
-    explain: `Ce visage montre : ${label(right, f.fem).toLowerCase()}. On le voit aux yeux et à la bouche.`,
+    explain: f.explain,
     skill: SKILLS.emotion,
   };
 }
 
-const gesture = (rng) => fromItem(rng, { ...rng.pick(GESTURES), skill: SKILLS.aider });
-const rights = (rng) => fromItem(rng, { ...rng.pick(RIGHTS), skill: SKILLS.droit });
+const gesture = (rng) => fromItem(rng, rng.pick(GESTURES));
+const rights = (rng) => fromItem(rng, rng.pick(RIGHTS));
 
 /** Règle ou préférence : une règle vaut pour tout le monde, une préférence est ce qu'on aime. */
 function ruleOrTaste(rng) {
   const wantRule = rng.chance(0.5);
-  const good = rng.pick(wantRule ? RULES : PREFERENCES);
-  const bad = rng.sample(wantRule ? PREFERENCES : RULES, 2);
+  const good = rng.pick(SENTENCES.filter((x) => x.kind === (wantRule ? 'regle' : 'gout')));
+  const bad = rng.sample(SENTENCES.filter((x) => x.kind !== good.kind), 2);
   return {
-    key: `regles-de-vie:${wantRule ? 'regle' : 'gout'}:${good}`,
+    key: `regles-de-vie:${wantRule ? 'regle' : 'gout'}:${good.id}`,
     type: 'choice',
     prompt: wantRule
       ? 'Quelle phrase est une règle ? Une règle est la même pour tout le monde.'
-      : 'Quelle phrase dit ce que j\'aime ? Chacun aime des choses différentes.',
-    speak: wantRule ? 'Quelle phrase est une règle ?' : 'Quelle phrase dit ce que j\'aime ?',
-    display: { choices: rng.shuffle(textChoices([good, ...bad])) },
-    answer: good,
+      : 'Quelle phrase dit ce qu\'une personne aime ? Chacun aime des choses différentes.',
+    speak: wantRule ? 'Quelle phrase est une règle ?' : 'Quelle phrase dit ce qu\'une personne aime ?',
+    display: { choices: rng.shuffle(textChoices([good.text, ...bad.map((x) => x.text)])) },
+    answer: good.text,
     explain: wantRule
-      ? 'Une règle est la même pour tout le monde et aide à bien vivre ensemble. Ce qu\'on aime, c\'est pour chacun.'
-      : 'Aimer une couleur ou un jeu, c\'est un goût : chacun a le sien. Une règle, elle, est pour tout le monde.',
+      ? "Une règle est la même pour tout le monde et aide à bien vivre ensemble. Ce qu'on aime, c'est pour chacun."
+      : "Aimer une couleur ou un jeu, c'est un goût : chacun a le sien. Une règle, elle, est pour tout le monde.",
     skill: SKILLS.regle,
   };
 }

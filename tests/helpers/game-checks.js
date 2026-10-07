@@ -57,3 +57,5 @@ export function checkGenerator(game, { draws = 500, minDistinct = 30, checks } =
   }
   return byLevel;
 }
+
+export { checkNoLengthShortcut, checkNoPromptEcho } from './shortcut-checks.js';
