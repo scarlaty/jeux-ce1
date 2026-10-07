@@ -7,8 +7,23 @@
 // Un intrus n'est donc accepté que s'il contredit au moins un indice sans aucune hésitation possible.
 // Pour ajouter une chose : une ligne dans RAW. Pour ajouter un indice : une ligne dans TAG_ROWS.
 // Genre : `{vert|verte}` = forme au masculin | au féminin (voir `render`).
+//
+// EXCLUSIF PAR DÉFAUT (#108). Un indice nomme une propriété PRÉCISE, et la banque la liste partout où
+// elle pourrait être vraie (dans `is` ou dans `maybe`) : une chose qui ne la porte pas ne la porte donc
+// JAMAIS, et peut servir d'intrus (« le chien ne miaule pas »). C'est ce qui rend utilisables les indices
+// de signature — sans quoi 71 indices sur 124 ne sortaient jamais, faute d'intrus qui les vérifie.
+// Ajouter un indice oblige donc à relire toute la banque. Les indices trop larges pour cela (sentir bon,
+// être rond, se trouver à la ferme, flotter, être minuscule…) portent un 5ᵉ champ `'ouvert'` : on ne les
+// nie jamais, et ils ne peuvent donc pas servir d'indice.
+//
+// ET LUI DONNER UN PORTEUR QUI NE PARTAGE PAS SES AUTRES INDICES. Un indice n'est tirable que si une
+// autre chose POURRAIT le vérifier (`maybe` suffit) tout en contredisant à coup sûr un autre indice de la
+// même réponse — sinon aucun intrus ne peut l'accompagner et l'indice est mort-né. C'est pour cela que
+// `lait` (vache + chèvre) et `noyau` (pêche + cerise) ne sortent jamais malgré leurs deux porteurs : ceux-ci
+// partagent tous leurs autres indices. `tests/games/devinettes.test.js` liste les indices morts connus
+// (`INDICES_MORTS`) et échoue dès qu'un indice vivant meurt, ou qu'un mort ressuscite sans être retiré.
 
-/** [id, genre d'indice, phrase de la devinette, phrase qui dit pourquoi une autre chose ne convient pas] */
+/** [id, genre d'indice, phrase de la devinette, phrase qui dit pourquoi une autre ne convient pas, 'ouvert' éventuel] */
 const TAG_ROWS = [
   // Ce qu'on est
   ['animal', 'cat', 'Je suis un animal.', "n'est pas un animal."],
@@ -43,25 +58,25 @@ const TAG_ROWS = [
   ['cornes', 'trait', "J'ai des cornes.", "n'a pas de cornes."],
   ['oreilles', 'trait', "J'ai de très longues oreilles.", "n'a pas de très longues oreilles."],
   ['ecailles', 'trait', "J'ai des écailles.", "n'a pas d'écailles."],
-  ['nuit', 'trait', 'Je suis {réveillé|réveillée} la nuit.', "n'est pas {réveillé|réveillée} la nuit."],
+  ['nuit', 'trait', 'Je suis {réveillé|réveillée} la nuit.', "n'est pas {réveillé|réveillée} la nuit.", 'ouvert'],  // souris, moustique, chien : beaucoup veillent la nuit
   ['rampe', 'trait', 'Je rampe sur le sol.', 'ne rampe pas sur le sol.'],
   ['siffle', 'trait', 'Je siffle.', 'ne siffle pas.'],
   ['galope', 'trait', 'Je peux galoper.', 'ne galope pas.'],
   ['grogne', 'trait', 'Je grogne.', 'ne grogne pas.'],
   ['bele', 'trait', 'Je fais « bêê ».', 'ne fait pas « bêê ».'],
   ['pique', 'trait', 'Je peux piquer.', 'ne pique pas.'],
-  ['main', 'trait', 'Je tiens dans la main.', 'ne tient pas dans la main.'],
-  ['grand', 'trait', 'Je suis très {grand|grande}.', "n'est pas très {grand|grande}."],
-  ['ferme', 'trait', 'On me trouve à la ferme.', 'ne se trouve pas à la ferme.'],
+  ['main', 'trait', 'Je tiens dans la main.', 'ne tient pas dans la main.', 'ouvert'],  // la taille se nie par son contraire (voir never)
+  ['grand', 'trait', 'Je suis très {grand|grande}.', "n'est pas très {grand|grande}.", 'ouvert'],  // la taille se nie par son contraire (voir never)
+  ['ferme', 'trait', 'On me trouve à la ferme.', 'ne se trouve pas à la ferme.', 'ouvert'],  // fruits, légumes et bêtes de la ferme : trop large
   ['poils', 'trait', "J'ai des poils.", "n'a pas de poils."],
-  ['rond', 'trait', 'Je suis {rond|ronde}.', "n'est pas {rond|ronde}."],
+  ['rond', 'trait', 'Je suis {rond|ronde}.', "n'est pas {rond|ronde}.", 'ouvert'],  // une coccinelle, un panda sont ronds sans être listés
   ['passagers', 'trait', 'Je transporte des gens.', 'ne transporte pas de gens.'],
-  ['flotte', 'trait', 'Je flotte sur l\'eau.', 'ne flotte pas sur l\'eau.'],
+  ['flotte', 'trait', 'Je flotte sur l\'eau.', 'ne flotte pas sur l\'eau.', 'ouvert'],  // presque tout flotte (pomme, bois, ballon)
   ['cou', 'sign', "J'ai un très long cou.", "n'a pas de très long cou."],
   ['carapace', 'sign', "J'ai une carapace.", "n'a pas de carapace."],
   ['rayures', 'sign', "J'ai des rayures.", "n'a pas de rayures."],
   ['pedales', 'sign', "J'ai des pédales.", "n'a pas de pédales."],
-  ['minuscule', 'trait', 'Je suis minuscule.', "n'est pas minuscule."],
+  ['minuscule', 'trait', 'Je suis minuscule.', "n'est pas minuscule.", 'ouvert'],  // graduel : une cerise est petite sans être minuscule
   ['epluche', 'trait', "On m'épluche avant de me manger.", "ne s'épluche pas."],
   ['pepins', 'trait', "J'ai des pépins.", "n'a pas de pépins."],
   ['sucre', 'trait', 'Je suis {sucré|sucrée}.', "n'est pas {sucré|sucrée}."],
@@ -72,7 +87,7 @@ const TAG_ROWS = [
   ['ciel', 'trait', 'Je brille dans le ciel.', 'ne brille pas dans le ciel.'],
   ['brule', 'trait', 'Je brûle.', 'ne brûle pas.'],
   ['habiter', 'trait', 'On peut habiter chez moi.', "n'est pas un endroit où habiter."],
-  ['toit', 'trait', "J'ai un toit.", "n'a pas de toit."],
+  ['toit', 'trait', "J'ai un toit.", "n'a pas de toit.", 'ouvert'],  // une voiture, un bus ont un toit
   // Indices qui désignent presque une seule chose
   ['singes', 'sign', "Les singes m'adorent.", 'ne plaît pas particulièrement aux singes.'],
   ['bananes', 'sign', "J'adore les bananes.", "n'adore pas les bananes."],
@@ -106,13 +121,13 @@ const TAG_ROWS = [
   ['grains', 'sign', "J'ai des petits grains sur la peau.", "n'a pas de petits grains sur la peau."],
   ['noyau', 'sign', "J'ai un gros noyau.", "n'a pas de gros noyau."],
   ['grappe', 'sign', 'Je pousse en grappe.', 'ne pousse pas en grappe.'],
-  ['foret', 'sign', 'On me trouve dans la forêt.', 'ne se trouve pas dans la forêt.'],
+  ['foret', 'sign', 'On me trouve dans la forêt.', 'ne se trouve pas dans la forêt.', 'ouvert'],  // insectes, arbres, champignons : trop de choses y vivent
   ['tete', 'sign', 'On me met sur la tête.', 'ne se met pas sur la tête.'],
   ['pieds', 'sign', 'On me met aux pieds.', 'ne se met pas aux pieds.'],
   ['mains', 'sign', 'On me met aux mains.', 'ne se met pas aux mains.'],
   ['jambes', 'sign', 'On me met sur les jambes.', 'ne se met pas sur les jambes.'],
   ['froid', 'sign', 'Je protège du froid.', 'ne protège pas du froid.'],
-  ['roi', 'sign', 'Un roi me porte.', "n'est pas {porté|portée} par un roi."],
+  ['roi', 'sign', 'Un roi ou une reine me porte.', "n'est pas {porté|portée} par un roi ou une reine."],
   ['boulangerie', 'sign', "On m'achète à la boulangerie.", "ne s'achète pas à la boulangerie."],
   ['coquille', 'sign', "J'ai une coquille.", "n'a pas de coquille."],
   ['pond', 'sign', 'Une poule me pond.', "n'est pas {pondu|pondue} par une poule."],
@@ -131,17 +146,17 @@ const TAG_ROWS = [
   ['chauffe', 'sign', 'Je chauffe la Terre.', 'ne chauffe pas la Terre.'],
   ['brille_nuit', 'sign', 'Je brille la nuit.', 'ne brille pas la nuit.'],
   ['cheminee', 'sign', "J'ai une cheminée.", "n'a pas de cheminée."],
-  ['rois', 'sign', 'Des rois ont habité chez moi.', "n'a pas été {habité|habitée} par des rois."],
+  ['rois', 'sign', 'Des rois et des reines ont habité chez moi.', "n'a pas été {habité|habitée} par des rois et des reines."],
   ['camping', 'sign', 'On dort dedans en camping.', 'ne sert pas à dormir en camping.'],
   ['noel', 'sign', 'On me décore à Noël.', 'ne se décore pas à Noël.'],
   ['petales', 'sign', "J'ai des pétales.", "n'a pas de pétales."],
-  ['parfum', 'sign', 'Je sens bon.', 'ne sent pas particulièrement bon.'],
+  ['parfum', 'sign', 'Je sens bon.', 'ne sent pas particulièrement bon.', 'ouvert'],  // le pain, la fraise, le chocolat sentent bon aussi
   ['baguettes', 'sign', 'On me frappe avec des baguettes.', 'ne se frappe pas avec des baguettes.'],
   ['boum', 'sign', 'Je fais « boum ».', 'ne fait pas « boum ».'],
 ];
 
-export const TAGS = Object.freeze(Object.fromEntries(TAG_ROWS.map(([id, kind, me, not]) =>
-  [id, Object.freeze({ id, kind, me, not })])));
+export const TAGS = Object.freeze(Object.fromEntries(TAG_ROWS.map(([id, kind, me, not, open]) =>
+  [id, Object.freeze({ id, kind, me, not, open: open === 'ouvert' })])));
 
 /** Ordre de lecture d'une devinette : le plus général d'abord, le plus précis à la fin. */
 export const KIND_RANK = { cat: 0, colour: 1, trait: 2, sign: 3 };
@@ -151,46 +166,46 @@ export const KIND_RANK = { cat: 0, colour: 1, trait: 2, sign: 3 };
 // « de l'ail » sont masculins sans être « un ». Le genre sert aux accords (`render`), le déterminant à la phrase.
 const RAW = [
   // Animaux
-  ['chat', 'un', 'm', '🐱', 'animal pattes4 miaule poils', 'gris marron jaune orange noir blanc nuit ferme rayures bonds'],
-  ['chien', 'un', 'm', '🐶', 'animal pattes4 aboie poils', 'marron jaune blanc noir gris hurle grand ferme'],
-  ['cheval', 'un', 'm', '🐴', 'animal pattes4 galope grand ferme poils', 'marron noir blanc gris criniere carottes aliment bonds'],
-  ['vache', 'une', 'f', '🐮', 'animal pattes4 lait cornes grand ferme poils', 'blanc noir marron aliment carottes'],
+  ['chat', 'un', 'm', '🐱', 'animal pattes4 miaule poils', 'gris marron jaune orange noir blanc nuit ferme rayures bonds queue'],
+  ['chien', 'un', 'm', '🐶', 'animal pattes4 aboie poils', 'marron jaune blanc noir gris hurle grand ferme bonds grogne oreilles'],
+  ['cheval', 'un', 'm', '🐴', 'animal pattes4 galope grand ferme poils', 'marron noir blanc gris criniere carottes aliment bonds passagers transporte champs'],
+  ['vache', 'une', 'f', '🐮', 'animal pattes4 lait cornes grand ferme poils', 'blanc noir marron aliment carottes champs'],
   ['cochon', 'un', 'm', '🐷', 'animal pattes4 rose grogne ferme', 'aliment grand poils carottes'],
   ['mouton', 'un', 'm', '🐑', 'animal pattes4 laine bele ferme', 'blanc gris cornes aliment lait grand poils carottes'],
-  ['chèvre', 'une', 'f', '🐐', 'animal pattes4 cornes lait bele ferme poils', 'blanc gris marron aliment grand bonds carottes'],
+  ['chèvre', 'une', 'f', '🐐', 'animal pattes4 cornes lait bele ferme poils', 'blanc gris marron aliment grand bonds carottes laine'],
   ['lapin', 'un', 'm', '🐰', 'animal pattes4 oreilles carottes poils', 'blanc gris marron aliment bonds grand ferme'],
-  ['souris', 'une', 'f', '🐭', 'animal pattes4 fromage main poils', 'gris blanc marron noisette minuscule ferme'],
+  ['souris', 'une', 'f', '🐭', 'animal pattes4 fromage main poils', 'gris blanc marron noisette minuscule ferme bonds'],
   ['singe', 'un', 'm', '🐵', 'animal bananes marron poils', 'pattes4 noir gris grand bonds'],
-  ['lion', 'un', 'm', '🦁', 'animal pattes4 rugit criniere poils', 'jaune marron orange grand bonds'],
-  ['éléphant', 'un', 'm', '🐘', 'animal pattes4 trompe gris grand', 'oreilles poils carottes foret ferme'],
-  ['ours', 'un', 'm', '🐻', 'animal pattes4 marron miel_aime grand poils', 'rugit foret noir bananes'],
-  ['panda', 'un', 'm', '🐼', 'animal pattes4 bambou blanc noir poils', 'grand'],
-  ['loup', 'un', 'm', '🐺', 'animal pattes4 hurle gris poils', 'blanc noir marron nuit foret grand bonds'],
+  ['lion', 'un', 'm', '🦁', 'animal pattes4 rugit criniere poils', 'jaune marron orange grand bonds grogne'],
+  ['éléphant', 'un', 'm', '🐘', 'animal pattes4 trompe gris grand', 'oreilles poils carottes foret ferme passagers transporte'],
+  ['ours', 'un', 'm', '🐻', 'animal pattes4 marron miel_aime grand poils', 'rugit foret noir bananes grogne bonds'],
+  ['panda', 'un', 'm', '🐼', 'animal pattes4 bambou blanc noir poils', 'grand grogne'],
+  ['loup', 'un', 'm', '🐺', 'animal pattes4 hurle gris poils', 'blanc noir marron nuit foret grand bonds grogne queue'],
   ['grenouille', 'une', 'f', '🐸', 'animal vert coasse', 'nage pattes4 bonds main aliment foret'],
-  ['serpent', 'un', 'm', '🐍', 'animal rampe siffle', 'vert marron jaune noir ecailles grand'],
-  ['poisson', 'un', 'm', '🐟', 'animal nage ecailles bleu', 'gris jaune orange aliment aileron main flotte rayures'],
+  ['serpent', 'un', 'm', '🐍', 'animal rampe siffle', 'vert marron jaune noir ecailles grand desert foret'],
+  ['poisson', 'un', 'm', '🐟', 'animal nage ecailles bleu', 'gris jaune orange aliment aileron main flotte rayures bonds'],
   ['requin', 'un', 'm', '🦈', 'animal nage aileron gris grand', 'bleu ecailles flotte aliment'],
-  ['abeille', 'une', 'f', '🐝', 'animal insecte vole ailes pique miel_fait jaune noir main', 'minuscule ferme poils rayures foret'],
-  ['papillon', 'un', 'm', '🦋', 'animal insecte vole ailes metamorphose main', 'bleu orange rose rouge jaune blanc noir vert minuscule foret'],
-  ['fourmi', 'une', 'f', '🐜', 'animal insecte minuscule colonie main', 'noir rouge marron pique ferme foret'],
+  ['abeille', 'une', 'f', '🐝', 'animal insecte vole ailes pique miel_fait jaune noir main', 'minuscule ferme poils rayures foret miel_aime colonie'],
+  ['papillon', 'un', 'm', '🦋', 'animal insecte vole ailes metamorphose main', 'bleu orange rose rouge jaune blanc noir vert minuscule foret trompe'],
+  ['fourmi', 'une', 'f', '🐜', 'animal insecte minuscule colonie main', 'noir rouge marron pique ferme foret rampe'],
   ['araignée', 'une', 'f', '🕷️', 'animal huit toile noir main', 'insecte pique minuscule rampe poils ferme foret'],
   ['kangourou', 'un', 'm', '🦘', 'animal poche bonds poils', 'marron gris pattes4 grand aliment'],
-  ['chameau', 'un', 'm', '🐫', 'animal pattes4 bosse desert grand poils', 'marron jaune cou'],
-  ['écureuil', 'un', 'm', '🐿️', 'animal pattes4 noisette queue poils', 'marron orange foret main rayures rouge'],
-  ['oiseau', 'un', 'm', '🐦', 'animal vole ailes plumes bec', 'oiseau bleu noir marron main ferme cou blanc vert minuscule'],
+  ['chameau', 'un', 'm', '🐫', 'animal pattes4 bosse desert grand poils', 'marron jaune cou galope passagers transporte'],
+  ['écureuil', 'un', 'm', '🐿️', 'animal pattes4 noisette queue poils', 'marron orange foret main rayures rouge bonds'],
+  ['oiseau', 'un', 'm', '🐦', 'animal vole ailes plumes bec', 'aliment oiseau bleu noir marron main ferme cou blanc vert minuscule siffle'],
   ['hibou', 'un', 'm', '🦉', 'animal oiseau vole ailes plumes bec nuit', 'marron gris cou ferme'],
   ['chenille', 'une', 'f', '🐛', 'animal vert rampe devenir main', 'insecte minuscule poils ferme foret'],
   ['mouche', 'une', 'f', '🪰', 'animal insecte vole ailes main', 'noir gris minuscule ferme foret'],
-  ['moustique', 'un', 'm', '🦟', 'animal insecte vole ailes pique main', 'noir gris minuscule ferme foret'],
+  ['moustique', 'un', 'm', '🦟', 'animal insecte vole ailes pique main', 'noir gris minuscule ferme foret trompe'],
   // Fruits et légumes
-  ['banane', 'une', 'f', '🍌', 'fruit aliment jaune singes sucre epluche main', 'blanc vert'],
+  ['banane', 'une', 'f', '🍌', 'fruit aliment jaune singes sucre epluche main', 'blanc vert grappe boulangerie'],
   ['pomme', 'une', 'f', '🍎', 'fruit aliment rouge pepins main rond', 'sucre vert epluche jaune acide blanc'],
   ['poire', 'une', 'f', '🍐', 'fruit aliment vert pepins main', 'jaune sucre epluche'],
   ['fraise', 'une', 'f', '🍓', 'fruit aliment rouge grains main', 'sucre pepins rond minuscule'],
   ['citron', 'un', 'm', '🍋', 'fruit aliment jaune acide pepins main', 'epluche vert rond'],
   ['orange', 'une', 'f', '🍊', 'fruit aliment epluche pepins main rond', 'orange sucre acide jaune vert'],
-  ['pêche', 'une', 'f', '🍑', 'fruit aliment noyau main rond', 'rose orange jaune sucre epluche rouge'],
-  ['raisin', 'du', 'm', '🍇', 'fruit aliment grappe violet', 'sucre pepins vert main rond jaune rouge'],
+  ['pêche', 'une', 'f', '🍑', 'fruit aliment noyau main rond', 'rose orange jaune sucre epluche rouge poils'],
+  ['raisin', 'du', 'm', '🍇', 'fruit aliment grappe violet', 'sucre pepins vert main rond jaune rouge acide'],
   ['carotte', 'une', 'f', '🥕', 'legume aliment orange terre lapins main', 'epluche ferme sucre'],
   ['pomme de terre', 'une', 'f', '🥔', 'legume aliment marron terre epluche main', 'rond jaune'],
   ['concombre', 'un', 'm', '🥒', 'legume aliment vert', 'epluche pepins main fruit'],
@@ -198,58 +213,66 @@ const RAW = [
   // Aliments
   ['pain', 'un', 'm', '🍞', 'aliment boulangerie marron', 'jaune main rond blanc'],
   ['croissant', 'un', 'm', '🥐', 'aliment boulangerie lune main', 'marron jaune sucre orange rond'],
-  ['chocolat', 'un', 'm', '🍫', 'aliment marron sucre main', 'tartine papier'],
+  ['chocolat', 'du', 'm', '🍫', 'aliment marron sucre main', 'tartine papier boulangerie'],
+  // Le gâteau est le seul sucré de la boulangerie : sans lui, « boulangerie » ne sortait jamais (#108).
+  ['gâteau', 'un', 'm', '🍰', 'aliment boulangerie sucre main', 'marron blanc rose jaune rond'],
   ['œuf', 'un', 'm', '🥚', 'aliment blanc coquille pond main', 'marron rond jaune'],
-  ['bonbon', 'un', 'm', '🍬', 'aliment sucre papier main', 'rose bleu rouge rond'],
+  ['bonbon', 'un', 'm', '🍬', 'aliment sucre papier main', 'rose bleu rouge rond boulangerie'],
   // Vêtements
   ['chapeau', 'un', 'm', '🎩', 'vetement tete noir', 'froid marron main rond jaune rouge orange vert rose gris blanc bleu violet'],
-  ['chaussure', 'une', 'f', '👟', 'vetement pieds lacets', 'blanc bleu marron noir rouge main jaune orange vert rose gris violet'],
-  ['chaussette', 'une', 'f', '🧦', 'vetement pieds main', 'froid jambes blanc rouge bleu rayures jaune orange vert rose marron gris noir violet'],
-  ['gant', 'un', 'm', '🧤', 'vetement mains froid main', 'blanc rouge bleu noir marron jaune orange vert rose gris violet'],
-  ['manteau', 'un', 'm', '🧥', 'vetement froid manches', 'marron bleu rouge noir gris vert grand main jaune orange rose blanc violet'],
+  ['chaussure', 'une', 'f', '👟', 'vetement pieds lacets', 'blanc bleu marron noir rouge main jaune orange vert rose gris violet froid'],
+  ['chaussette', 'une', 'f', '🧦', 'vetement pieds main', 'froid jambes blanc rouge bleu rayures jaune orange vert rose marron gris noir violet laine'],
+  ['gant', 'un', 'm', '🧤', 'vetement mains froid main', 'blanc rouge bleu noir marron jaune orange vert rose gris violet laine'],
+  ['manteau', 'un', 'm', '🧥', 'vetement froid manches', 'marron bleu rouge noir gris vert grand main jaune orange rose blanc violet laine roi'],
   ['pantalon', 'un', 'm', '👖', 'vetement jambes bleu', 'froid noir gris marron grand main jaune rouge orange vert rose blanc violet'],
   ['couronne', 'une', 'f', '👑', 'tete roi jaune', 'vetement rond main'],
   // Véhicules
-  ['voiture', 'une', 'f', '🚗', 'vehicule roues route passagers', 'transporte bleu grand jaune rouge orange vert rose marron gris blanc noir violet'],
-  ['camion', 'un', 'm', '🚚', 'vehicule roues route transporte grand', 'orange blanc passagers jaune rouge vert rose marron gris noir bleu violet'],
-  ['tracteur', 'un', 'm', '🚜', 'vehicule roues champs grand ferme', 'route rouge vert transporte jaune orange passagers rose marron gris blanc noir bleu violet'],
-  ['train', 'un', 'm', '🚂', 'vehicule roues rails grand passagers', 'transporte noir gris rouge bleu jaune orange vert rose marron blanc violet'],
+  ['voiture', 'une', 'f', '🚗', 'vehicule roues route passagers', 'transporte bleu grand jaune rouge orange vert rose marron gris blanc noir violet pedales'],
+  ['camion', 'un', 'm', '🚚', 'vehicule roues route transporte grand', 'orange blanc passagers jaune rouge vert rose marron gris noir bleu violet pedales'],
+  ['tracteur', 'un', 'm', '🚜', 'vehicule roues champs grand ferme', 'route rouge vert transporte jaune orange passagers rose marron gris blanc noir bleu violet pedales'],
+  ['train', 'un', 'm', '🚂', 'vehicule roues rails grand passagers', 'transporte noir gris rouge bleu jaune orange vert rose marron blanc violet siffle cheminee'],
   ['avion', 'un', 'm', '✈️', 'vehicule vole ailes grand passagers', 'transporte roues blanc bleu gris jaune rouge orange vert rose marron noir violet'],
   // Objets, maisons, nature
   ['cloche', 'une', 'f', '🔔', 'sonne jaune', 'orange main rond rouge vert rose marron gris blanc noir bleu violet'],
   ['réveil', 'un', 'm', '⏰', 'sonne heure matin main', 'rouge rond blanc noir jaune orange vert rose marron gris bleu violet'],
-  ['ballon', 'un', 'm', '⚽', 'foot blanc noir rond', 'rouge main grand flotte jaune orange vert rose marron gris bleu violet'],
+  ['ballon', 'un', 'm', '⚽', 'foot blanc noir rond', 'rouge main grand flotte jaune orange vert rose marron gris bleu violet boum'],
   ['cuillère', 'une', 'f', '🥄', 'soupe gris main', 'rond'],
   ['soleil', 'un', 'm', '☀️', 'ciel jaune chauffe grand rond', 'orange brule rouge blanc'],
   ['étoile', 'une', 'f', '⭐', 'ciel jaune brille_nuit', 'main'],
-  ['feu', 'un', 'm', '🔥', 'brule rouge orange', 'jaune chauffe grand'],
-  ['maison', 'une', 'f', '🏠', 'habiter toit cheminee grand', 'rouge marron blanc jaune orange vert rose gris noir bleu violet'],
-  ['château', 'un', 'm', '🏰', 'habiter toit rois grand', 'cheminee gris marron blanc jaune rouge orange vert rose noir bleu violet'],
-  ['tente', 'une', 'f', '⛺', 'habiter camping', 'toit blanc orange vert rouge grand jaune rose marron gris noir bleu violet'],
+  ['feu', 'un', 'm', '🔥', 'brule rouge orange', 'jaune chauffe grand brille_nuit'],
+  ['maison', 'une', 'f', '🏠', 'habiter toit cheminee grand', 'rouge marron blanc jaune orange vert rose gris noir bleu violet froid'],
+  ['château', 'un', 'm', '🏰', 'habiter toit rois grand', 'cheminee gris marron blanc jaune rouge orange vert rose noir bleu violet froid'],
+  ['tente', 'une', 'f', '⛺', 'habiter camping', 'toit blanc orange vert rouge grand jaune rose marron gris noir bleu violet froid'],
   ['sapin', 'un', 'm', '🎄', 'arbre vert noel foret grand', 'marron'],
   ['fleur', 'une', 'f', '🌼', 'petales jaune parfum', 'blanc main rouge orange vert rose marron gris noir bleu violet'],
-  ['girafe', 'une', 'f', '🦒', 'animal pattes4 cou grand', 'jaune marron poils cornes'],
+  ['girafe', 'une', 'f', '🦒', 'animal pattes4 cou grand', 'jaune marron poils cornes galope'],
   ['tortue', 'une', 'f', '🐢', 'animal pattes4 carapace', 'vert marron rampe nage rond ecailles'],
-  ['escargot', 'un', 'm', '🐌', 'animal rampe coquille main', 'marron jaune gris minuscule aliment'],
-  ['coccinelle', 'une', 'f', '🐞', 'animal insecte vole ailes rouge noir main minuscule', ''],
-  ['canard', 'un', 'm', '🦆', 'animal oiseau vole ailes plumes bec', 'nage flotte jaune blanc marron vert noir ferme aliment'],
-  ['dauphin', 'un', 'm', '🐬', 'animal nage gris', 'bleu aileron grand flotte'],
-  ['baleine', 'une', 'f', '🐳', 'animal nage grand bleu', 'gris flotte blanc'],
+  ['escargot', 'un', 'm', '🐌', 'animal rampe coquille main', 'marron jaune gris minuscule aliment cornes'],
+  ['coccinelle', 'une', 'f', '🐞', 'animal insecte vole ailes rouge noir main minuscule', 'carapace'],
+  ['canard', 'un', 'm', '🦆', 'animal oiseau vole ailes plumes bec', 'nage flotte jaune blanc marron vert noir ferme aliment cou'],
+  // Le seul oiseau qui ne vole pas : sans lui, « oiseau », « plumes » et « bec » ne sortaient jamais (#108).
+  // Choix assumé : en zoologie, 🐧 dessine un MANCHOT — le pingouin, lui, vole, et on lui fait pourtant
+  // dire « Je ne peux pas voler. » L'usage courant et les albums jeunesse appellent cette image
+  // « pingouin », et c'est le mot de l'enfant : la nommer « manchot » la dérouterait davantage.
+  // À reprendre le jour où le jeu voudra enseigner la distinction.
+  ['pingouin', 'un', 'm', '🐧', 'animal oiseau plumes bec noir blanc', 'nage flotte cou grand'],
+  ['dauphin', 'un', 'm', '🐬', 'animal nage gris', 'bleu aileron grand flotte bonds'],
+  ['baleine', 'une', 'f', '🐳', 'animal nage grand bleu', 'gris flotte blanc aileron'],
   ['crocodile', 'un', 'm', '🐊', 'animal vert ecailles pattes4', 'nage grand rampe flotte'],
-  ['zèbre', 'un', 'm', '🦓', 'animal pattes4 galope rayures poils', 'noir blanc grand'],
+  ['zèbre', 'un', 'm', '🦓', 'animal pattes4 galope rayures poils', 'noir blanc grand criniere'],
   ['cerise', 'une', 'f', '🍒', 'fruit aliment rouge noyau main rond', 'sucre'],
   ['ananas', 'un', 'm', '🍍', 'fruit aliment epluche', 'jaune marron vert sucre acide grand'],
-  ['kiwi', 'un', 'm', '🥝', 'fruit aliment vert epluche main', 'marron pepins sucre acide rond'],
+  ['kiwi', 'un', 'm', '🥝', 'fruit aliment vert epluche main', 'marron pepins sucre acide rond poils'],
   ['pastèque', 'une', 'f', '🍉', 'fruit aliment rouge', 'vert pepins sucre epluche grand rond'],
   ['brocoli', 'un', 'm', '🥦', 'legume aliment vert', 'epluche main'],
-  ['vélo', 'un', 'm', '🚲', 'vehicule roues pedales', 'route rouge bleu noir passagers jaune orange vert rose marron gris blanc violet'],
-  ['bus', 'un', 'm', '🚌', 'vehicule roues route passagers grand', 'jaune rouge bleu blanc orange vert rose marron gris noir violet'],
+  ['vélo', 'un', 'm', '🚲', 'vehicule roues pedales', 'route rouge bleu noir passagers jaune orange vert rose marron gris blanc violet transporte'],
+  ['bus', 'un', 'm', '🚌', 'vehicule roues route passagers grand', 'jaune rouge bleu blanc orange vert rose marron gris noir violet pedales transporte'],
   ['bateau', 'un', 'm', '⛵', 'vehicule flotte passagers', 'nage blanc bleu grand transporte jaune rouge orange vert rose marron gris noir violet'],
-  ['hélicoptère', 'un', 'm', '🚁', 'vehicule vole passagers', 'rouge blanc jaune bleu gris grand ailes roues orange vert rose marron noir violet'],
-  ['moto', 'une', 'f', '🏍️', 'vehicule roues route', 'rouge noir bleu passagers jaune orange vert rose marron gris blanc violet'],
+  ['hélicoptère', 'un', 'm', '🚁', 'vehicule vole passagers', 'rouge blanc jaune bleu gris grand ailes roues orange vert rose marron noir violet transporte'],
+  ['moto', 'une', 'f', '🏍️', 'vehicule roues route', 'rouge noir bleu passagers jaune orange vert rose marron gris blanc violet transporte pedales'],
   ['casquette', 'une', 'f', '🧢', 'vetement tete', 'bleu rouge noir blanc main jaune orange vert rose marron gris violet'],
-  ['t-shirt', 'un', 'm', '👕', 'vetement manches', 'blanc bleu rouge jaune vert main orange rose marron gris noir violet'],
-  ['écharpe', 'une', 'f', '🧣', 'vetement froid', 'rouge bleu blanc gris marron rose main jaune orange vert noir violet'],
+  ['t-shirt', 'un', 'm', '👕', 'vetement manches', 'blanc bleu rouge jaune vert main orange rose marron gris noir violet rayures'],
+  ['écharpe', 'une', 'f', '🧣', 'vetement froid', 'rouge bleu blanc gris marron rose main jaune orange vert noir violet laine'],
   ['tambour', 'un', 'm', '🥁', 'baguettes boum rond', 'rouge marron jaune main grand orange vert rose gris blanc noir bleu violet'],
 ];
 
@@ -277,12 +300,12 @@ export const CONFUSABLE = [
   ['serpent', 'chenille'], ['poisson', 'requin'], ['oiseau', 'hibou'], ['cheval', 'chameau'],
   ['orange', 'pêche'], ['orange', 'carotte'], ['poire', 'citron'], ['pomme', 'fraise'],
   ['poivron', 'concombre'], ['pain', 'croissant'], ['chocolat', 'bonbon'],
-  ['chaussure', 'chaussette'], ['maison', 'château'], ['maison', 'tente'], ['soleil', 'étoile'],
+  ['chaussure', 'chaussette'], ['maison', 'château'], ['soleil', 'étoile'],
   ['soleil', 'feu'], ['cloche', 'réveil'], ['voiture', 'camion'], ['camion', 'tracteur'],
   ['banane', 'citron'], ['fleur', 'soleil'],
   ['cheval', 'zèbre'], ['girafe', 'chameau'], ['dauphin', 'requin'], ['dauphin', 'baleine'], ['baleine', 'poisson'],
   ['crocodile', 'serpent'], ['tortue', 'escargot'], ['coccinelle', 'fourmi'], ['coccinelle', 'abeille'], ['canard', 'oiseau'],
-  ['cerise', 'fraise'], ['cerise', 'pomme'], ['kiwi', 'concombre'], ['brocoli', 'sapin'], ['bus', 'camion'], ['bus', 'voiture'],
+  ['cerise', 'fraise'], ['gâteau', 'fraise'], ['cerise', 'pomme'], ['kiwi', 'concombre'], ['brocoli', 'sapin'], ['bus', 'camion'], ['bus', 'voiture'],
   ['moto', 'vélo'], ['hélicoptère', 'avion'], ['casquette', 'chapeau'], ['t-shirt', 'manteau'], ['pastèque', 'fraise'],
   ['bateau', 'poisson'], ['ananas', 'banane'], ['crocodile', 'requin'],
 ];
@@ -340,14 +363,14 @@ export const NEGATIONS = Object.freeze({
 export const negationText = (tag, thing) => render(NEGATIONS[tag], thing.gender);
 
 // Une contrainte d'énoncé : { tag } (« Je suis… ») ou { tag, neg: true } (« Je ne suis pas… »).
-// « N'est JAMAIS X » (#97/#106) : « X n'est pas dans fits » ne suffit pas, la banque n'est pas exhaustive
-// (un ours peut être blanc ou gris, un oiseau jaune). On n'affirme « n'est pas X » que si X est dans `never` :
-//  - une catégorie (animal, fruit, véhicule…) absente de `fits` ;
-//  - un trait « ferme » (vole, ailes, roues…) absent de `fits` ;
+// « N'est JAMAIS X » (#97/#106) : pour les COULEURS et la TAILLE, « X n'est pas dans fits » ne suffit pas,
+// la banque n'est pas exhaustive (un ours peut être blanc ou gris, un oiseau jaune). On n'affirme
+// « n'est pas X » que si X est dans `never` :
+//  - une propriété précise (catégorie, trait, signature) absente de `fits`, sauf si l'indice est `open` :
+//    là, la banque est tenue exhaustive, c'est la règle « exclusif par défaut » du haut du fichier (#108) ;
 //  - la taille opposée (ce qui est très grand ne tient pas dans la main, et réciproquement) ;
 //  - une couleur listée explicitement pour cette chose. Les choses multicolores (bonbon, cuillère, chapeau,
 //    poisson, oiseau, serpent, couronne, chien…) n'y figurent pas : jamais de négation ni d'intrus de couleur.
-const FIRM = new Set(['vole', 'nage', 'pattes4', 'ailes', 'roues', 'plumes', 'bec', 'cornes', 'ecailles', 'aliment', 'habiter']);
 const NEVER_COLOURS = {
   banane: 'rouge bleu rose violet orange gris noir', citron: 'rouge bleu rose violet noir gris marron',
   carotte: 'bleu rose violet noir gris', pomme: 'bleu rose violet noir gris orange marron',
@@ -364,7 +387,7 @@ const NEVER_COLOURS = {
   coccinelle: 'bleu rose violet vert gris', fourmi: 'bleu rose violet vert', panda: 'bleu rose violet rouge orange jaune vert marron gris',
   baleine: 'rouge rose violet orange jaune vert marron', dauphin: 'rouge rose violet orange jaune vert marron noir',
   requin: 'rose violet rouge orange jaune vert marron', loup: 'bleu rose violet rouge orange jaune vert',
-  lion: 'bleu rose violet rouge vert noir blanc gris', cochon: 'bleu violet rouge orange jaune vert gris',
+  lion: 'bleu rose violet rouge vert noir gris', cochon: 'bleu violet rouge orange jaune vert gris',
   mouton: 'bleu rose violet rouge orange vert jaune', lapin: 'bleu rose violet rouge orange vert jaune',
   chèvre: 'bleu rose violet rouge orange vert jaune', hibou: 'bleu rose violet rouge orange jaune vert',
   ours: 'bleu rose violet rouge orange jaune vert', chat: 'bleu rose violet rouge vert',
@@ -375,21 +398,21 @@ const NEVER_COLOURS = {
   feu: 'rose violet', chocolat: 'bleu rose violet rouge orange vert gris jaune',
   pain: 'bleu rose violet rouge vert gris noir', croissant: 'bleu rose violet rouge vert gris noir',
   œuf: 'bleu rose violet rouge vert gris noir orange', sapin: 'bleu rose violet rouge orange gris',
+  pingouin: 'bleu rose violet rouge vert marron', gâteau: 'bleu violet gris noir',
 };
 const NEVER = new Map(Object.entries(NEVER_COLOURS).map(([w, s]) => [w.replace(/_/g, ' '), new Set(s.split(' '))]));
 /** Sa couleur est connue sans doute possible (pas un bonbon, un poisson ou un oiseau multicolores). */
 export const colourClosed = (t) => NEVER.has(t.word);
 /** La chose n'est-elle JAMAIS (sans aucun doute possible) cette propriété ? */
 export function never(t, tag) {
-  const kind = TAGS[tag].kind;
-  if (kind === 'cat' || FIRM.has(tag)) return !t.fits.has(tag);
+  const { kind, open } = TAGS[tag];
   if (tag === 'main') return t.is.has('grand');
   if (tag === 'grand') return t.is.has('main');
   if (kind === 'colour') return Boolean(NEVER.get(t.word) && NEVER.get(t.word).has(tag));
-  return false;
+  return !open && !t.fits.has(tag);
 }
 /** Propriétés dont on peut dire « X n'est pas … » (indice dit à l'envers ou phrase de correction). */
-export const canDeny = (tag) => TAGS[tag].kind === 'colour' || TAGS[tag].kind === 'cat' || FIRM.has(tag) || tag === 'main' || tag === 'grand';
+export const canDeny = (tag) => !TAGS[tag].open || tag === 'main' || tag === 'grand';
 
 /** Vérifiée avec certitude par la chose (un `maybe` ne compte pas ; « pas X » exige que X soit `never`). */
 export const holds = (t, c) => (c.neg ? never(t, c.tag) : t.is.has(c.tag));
