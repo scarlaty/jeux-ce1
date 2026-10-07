@@ -9,12 +9,16 @@ import { h, content } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
-import { mascotSticker, hasMascot, endFace, answerReaction, react } from '../core/ui/mascot.js';
+import { mascotSticker, hasMascot } from '../core/ui/mascot.js';
+import {
+  companionSticker, companionReaction, companionEndFace, reactCompanion, resetCompanion,
+} from '../core/ui/companion.js';
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
 import { getGameProgress } from '../core/history.js';
 import { rewardEvents, rewardSummary, liveTotal } from '../core/rewards-live.js';
+import { currentCompanion, companionSummary } from '../core/companion-live.js';
 import { loadGame } from '../games/registry.js';
 import * as audio from '../core/audio.js';
 
@@ -92,21 +96,35 @@ export function extrasList(extras) {
     h('span', { text: x.text }))));
 }
 
-/** L'île dont la mascotte accompagne une partie (le défi du jour prend celle de sa gommette). */
+/** L'île dont la mascotte accueille l'enfant (le défi du jour prend celle de sa gommette). */
 export function mascotIsland(game) {
   return hasMascot(game.island) ? game.island : game.rewardIsland;
 }
 
-/** Mascotte de fin de partie : son expression suit les étoiles, deux étincelles dès 2 étoiles. */
-export function endMascot(island, stars) {
-  const buddy = mascotSticker(island, { face: endFace(stars), loop: stars >= 2 ? 'bounce' : null, className: 'end__mascot' });
-  if (!buddy) return null;
+/**
+ * Compagnon de fin de partie, à la place de la mascotte de l'île : un seul personnage à la fois
+ * (comme dans l'en-tête de partie), et c'est LE personnage de l'enfant. La mascotte de l'île garde
+ * l'accueil, le choix du niveau et l'album. Son expression suit les étoiles, deux étincelles dès
+ * 2 étoiles ; l'œuf, lui, se balance doucement.
+ */
+export function endCompanion(stars) {
+  const companion = currentCompanion();
+  const loop = companion.hatched ? (stars >= 2 ? 'bounce' : null) : 'wobble';
+  const buddy = companionSticker(companion, { face: companionEndFace(stars, companion), loop, className: 'end__mascot' });
   const sparkle = (side, color) => h('span', { class: `end__deco end__deco--${side} kw-twinkle`, 'aria-hidden': 'true' },
     drawDeco({ shape: 'sparkle', color }));
   return h('div', { class: 'end__buddy' },
     stars >= 2 && sparkle('left', 'citron'),
     buddy,
     stars >= 2 && sparkle('right', 'rose'));
+}
+
+/** Bouton vers « Mon compagnon » quand l'œuf est prêt à éclore ou que le compagnon vient de grandir. */
+export function companionAction(session) {
+  const change = companionSummary(session);
+  if (!change || !(change.ready || change.grew)) return null;
+  return h('a', { class: 'btn btn--primary', href: '#/compagnon' },
+    h('span', { text: change.ready ? 'Faire éclore mon œuf' : 'Voir mon compagnon' }), icon('arrowRight'));
 }
 
 /**
@@ -119,7 +137,8 @@ export function createGameView(root, { app, game, onEnd }) {
   let timer = null;
   let offPoints = null;
   let buddy = null;
-  let buddyFace = 'happy';
+  let buddyReacted = false;
+  let mate = null;
   const gainTimers = new Set();
 
   function clearGains() {
@@ -173,8 +192,10 @@ export function createGameView(root, { app, game, onEnd }) {
       record: record === undefined ? (result) => app.record(result) : record,
     });
     const dots = session.questions.map((_, i) => h('li', { class: 'dot', 'aria-label': `question ${i + 1}` }));
-    // La mascotte reste dans l'en-tête, loin de la consigne et des réponses ; immobile entre deux réactions.
-    buddy = mascotSticker(mascotIsland(game), { face: 'happy', blink: false, className: 'play-head__mascot' });
+    // Le compagnon (ou son œuf) reste dans l'en-tête, loin de la consigne et des réponses ; immobile entre deux réactions.
+    mate = currentCompanion();
+    buddyReacted = false;
+    buddy = companionSticker(mate, { blink: false, className: 'play-head__mascot' });
     const head = h('div', { class: 'play-head' },
       h('span', { class: 'chip', text: game.levels[level - 1].label }),
       h('ol', { class: 'dots', 'aria-label': 'Progression' }, dots),
@@ -199,9 +220,9 @@ export function createGameView(root, { app, game, onEnd }) {
     dots.forEach((d, i) => d.classList.toggle('is-current', i === index));
     head.querySelector('.play-head__count').textContent = `${index + 1} / ${session.total}`;
 
-    if (buddyFace !== 'happy') {
-      buddyFace = 'happy';
-      react(buddy, mascotIsland(game), { face: 'happy' });
+    if (buddyReacted) {
+      buddyReacted = false;
+      resetCompanion(buddy, mate);
     }
 
     const Ui = getQuestionUI(question.type);
@@ -236,9 +257,11 @@ export function createGameView(root, { app, game, onEnd }) {
       dot.classList.remove('is-current');
       dot.classList.add(fb.correct ? 'is-right' : 'is-wrong');
       dot.replaceChildren(badge(fb.correct ? 'right' : 'wrong'));
-      const reaction = answerReaction(fb.correct);
-      buddyFace = reaction.face;
-      react(buddy, mascotIsland(game), reaction);
+      const reaction = companionReaction(fb.correct, mate);
+      if (reaction) {
+        buddyReacted = true;
+        reactCompanion(buddy, mate, reaction);
+      }
       if (fb.correct) {
         audio.playSound('success');
         stage.append(h('div', { class: 'stamp stamp--ok', 'aria-hidden': 'true', text: PRAISE[Math.floor(Math.random() * PRAISE.length)] }));
@@ -364,7 +387,7 @@ export default {
         h('span', { text: 'Niveau suivant' }), icon('arrowRight'));
 
       root.replaceChildren(h('div', { class: 'end card' },
-        endMascot(game.island, stars),
+        endCompanion(stars),
         h('h1', { class: 'end__title stamp stamp--static', text: END_TITLES[stars] }),
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },
@@ -374,12 +397,13 @@ export default {
         hasNext && !nextOpen && h('p', { class: 'end__hint', text: `Gagne 3 étoiles pour ouvrir le niveau ${level + 1}.` }),
         extrasList(result.extras),
         h('div', { class: 'end__actions' },
+          companionAction(session),
           next || null,
           replay,
           h('button', { type: 'button', class: 'btn btn--secondary', onclick: showLevels }, h('span', { text: 'Changer de niveau' })),
           h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte' })))));
-      (next || replay).focus({ preventScroll: true });
+      root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }
 
     showLevels();

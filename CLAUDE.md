@@ -64,6 +64,7 @@ js/
     index.js            TABLE DES ÉCRANS (point d'extension) : chemin → module d'écran
     home.js             accueil : carte au trésor des îles (avancement, défi du jour, grade)
     play.js             choix du niveau, partie, fin de partie ; exporte createGameView (réutilisé)
+    compagnon.js        « Mon compagnon » : éclosion, croissance, nom et animal (#/compagnon, #90)
     album.js            album de gommettes et échelle des grades (#/album)
     daily.js            défi du jour : 5 questions tirées des jeux déjà joués (#/defi)
     welcome.js          prénom + avatar : premier lancement, nouveau profil, modification (#9, #10)
@@ -84,6 +85,7 @@ js/
     offline.js          enregistrement du service worker + avis discret de mise à jour
     rewards.js          points, séries, grades, gommettes, défi du jour (FONCTIONS PURES)
     rewards-live.js     branchement des récompenses sur gameEvents + écriture dans le profil
+    companion.js        compagnon : stades, seuils, noms (PUR) ; companion-live.js : branchement sur gameEvents (#90)
     audio.js            sons (Web Audio) + voix (speechSynthesis fr-FR / en-GB)
     random.js           RNG avec graine (mulberry32), shuffle, pick, sample sans remise
     ui/                 composants d'affichage réutilisables (un fichier par type de question)
@@ -345,7 +347,12 @@ draw(companion({ animal: 'bunny', stage: 3 }));   // 0 œuf · 1 œuf qui éclot
   personnages qu'on veut sur une page. Ne jamais écrire d'`id` en dur dans un dessin du kit.
 - Mascottes : Perle (goutte rose, Mots), Cubi (cube bleu ciel à lunettes, Nombres), Étincelle (étoile
   pêche, Mesures), Pépin (boule menthe à pousse, Monde), Nuagette (nuage lavande à fleur, Ailleurs).
-- Compagnon : le kit **dessine** les stades ; les seuils (étoiles…) appartiennent au module compagnon (#90).
+- Compagnon : le kit **dessine** les stades ; les seuils appartiennent à `core/companion.js` (#90, pur) :
+  profil `companion = { animal, name, hatched, games, stars }` (repris dans `normalizeProfile` ; absent → œuf).
+  Œuf fêlé après 2 parties, prêt à éclore après 3 (l'enfant choisit chat/lapin/ourson et le nom sur `#/compagnon`),
+  puis « petit » à 20 étoiles cumulées et « grand » à 60. `core/companion-live.js` (abonné à `gameEvents`, comme
+  les récompenses) cumule parties et étoiles ; `core/ui/companion.js` dessine. Un seul personnage à la fois :
+  le compagnon (ou son œuf) remplace la mascotte de l'île dans l'en-tête de partie et en fin de partie.
 - **Décorations** (`kawaii-deco.js`, `import { draw as drawDeco }`) : `drawDeco({ shape: 'star' | 'heart' | 'cloud' | 'sparkle', color?, face? })`,
   décoratives (`aria-hidden`) sauf si `label` est donné.
 - Ajouter une forme / un accessoire / une expression : une entrée dans `kawaii-parts.js`

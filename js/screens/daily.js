@@ -12,7 +12,7 @@ import { rewardSummary } from '../core/rewards-live.js';
 import {
   DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards,
 } from '../core/rewards.js';
-import { createGameView, starRow, gradeBanner, extrasList, celebrate, endMascot } from './play.js';
+import { createGameView, starRow, gradeBanner, extrasList, celebrate, endCompanion, companionAction } from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 
@@ -117,7 +117,7 @@ export default {
       stopConfetti = celebrate(stars);
 
       root.replaceChildren(h('div', { class: 'end card' },
-        endMascot(game.rewardIsland, stars),
+        endCompanion(stars),
         h('h1', { class: 'end__title stamp stamp--static', text: END_TITLES[stars] }),
         starRow(stars, { size: 56, animate: true }),
         h('p', { class: 'end__score' },
@@ -126,7 +126,8 @@ export default {
         extrasList(result.extras),
         h('p', { class: 'end__hint', text: 'Un nouveau défi t\'attend demain !' }),
         h('div', { class: 'end__actions' },
-          h('a', { class: 'btn btn--primary', href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
+          companionAction(session),
+          h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--secondary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));
       root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
     }

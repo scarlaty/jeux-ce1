@@ -404,3 +404,100 @@
 @media (max-width: 520px) {
   .play-head__mascot { width: 68px; margin: -14px -4px -8px 0; }
 }
+
+/* ---------- Le compagnon (#90) ----------
+   Carte sur l'accueil + écran « Mon compagnon ». Le compagnon est un .mascot (le conteneur bouge). */
+
+.pet-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--tap-l);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--kawaii-creme);
+  border: 2px solid var(--kawaii-peche-deep);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 0 var(--kawaii-peche-deep);
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+.pet-card:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--kawaii-peche-deep); }
+.pet-card.is-ready { border-style: dashed; }
+.pet-card__art { width: 72px; }
+.pet-card__body { display: grid; gap: 2px; flex: 1; min-width: 0; color: var(--kawaii-creme-ink); }
+.pet-card__name { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; }
+.pet-card__stage, .pet-card__text { font-size: var(--text-s); }
+.pet-card__go { flex: none; color: var(--kawaii-creme-ink); }
+@media (max-width: 520px) {
+  .pet-card { gap: var(--space-3); padding: var(--space-2) var(--space-3); }
+  .pet-card__art { width: 60px; }
+}
+
+.pet { display: grid; gap: var(--space-4); }
+.pet__card { display: grid; justify-items: center; gap: var(--space-3); text-align: center; }
+.pet__art { width: 200px; }
+.pet__art--egg { width: 168px; }
+.pet__name { margin: 0; }
+.pet__stage { margin: 0; }
+.pet__progress { margin: 0; font-weight: 700; }
+.pet__lead { margin: 0; font-size: 1.3rem; }
+.pet .meter { max-width: 320px; }
+.pet__edit { gap: var(--space-4); }
+.pet__edit-title { margin: 0; font-family: var(--font-title); font-size: 1.3rem; }
+.pet__actions { justify-content: center; }
+.pet__card .identity__row { width: 100%; }
+
+/* Frise des stades : l'étape actuelle est cernée et nommée ; celles à venir sont atténuées ET
+   annoncées « Bientôt » (l'information ne repose pas sur l'atténuation). */
+.pet-frieze {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pet-step {
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 2px;
+  padding: var(--space-2);
+  text-align: center;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-m);
+}
+.pet-step.is-current { border: 3px solid var(--kawaii-peche-deep); background: var(--kawaii-creme); color: var(--kawaii-creme-ink); }
+.pet-step__art { width: 88px; }
+.pet-step.is-ahead .pet-step__art { opacity: .55; }
+.pet-step__label { font-family: var(--font-title); font-weight: 600; }
+.pet-step__note { font-size: var(--text-s); }
+.pet-step:not(.is-current) .pet-step__note { color: var(--ink-soft); }
+@media (max-width: 520px) {
+  .pet__art { width: 160px; }
+  .pet-step__art { width: 64px; }
+  .pet-step { padding: var(--space-2) var(--space-1); }
+}
+
+/* Choix de l'animal : trois grands boutons avec le bébé dessiné. */
+.pet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.pet-pick {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-height: var(--tap-l);
+  padding: var(--space-2);
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 3px solid var(--border);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+.pet-pick.is-picked { border-color: var(--kawaii-peche-deep); background: var(--kawaii-creme); color: var(--kawaii-creme-ink); box-shadow: 0 0 0 3px var(--kawaii-peche); }
+.pet-pick .mascot { width: 84px; }
+.pet-pick__label { font-family: var(--font-title); font-weight: 600; font-size: 1.1rem; }
+@media (max-width: 520px) { .pet-pick .mascot { width: 64px; } }
