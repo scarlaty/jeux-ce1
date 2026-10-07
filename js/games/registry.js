@@ -104,6 +104,13 @@ export const GAMES = [
     subject: 'maths',
     load: () => import('./tirelire.js'),
   },
+  {
+    id: 'colors-numbers',
+    title: 'Colors and numbers',
+    island: 'ailleurs',
+    subject: 'anglais',
+    load: () => import('./colors-numbers.js'),
+  },
 ];
 
 export function getIsland(id) {

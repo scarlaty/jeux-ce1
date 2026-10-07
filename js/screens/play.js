@@ -62,6 +62,19 @@ function flashControls(contentEl, ms, answerEl) {
   return [h('div', { class: 'show__flash' }, contentEl, count), replay];
 }
 
+const isForeign = (q) => Boolean(q.lang && !q.lang.startsWith('fr') && q.speak);
+
+/**
+ * Question « à écouter » dans une autre langue (`listenOnly`) sur un appareil sans voix de cette
+ * langue : on écrit le texte à lire, pour que la question reste jouable.
+ */
+function noVoiceNote(q) {
+  if (!q.listenOnly || !isForeign(q) || audio.hasVoice(q.lang)) return null;
+  return h('p', { class: 'no-voice' },
+    h('span', { text: 'Pas de voix anglaise sur cet appareil. Lis : ' }),
+    h('strong', { lang: q.lang, text: q.speak }));
+}
+
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 /** Bouton « écouter » ; absent si le navigateur ne sait pas lire à voix haute. */
@@ -252,8 +265,9 @@ export function createGameView(root, { app, game, onEnd }) {
     stage.className = `stage stage--${question.type}${show ? ' stage--with-show' : ''}`;
     stage.replaceChildren(...[
       h('div', { class: 'prompt' },
-        listenButton(question.speak || question.prompt, { lang }),
+        listenButton(question.speak || question.prompt, { lang, label: question.listenLabel || undefined }),
         h('p', { class: 'prompt__text', text: question.prompt })),
+      noVoiceNote(question),
       show && h('div', { class: 'show' },
         showMain,
         replay,
@@ -303,6 +317,8 @@ export function createGameView(root, { app, game, onEnd }) {
         !answer && h('p', { class: 'bubble__label', text: 'Regarde bien la correction.' }),
         fb.explain && h('p', { class: 'bubble__explain', text: fb.explain }),
         h('div', { class: 'bubble__actions' },
+          // Question d'anglais : la voix française lirait mal le mot, on propose de le réécouter en anglais.
+          isForeign(q) && listenButton(q.speak, { lang: q.lang, label: 'Réécouter en anglais' }),
           listenButton(spoken, { label: 'Écouter l\'explication' }),
           continueButton)));
       continueButton.focus({ preventScroll: true });

@@ -100,6 +100,19 @@ export function canSpeak() {
 }
 
 /**
+ * Y a-t-il une voix pour cette langue (en-GB…) ? Sert aux jeux d'anglais : sans voix anglaise,
+ * l'écran montre le mot écrit à la place de l'écoute. Faux sans synthèse vocale.
+ */
+export function hasVoice(lang) {
+  if (!canSpeak()) return false;
+  try {
+    return pickVoice(synth().getVoices(), lang) !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Meilleure voix pour une langue : correspondance exacte (fr-FR), sinon même langue (fr-CA…),
  * en préférant les voix locales (hors ligne). Fonction pure, testable.
  */
