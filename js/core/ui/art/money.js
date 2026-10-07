@@ -147,14 +147,14 @@ function note({ value, x, y, w, h }) {
   return s('g', { class: `money__note money__note--${tone}` },
     s('rect', { x, y, width: w, height: h, rx: 3, class: 'money__body' }),
     s('rect', { x: x + 3, y: y + 3, width: w - 6, height: h - 6, rx: 1.5, class: 'money__frame' }),
-    s('circle', { cx: x + w * 0.2, cy: y + h * 0.5, r: h * 0.22, class: 'money__frame' }),
-    s('path', { d: `M${x + w * 0.74} ${y + h * 0.78}v${-h * 0.3}a${h * 0.14} ${h * 0.14} 0 0 1 ${h * 0.28} 0v${h * 0.3}z`, class: 'money__window' }),
+    s('circle', { cx: x + w * 0.13, cy: y + h * 0.5, r: h * 0.15, class: 'money__frame' }),
+    s('path', { d: `M${x + w * 0.79} ${y + h * 0.78}v${-h * 0.3}a${h * 0.14} ${h * 0.14} 0 0 1 ${h * 0.28} 0v${h * 0.3}z`, class: 'money__window' }),
     s('text', {
-      x: x + w * 0.46, y: y + h * 0.46, class: 'money__value money__value--note',
-      'text-anchor': 'middle', 'dominant-baseline': 'central', style: `font-size:${(h * 0.5).toFixed(1)}px`, text: `${n}${NB}€`,
+      x: x + w * 0.5, y: y + h * 0.46, class: 'money__value money__value--note',
+      'text-anchor': 'middle', 'dominant-baseline': 'central', style: `font-size:${(h * 0.38).toFixed(1)}px`, text: `${n}${NB}€`,
     }),
     s('text', {
-      x: x + w * 0.46, y: y + h * 0.82, class: 'money__unit money__unit--note',
+      x: x + w * 0.5, y: y + h * 0.82, class: 'money__unit money__unit--note',
       'text-anchor': 'middle', 'dominant-baseline': 'central', style: `font-size:${(h * 0.14).toFixed(1)}px`, text: 'EURO',
     }));
 }
@@ -164,7 +164,8 @@ export function draw(spec) {
   const svg = figure(`${-PAD} ${-PAD} ${width + 2 * PAD} ${height + 2 * PAD}`, label(spec),
     items.map((it) => (isNote(it.value) ? note(it) : coin(it))));
   // La feuille de style règle la largeur : `--mm` est la largeur du dessin en millimètres.
-  svg.setAttribute('class', 'art art--money');
+  // Quelques petites pièces seulement : la feuille de style peut les agrandir sans que ça déborde.
+  svg.setAttribute('class', `art art--money${items.length === 1 ? ' art--money-single' : ''}${width <= 120 ? ' art--money-compact' : ''}`);
   svg.setAttribute('style', `--mm: ${(width + 2 * PAD).toFixed(1)}`);
   return svg;
 }

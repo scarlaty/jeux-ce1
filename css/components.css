@@ -567,13 +567,26 @@
 .show:has(.art--money) .show__content { width: 100%; justify-content: center; }
 .choices:has(.art--money) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); max-width: 720px; }
 .choice:has(.art--money) { flex-direction: column; gap: var(--space-2); }
-@media (min-width: 900px) { .art--money, .show__content .art--money, .choice .art--money { --money-scale: 1.6px; } }
+/* Une pièce ou un billet seul (choix « Touche le billet de 10 € ») : plus grand, pour lire le chiffre. */
+.choice .art--money.art--money-single, .show__content .art--money.art--money-single { --money-scale: 2.6px; }
+.show__content .art--money.art--money-compact { --money-scale: 3.4px; }
+.choices:has(.art--money-single) { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); max-width: 640px; }
+.art--money, .show__content .art--money, .choice .art--money { --money-scale: 1.7px; }
+@media (min-width: 900px) {
+  .art--money, .show__content .art--money, .choice .art--money { --money-scale: 2.2px; }
+  /* Comme le matériel de numération : l'argent prend la place, le pavé garde 340 px. */
+  .stage--with-show.stage--keypad:has(.art--money) { grid-template-columns: minmax(0, 1fr) 340px; }
+  .stage--with-show.stage--choice:has(.art--money) { grid-template-columns: 1fr; }
+  .stage--with-show.stage--choice:has(.art--money) .show { min-height: 0; }
+  .stage--with-show.stage--choice:has(.art--money) .choices:not(.choices--images) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; }
+  .stage--with-show.stage--choice:has(.art--money) .choices { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); max-width: 720px; }
+}
 
 /* Composer un montant (ui/amount.js) */
 .amount { display: grid; gap: var(--space-3); width: 100%; justify-items: center; }
 .amount__tray {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2);
-  width: 100%; min-height: 96px; padding: var(--space-3);
+  width: 100%; min-height: 72px; padding: var(--space-2);
   background: var(--surface-sunk); border: 3px dashed var(--border-strong); border-radius: var(--radius-l);
 }
 .amount__tray.is-empty::before { content: 'Touche une pièce ou un billet'; color: var(--ink-faint); }
@@ -592,9 +605,10 @@
 .amount__option:disabled { opacity: .45; cursor: default; }
 .amount__piece { padding: var(--space-1); border-width: 2px; box-shadow: none; }
 .amount__piece:disabled { cursor: default; }
-.amount .art--money { --money-scale: .8px; }
+/* Largeur explicite (pas de %) : un bouton ne doit pas s'étirer à cause de son dessin. */
+.amount .art--money { --money-scale: .85px; width: calc(var(--mm) * var(--money-scale)); max-width: none; }
 .amount__piece .art--money { --money-scale: .6px; }
-@media (min-width: 900px) { .amount .art--money { --money-scale: 1.05px; } .amount__piece .art--money { --money-scale: .8px; } }
+@media (min-width: 900px) { .amount .art--money { --money-scale: 1px; } .amount__piece .art--money { --money-scale: .75px; } }
 .amount__ok { min-height: 56px; }
 
 .answer { display: grid; justify-items: center; }

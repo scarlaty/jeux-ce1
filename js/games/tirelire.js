@@ -149,7 +149,7 @@ function compose(rng) {
     type: 'amount',
     prompt: `Compose ${target}${' '}€ ${palette.with}.`,
     speak: `Compose ${moneySpoken(E(target))} ${palette.with.replace(/(\d+) €/g, (_, n) => moneySpoken(E(Number(n))))}.`,
-    display: { show: { text: `${target}${' '}€` }, options, suffix: ' €', maxPieces: 30 },
+    display: { options, suffix: ' €', maxPieces: 30 },
     answer: target,
     explain: `Il fallait faire ${target} €. Par exemple : ${example.map((v) => `${v}${' '}€`).join(' + ')}. Il y a plusieurs façons d'y arriver !`,
     skill: SKILL.compose,

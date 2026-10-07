@@ -74,7 +74,7 @@ export function create(question, ctx) {
   }
 
   render();
-  const root = h('div', { class: 'amount' }, tray, totalBox, palette, okButton);
+  const root = h('div', { class: 'amount' }, totalBox, tray, palette, okButton);
 
   return {
     el: root,
