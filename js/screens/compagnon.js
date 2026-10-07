@@ -9,7 +9,7 @@ import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { companionSticker } from '../core/ui/companion.js';
 import {
-  COMPANION_ANIMALS, MAX_NAME, STAGE_LABELS, animalInfo, customize, hatch, nameOrDefault,
+  COMPANION_ANIMALS, MAX_NAME, adopt, adoptable, animalUnlocked, STAGE_LABELS, animalInfo, customize, hatch, nameOrDefault,
   progressOf, progressText, readCompanion, readyToHatch, saveCompanion, stageOf,
 } from '../core/companion.js';
 import { ACCESSORIES, equip, readChest, saveChest, withAccessory } from '../core/chest.js';
@@ -29,7 +29,7 @@ function meter(companion) {
  * Choix de l'animal + champ du nom. `value()` renvoie { animal, name } (nom non filtré : c'est
  * hatch() / customize() qui le nettoient). Le nom proposé suit l'animal tant que l'enfant n'a rien écrit.
  */
-function picker({ animal, name, onChange }) {
+function picker({ animal, name, stars = 0, chooseAnimal = true, onChange }) {
   let current = animal;
   let touched = Boolean(name);
   const field = h('input', {
@@ -41,7 +41,15 @@ function picker({ animal, name, onChange }) {
   field.addEventListener('input', () => { touched = true; });
 
   const buttons = new Map();
-  for (const a of COMPANION_ANIMALS) {
+  for (const a of chooseAnimal ? COMPANION_ANIMALS : []) {
+    if (!animalUnlocked(a.id, stars)) {
+      // Un animal à gagner : visible, mais fermé. L’ourson est la récompense d’un enfant qui joue.
+      buttons.set(a.id, h('div', { class: 'pet-pick pet-pick--locked' },
+        h('span', { class: 'pet-pick__lock', 'aria-hidden': 'true' }, icon('lock', { size: 28 })),
+        h('span', { class: 'pet-pick__label', text: a.label }),
+        h('span', { class: 'pet-pick__goal', text: `à ${a.unlock} étoiles` })));
+      continue;
+    }
     const art = companionSticker({ animal: a.id, hatched: true, name: '', games: 0, stars: 0 }, { stage: 2, blink: false });
     const button = h('button', {
       type: 'button',
@@ -51,6 +59,7 @@ function picker({ animal, name, onChange }) {
         current = a.id;
         audio.playSound('tap');
         for (const [id, el] of buttons) {
+          if (el.tagName !== 'BUTTON') continue;
           el.classList.toggle('is-picked', id === current);
           el.setAttribute('aria-pressed', String(id === current));
         }
@@ -63,9 +72,10 @@ function picker({ animal, name, onChange }) {
   }
 
   const el = h('div', { class: 'pet-picker' },
-    h('div', { class: 'identity__row' },
+    chooseAnimal && h('div', { class: 'identity__row' },
       h('p', { class: 'identity__label', id: 'animal-label', text: 'Choisis ton animal' }),
-      h('div', { class: 'pet-grid', role: 'group', 'aria-labelledby': 'animal-label' }, [...buttons.values()])),
+      h('div', { class: 'pet-grid', role: 'group', 'aria-labelledby': 'animal-label' }, [...buttons.values()]),
+      h('p', { class: 'identity__hint', text: 'Tu le choisis une seule fois. Un autre ami arrive plus tard, avec tes étoiles.' })),
     h('div', { class: 'identity__row' },
       h('label', { class: 'identity__label', for: 'nom-compagnon', text: 'Son nom' }),
       field,
@@ -122,7 +132,7 @@ export default {
     // --- L'éclosion : choisir l'animal et son nom --------------------------------------------
 
     function showChoose() {
-      const choice = picker({ animal: companion.animal, name: '' });
+      const choice = picker({ animal: companion.animal, name: '', stars: companion.stars });
       const form = h('form', {
         class: 'card pet__card identity',
         novalidate: true,
@@ -227,6 +237,43 @@ export default {
 
     // --- L'écran habituel --------------------------------------------------------------------
 
+    /** Un animal-récompense est débloqué : l’enfant peut l’adopter, ou garder son compagnon. Jamais imposé. */
+    function adoptionCard() {
+      const options = adoptable(companion);
+      if (!options.length) return null;
+      return h('section', { class: 'card pet__card pet__adopt', 'aria-labelledby': 'adopt-title' },
+        h('h2', { class: 'pet__edit-title', id: 'adopt-title', text: 'Un nouvel ami t’attend !' }),
+        h('p', { class: 'pet__lead cursive', text: 'Tu as gagné assez d’étoiles pour l’ouvrir. Tes étoiles et ton nom le suivent.' }),
+        options.map((a) => {
+          const art = companionSticker({ animal: a.id, hatched: true, name: '', games: 0, stars: 0 }, { stage: 2, blink: false });
+          const ask = h('button', {
+            type: 'button', class: 'btn btn--secondary',
+            onclick: () => {
+              audio.playSound('tap');
+              confirmBox.hidden = false;
+              ask.hidden = true;
+              yes.focus({ preventScroll: true });
+            },
+          }, h('span', { text: `Adopter ${a.label}` }));
+          const yes = h('button', {
+            type: 'button', class: 'btn btn--primary',
+            onclick: () => {
+              save((c) => adopt(c, { animal: a.id }));
+              audio.playSound('finish');
+              stopConfetti();
+              stopConfetti = confetti();
+              show();
+            },
+          }, h('span', { text: `Oui, partir avec ${a.label}` }));
+          const keep = h('button', {
+            type: 'button', class: 'btn btn--ghost',
+            onclick: () => { confirmBox.hidden = true; ask.hidden = false; ask.focus({ preventScroll: true }); },
+          }, h('span', { text: `Garder ${companion.name}` }));
+          const confirmBox = h('div', { class: 'end__actions', hidden: true }, yes, keep);
+          return h('div', { class: 'pet__adopt-item' }, art, ask, confirmBox);
+        }));
+    }
+
     function showMain() {
       const stage = stageOf(companion);
       const name = companion.hatched ? companion.name : 'Mon œuf';
@@ -246,24 +293,26 @@ export default {
         h('span', { class: 'pet-step__note', text: s === stage ? 'Maintenant' : (s > stage ? 'Bientôt' : 'Déjà vu') }))));
 
       const edit = companion.hatched && (() => {
-        const choice = picker({ animal: companion.animal, name: companion.name });
+        const choice = picker({ animal: companion.animal, name: companion.name, chooseAnimal: false });
         return h('form', {
           class: 'card pet__card identity pet__edit', novalidate: true,
           onsubmit: (event) => {
             event.preventDefault();
             const { animal, name } = choice.value();
-            save((c) => customize(c, { animal, name: nameOrDefault(name, animal) }));
+            save((c) => customize(c, { name: nameOrDefault(name, animal) }));
             audio.playSound('success');
             step = 'main';
             show();
           },
         },
-        h('h2', { class: 'pet__edit-title', text: 'Changer d\'animal ou de nom' }),
+        h('h2', { class: 'pet__edit-title', text: 'Changer son nom' }),
         choice.el,
         h('div', { class: 'identity__actions' },
           h('button', { type: 'submit', class: 'btn btn--secondary' }, icon('check'), h('span', { text: 'Enregistrer' }))));
       })();
 
+      const adoption = companion.hatched && adoptionCard();
+      const teaser = companion.hatched && !adoption && COMPANION_ANIMALS.find((a) => a.unlock > companion.stars);
       const accessories = (companion.hatched || chest.accessories.length) ? accessoriesSection(art) : null;
       root.replaceChildren(
         h('div', { class: 'card pet__card' },
@@ -274,8 +323,10 @@ export default {
           h('p', { class: 'pet__progress', text: progressText(companion) }),
           next === null && h('p', { class: 'pet__lead cursive', text: 'Merci de jouer avec lui !' }),
           !companion.hatched && h('p', { class: 'pet__lead cursive', text: 'Il éclot quand tu as terminé des parties.' })),
+        adoption || null,
         accessories,
         frieze || null,
+        teaser ? h('p', { class: 'pet__teaser cursive', text: `${teaser.label} arrive à ${teaser.unlock} étoiles (encore ${teaser.unlock - companion.stars}).` }) : null,
         edit || null,
         h('div', { class: 'end__actions pet__actions' },
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' }))));

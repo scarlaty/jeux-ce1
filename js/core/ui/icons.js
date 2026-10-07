@@ -9,6 +9,10 @@ const PATHS = {
   moon: '<path d="M19.5 14.6A8 8 0 1 1 9.4 4.5a6.3 6.3 0 0 0 10.1 10.1z"/>',
   contrast: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/>',
   star: '<path d="m12 2.9 2.8 5.8 6.3.8-4.6 4.4 1.2 6.3L12 17.1l-5.7 3.1 1.2-6.3-4.6-4.4 6.3-.8z" fill="currentColor" stroke-linejoin="round"/>',
+  // Points : un jeton rond (pièce à bord double). Jamais une étoile : l'étoile est réservée aux étoiles (#105).
+  coin: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5" fill="currentColor"/>',
+  // Album de gommettes : un livre ouvert.
+  album: '<path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5z"/><path d="M12 6.5v13"/>',
   lock: '<rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   cross: '<path d="m7 7 10 10M17 7 7 17"/>',

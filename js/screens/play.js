@@ -186,7 +186,7 @@ export function createGameView(root, { app, game, onEnd }) {
   function pointsCounter(session) {
     const initial = liveTotal(session);
     const value = h('span', { class: 'points-chip__value', text: String(initial) });
-    const chip = h('span', { class: 'points-chip', 'aria-label': plural(initial, 'point') }, icon('star', { size: 20 }), value);
+    const chip = h('span', { class: 'points-chip', 'aria-label': plural(initial, 'point') }, icon('coin', { size: 20, className: 'icon--points' }), value);
     // Annonce sobre : seuls les bonus de série sont dits à voix haute, pas chaque réponse.
     const announce = h('p', { class: 'visually-hidden', 'aria-live': 'polite' });
     const el = h('div', { class: 'points' }, chip, announce);
@@ -435,7 +435,7 @@ export default {
           next || null,
           replay,
           h('button', { type: 'button', class: 'btn btn--secondary', onclick: showLevels }, h('span', { text: 'Changer de niveau' })),
-          h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('star'), h('span', { text: 'Mon album' })),
+          h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte' })))));
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }

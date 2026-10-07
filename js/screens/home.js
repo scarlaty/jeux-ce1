@@ -30,7 +30,8 @@ function rewardBar(rewards) {
     h('span', { class: 'emoji reward-bar__icon', role: 'img', 'aria-label': `Grade : ${grade.name}`, text: grade.icon }),
     h('span', { class: 'reward-bar__body' },
       h('span', { class: 'reward-bar__grade', text: grade.name }),
-      h('span', { class: 'reward-bar__points', text: `${plural(rewards.points, 'point')} · ${owned} / ${stickerTotal()} gommettes` }),
+      h('span', { class: 'reward-bar__points' }, icon('coin', { size: 16, className: 'icon--points' }),
+        h('span', { text: `${plural(rewards.points, 'point')} · ${owned} / ${stickerTotal()} gommettes` })),
       next
         ? h('span', { class: 'meter', role: 'img', 'aria-label': `Encore ${plural(remaining, 'point')} pour devenir ${next.name}` },
           h('span', { class: 'meter__fill', style: `--ratio: ${Math.min(1, ratio).toFixed(3)}` }))

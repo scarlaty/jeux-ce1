@@ -3,6 +3,7 @@
 //
 //   companionSummary(session) → ce qui a changé à la fin de cette partie (ou null)
 import { gameEvents } from './engine.js';
+import { totalStars } from './rewards.js';
 import { addRun, readCompanion, saveCompanion } from './companion.js';
 import { withAccessory } from './chest.js';
 
@@ -14,10 +15,12 @@ function onEnd({ session, result, extras }) {
   if (!context) return;
   let change = null;
   try {
+    // `record` (app.js) a déjà écrit la partie dans `progress` : le total est celui de la carte des îles.
+    const total = totalStars(context.store.getProfile(context.profileId)?.progress);
     saveCompanion(context.store, context.profileId, (companion) => {
-      change = addRun(companion, { stars: result.stars });
+      change = addRun(companion, { totalStars: total });
       return change.companion;
-    });
+    }, { stored: true });
   } catch (err) {
     console.error('[companion] écriture du profil', err);
     return;
