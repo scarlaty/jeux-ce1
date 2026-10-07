@@ -133,7 +133,7 @@ export const CONTEXTS = [
   ...ctx('?', [
     ['Léa demande à sa maman si elle peut jouer.', 'Je peux jouer dehors'],
     ['Tom veut savoir si son ami vient.', 'Tu viens avec nous'],
-    ['Mia demande à son frère où est son sac.', 'Il est dans ta chambre'],
+    ['Mia demande à son frère s'il a vu son sac.', 'Tu as vu mon sac'],
     ['Papa veut savoir si Léa a faim.', 'Tu as faim'],
     ['Emma demande à la maîtresse si elle peut sortir.', 'Je peux aller aux toilettes'],
     ['Lucas demande à un ami s\'il a fini.', 'Tu as terminé ton dessin'],
@@ -151,7 +151,7 @@ export const CONTEXTS = [
     ['Léa frissonne et s\'écrie.', 'Il fait froid'],
     ['Emma voit un arc-en-ciel et s\'écrie.', 'C\'est magnifique'],
     ['Papa goûte le gâteau et dit sa joie.', 'Il est délicieux'],
-    ['Tom est très étonné de voir de la neige.', 'Il neige'],
+    ['Tom s'écrie, tout content, en voyant la neige.', 'Il neige'],
     ['Mamie est très heureuse de voir ses petits-enfants.', 'Vous êtes là'],
     ['Tom a très peur d\'une grosse araignée et crie.', 'Elle est énorme'],
     ['Emma est très contente de son cadeau.', 'Il est magnifique'],

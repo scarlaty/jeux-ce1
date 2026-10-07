@@ -141,3 +141,15 @@ test('explications : jamais négatives, jamais vides, citent la phrase juste', (
     }
   }
 });
+
+test('contextes : un seul signe défendable (juge pédagogie, #35)', () => {
+  // « Mia demande où est son sac » + « Il est dans ta chambre » : le texte RÉPOND à la question, un « . » se défend.
+  // « C'est déjà l'heure » : « déjà » marque la surprise, un « ! » se défend.
+  // « Tom est étonné… » + « Il neige » : l'étonnement autorise « Il neige ? ».
+  for (const c of CONTEXTS.filter((c) => c.sign === '?')) {
+    assert.doesNotMatch(c.text, /^(Il|Elle) est (dans|sur|sous|à)\b|\bdéjà\b/, c.text);
+  }
+  for (const c of CONTEXTS.filter((c) => c.sign === '!')) {
+    assert.doesNotMatch(c.context, /étonn|surpri/, c.context);
+  }
+});
