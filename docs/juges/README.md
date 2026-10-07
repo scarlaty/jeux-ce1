@@ -3,6 +3,11 @@
 Un **juge** est un agent de relecture lancé sur une branche terminée, avant la fusion dans `main`.
 Il ne code pas. Il mesure, et il rend un verdict argumenté.
 
+> **Statut : en rodage.** Les grilles ne sont **pas encore** inscrites dans la méthode de `CLAUDE.md`.
+> On les éprouve d'abord sur de vraies branches : elles vont laisser passer des choses, et c'est en
+> corrigeant ce qu'elles ont manqué qu'elles deviendront utiles. Elles n'entreront dans la méthode
+> qu'une fois qu'elles auront attrapé des défauts que la relecture seule n'avait pas vus. Suivi : #101.
+
 Ces grilles sont nées des défauts réellement trouvés sur ce projet. Elles ne sont pas théoriques :
 chaque critère vient d'un bug qui est passé au travers des tests.
 
@@ -61,9 +66,13 @@ Les juges tournent **en parallèle** : ils sont indépendants les uns des autres
 
 Chaque juge rend :
 
-- **Bloquant** — un défaut qui atteindrait l'enfant. Pas de fusion avant correction.
+- **Bloquant** — un défaut qui atteindrait l'enfant.
 - **À corriger** — réel mais non bloquant. Fusion possible, issue créée dans la foulée.
 - **Observation** — ni l'un ni l'autre. Reste dans le rapport, ne crée rien.
+
+**Un verdict « bloquant » est un avis, pas un veto.** C'est l'orchestrateur qui tranche et qui en
+répond. Un juge mal calibré, ou qui s'est trompé, ne doit pas pouvoir paralyser le projet — et un
+orchestrateur qui passe outre doit écrire pourquoi dans le commentaire de fusion.
 
 Chaque point porte **la mesure qui l'établit** et, s'il est bloquant ou à corriger, **le test à écrire**.
 
