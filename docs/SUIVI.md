@@ -46,6 +46,7 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 | Qui | Issue | Branche |
 |---|---|---|
 | Claude (session scarlaty) | #35 La phrase | `feat/35-la-phrase` |
+| Claude (session scarlaty) | #80 Les règles de vie | `feat/80-regles-de-vie` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
