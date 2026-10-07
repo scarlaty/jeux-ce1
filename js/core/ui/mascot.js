@@ -27,6 +27,11 @@ export function islandFace(open) {
   return open ? 'happy' : 'sleepy';
 }
 
+/** Expression dans l'album : très contente quand toutes les gommettes de l'île sont gagnées. Pure. */
+export function albumFace(owned, total) {
+  return total > 0 && owned >= total ? 'joyful' : 'happy';
+}
+
 /**
  * Conteneur `<span class="mascot">` avec le dessin de la mascotte d'une île, ou null.
  * `loop` : 'bounce' | 'float' (accueil, fin de partie, album — jamais à côté d'une consigne).

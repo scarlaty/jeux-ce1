@@ -394,3 +394,6 @@
   .mascot-row { gap: var(--space-2); }
   .mascot-row .mascot { width: 72px; }
 }
+
+/* Album : la mascotte de chaque île veille sur sa collection (immobile : une page à parcourir). */
+.album-island__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }

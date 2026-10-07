@@ -1,7 +1,7 @@
 // Mascottes sur les écrans (#89) : le choix de l'expression est pur et ne rend jamais triste.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { hasMascot, endFace, answerReaction, islandFace } from '../js/core/ui/mascot.js';
+import { hasMascot, endFace, answerReaction, islandFace, albumFace } from '../js/core/ui/mascot.js';
 import { FACES, ONE_SHOTS } from '../js/core/ui/art/kawaii.js';
 import { ISLANDS } from '../js/games/registry.js';
 
@@ -27,6 +27,13 @@ test('réaction à une réponse : saut de joie ou encouragement, jamais triste',
     assert.ok(FACES.includes(r.face));
     assert.ok(ONE_SHOTS.includes(r.motion));
   }
+});
+
+test('album : très contente quand la collection de l\'île est complète', () => {
+  assert.equal(albumFace(10, 10), 'joyful');
+  assert.equal(albumFace(3, 10), 'happy');
+  assert.equal(albumFace(0, 10), 'happy');
+  assert.equal(albumFace(0, 0), 'happy');
 });
 
 test('carte : la mascotte dort tant que son île est fermée', () => {
