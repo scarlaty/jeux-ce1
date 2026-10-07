@@ -1,7 +1,7 @@
 # Jeux CE1 — guide de développement
 
 Mini-jeux éducatifs couvrant le programme officiel de CE1 (programmes 2024, BO n°41 du 31/10/2024),
-pour une enfant de 7 ans, sur tablette (tactile) et PC (souris).
+pour les enfants de 7 ans, filles et garçons, sur tablette (tactile) et PC (souris).
 Publié sur GitHub Pages : https://scarlaty.github.io/jeux-ce1/ — backlog : issues + jalons (E0…E14) du dépôt.
 
 ## ⚠️ Avant de coder quoi que ce soit : règle anti-doublon
@@ -34,6 +34,11 @@ de cette règle, le profil, les récompenses et « Les sons » ont été dévelo
   Vocabulaire adapté à 7 ans, phrases courtes, consignes à l'impératif (« Touche le mot qui… »).
 - **Bienveillance.** Jamais de message négatif (« Faux ! »). Après une erreur : la bonne réponse +
   une explication courte ou une astuce. Pas de chrono punitif.
+- **Mixité.** Les jeux s'adressent aux filles comme aux garçons. Tout ce que le jeu dit à l'enfant
+  (« tu… ») ou lui fait dire (« je… ») est épicène : jamais « tu es prête », « je suis content »,
+  « pour ne pas être mêlé » — reformuler (« Bravo ! », « je le félicite »). Les personnages des
+  questions sont variés (prénoms de filles et de garçons, rôles non stéréotypés), et leurs accords
+  suivent leur propre genre. Le juge pédagogie le vérifie.
 - **Vie privée.** Rien n'est envoyé sur le réseau. Pas d'analytics, pas de cookies.
 
 ## Arborescence

@@ -128,3 +128,9 @@ Pour chaque point : **la mesure**, puis le verdict.
 
 Pour chaque point bloquant ou à corriger : **le test à écrire** pour qu'il ne revienne pas.
 Les helpers existent déjà (`tests/helpers/game-checks.js`) — dis lequel étendre.
+
+
+## Mixité (ajout du 07/10)
+
+- [ ] tout texte adressé à l'enfant (« tu ») ou mis dans sa bouche (« je ») est épicène : **compter** les accords genrés (« je suis content », « tu es prête », « mêlé ») sur toute la banque et les textes du jeu ;
+- [ ] les personnages sont mixtes et sans stéréotype (rôles, métiers, goûts) : **compter** la répartition filles / garçons et relever les rôles stéréotypés.

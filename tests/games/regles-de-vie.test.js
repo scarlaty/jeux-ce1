@@ -148,7 +148,7 @@ test('« Un adulte te parle » n\'apparaît pas sans rôle', () => {
 
 test('aucune réponse n\'impose un accord au masculin à la joueuse', () => {
   for (const i of everyItem()) {
-    for (const r of [i.right, ...i.wrong]) assert.ok(!/Je suis (content|prêt|seul|ravi|heureux)\b/.test(r), r);
+    for (const r of [i.right, ...i.wrong]) assert.ok(!/\bje (suis|me sens|reste) (content|prêt|seul|ravi|heureux|fier|fâché|désolé|gêné|surpris)e?\b|être (mêlé|gêné|puni)e?\b/i.test(r), r);
   }
 });
 
