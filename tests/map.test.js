@@ -9,8 +9,11 @@ import {
   archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, SHORT_TITLES,
 } from '../js/core/map.js';
 import { GAMES, ISLANDS } from '../js/games/registry.js';
+import { themes, contrast } from './helpers/tokens.js';
 import { PROPS } from '../js/core/ui/art/scenery.js';
-import { ISLAND_TRIM } from '../js/core/ui/map-scene.js';
+import {
+  ISLAND_TRIM, PROP_TOP, islandExtent, tipPlacement, estimateText,
+} from '../js/core/ui/map-scene.js';
 
 const boxesOverlap = (a, b) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -257,4 +260,89 @@ test('la zone sûre est bien dans la scène', () => {
   assert.ok(SAFE.x + SAFE.width <= SCENE.width);
   assert.ok(SAFE.y + SAFE.height <= SCENE.height);
   assert.ok(PLACE_HEIGHT > 0);
+});
+
+// --- Le panneau de nom ne recouvre jamais l'île qu'il nomme (#103) -------------------------------
+//
+// Il était ancré sur le haut de l'ellipse d'herbe ; les palmiers de l'île aux Mots montent bien
+// au-dessus (haut réel 90,6 contre 117) et le panneau retombait dedans à 30,5 %.
+
+const openIsland = { unlocked: true, starsLeft: 0, earned: 54, possible: 54, stickers: 10, total: 10, games: 6 };
+const lockedIsland = { unlocked: false, starsLeft: 15, earned: 0, possible: 9, stickers: 0, total: 10, games: 1 };
+
+test('chaque objet du semis a une hauteur connue (sinon l\'extension d\'une île est sous-estimée)', () => {
+  for (const [id, trim] of Object.entries(ISLAND_TRIM)) {
+    for (const [prop] of trim) assert.ok(PROP_TOP[prop] > 0, `${id} : hauteur de « ${prop} » inconnue`);
+  }
+});
+
+test('l\'extension réelle d\'une île dépasse le haut de son herbe quand le semis monte plus haut', () => {
+  const [mots] = archipelago(ISLANDS.filter((i) => i.id === 'mots'), () => openIsland);
+  const { top } = islandExtent(mots);
+  assert.ok(top < mots.cy - mots.ry - 15, `les palmes de l'île aux Mots montent à ${top}`);
+  for (const entry of archipelago(ISLANDS, () => openIsland)) {
+    assert.ok(islandExtent(entry).top <= entry.cy - entry.ry, `${entry.id} : l'extension rétrécit`);
+    assert.ok(islandExtent(entry).bottom > entry.cy, `${entry.id} : la flottaison est sous l'île`);
+  }
+});
+
+test('le panneau de nom ne recouvre aucune île, ouverte ou fermée, au-dessus comme replié dessous', () => {
+  for (const data of [openIsland, lockedIsland]) {
+    for (const entry of archipelago(ISLANDS, () => data)) {
+      const extent = islandExtent(entry);
+      const anchor = {
+        x: entry.cx, top: extent.top, under: waterline(entry) + ISLAND_BADGE.height + 6,
+        point: entry.cy - entry.ry * 0.3,
+      };
+      const box = tipPlacement(anchor, estimateText(entry.name, 7), estimateText(entry.meta, 5.4));
+      const body = { x: entry.hit.x, y: extent.top, width: entry.hit.width, height: extent.bottom - extent.top };
+      assert.ok(!boxesOverlap(box, body),
+        `${entry.id} : le panneau (${box.y}→${box.y + box.height}) recouvre l'île (${extent.top}→${extent.bottom})`);
+      if (!box.under) assert.ok(box.y + box.height <= extent.top, `${entry.id} : le panneau doit finir avant le haut de l'île`);
+    }
+  }
+});
+
+// --- Contraste (#102) : calculé depuis css/tokens.css, dans les deux thèmes -----------------------
+//
+// WCAG 1.4.11 : un indicateur de focus et un symbole d'état tiennent au moins 3:1 sur leur fond.
+// `.sc-link { outline: none }` ne laisse aucun repli natif : l'anneau dessiné est le SEUL repère.
+
+const MAP_BACKGROUNDS = [
+  '--sea-deep', '--sea', '--sea-shallow', '--land-grass', '--land-grass-light', '--land-grass-deep', '--land-sand',
+];
+const bothThemes = () => {
+  const { light, dark } = themes();
+  return [['clair', light], ['ardoise', dark]];
+};
+
+test('l\'anneau de focus (liseré + trait) tient 3:1 sur chaque fond réel de la carte, en clair et en ardoise', () => {
+  for (const [theme, vars] of bothThemes()) {
+    const [rim, ink] = [vars['--map-focus-rim'], vars['--map-focus-ink']];
+    assert.match(rim, /^#[0-9a-f]{6}$/i, `${theme} : --map-focus-rim manquant`);
+    assert.match(ink, /^#[0-9a-f]{6}$/i, `${theme} : --map-focus-ink manquant`);
+    assert.ok(contrast(rim, ink) >= 3, `${theme} : le liseré et le trait se confondent (${contrast(rim, ink).toFixed(2)})`);
+    for (const name of MAP_BACKGROUNDS) {
+      const best = Math.max(contrast(rim, vars[name]), contrast(ink, vars[name]));
+      assert.ok(best >= 3, `${theme} : l'anneau sur ${name} = ${best.toFixed(2)}:1 (< 3:1)`);
+    }
+  }
+});
+
+test('les deux blocs ardoise (automatique et forcé) portent les mêmes tokens de la carte', () => {
+  const { darkAuto, darkForced } = themes();
+  for (const name of ['--map-focus-rim', '--map-focus-ink', '--map-star', '--map-star-edge']) {
+    assert.ok(darkAuto[name], `${name} manque dans le thème sombre automatique`);
+    assert.equal(darkAuto[name], darkForced[name], `${name} diffère entre les deux blocs sombres`);
+  }
+});
+
+test('une étoile gagnée ressort mieux qu\'une étoile vide sur la planchette, en clair et en ardoise', () => {
+  for (const [theme, vars] of bothThemes()) {
+    const board = vars['--kawaii-creme'];
+    const earned = contrast(vars['--map-star-edge'], board);
+    const empty = contrast(vars['--star-empty-edge'], board);
+    assert.ok(earned >= 3, `${theme} : le contour de l'étoile gagnée = ${earned.toFixed(2)}:1 (< 3:1)`);
+    assert.ok(earned > empty, `${theme} : l'étoile vide (${empty.toFixed(2)}) ressort plus que la gagnée (${earned.toFixed(2)})`);
+  }
 });

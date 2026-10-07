@@ -331,10 +331,37 @@ export const ISLAND_TRIM = {
   ],
 };
 
+/**
+ * Hauteur de chaque objet du semis au-dessus de son point de contact, à l'échelle 1 (unités du
+ * dessin). Relevée avec `getBBox` sur les objets de `art/scenery.js` : un palmier monte à 57, un
+ * galet à 5. Sans elle, on ne connaît que la forme de l'herbe, pas le haut VISUEL d'une île (#103).
+ */
+export const PROP_TOP = {
+  palm: 57.1, tree: 31, bush: 11.7, flower: 14.4, tuft: 7.4, pebble: 5.4, rock: 12.7,
+  shell: 9.4, starfish: 9.5, mushroom: 11.4, lantern: 16.6, tent: 21,
+};
+
+/** Échelle du semis d'une île : le même calcul pose les objets (`islandTrim`) et les mesure. */
+const trimScale = ({ rx }) => Math.min(1, rx / 42) * 0.92;
+
+/**
+ * Extension verticale RÉELLE d'une île : du plus haut sommet (corps ou objet du semis) à la ligne
+ * de flottaison. Pure. C'est elle, et non le haut de l'ellipse d'herbe, qui ancre le panneau de nom.
+ */
+export function islandExtent(entry) {
+  const { cy, ry, id } = entry;
+  const s = trimScale(entry);
+  let top = cy - ry;
+  for (const [prop, , v, scale] of ISLAND_TRIM[id] || ISLAND_TRIM.mots) {
+    top = Math.min(top, cy + ry * v - (PROP_TOP[prop] || 0) * scale * s);
+  }
+  return { top: r2(top), bottom: waterline(entry) };
+}
+
 /** Le petit décor posé sur une île de l'archipel : il change avec sa taille, jamais vide. */
 function islandTrim(entry, scene) {
   const { cx, cy, rx, ry, id } = entry;
-  const s = Math.min(1, rx / 42) * 0.92;
+  const s = trimScale(entry);
   const items = (ISLAND_TRIM[id] || ISLAND_TRIM.mots).map(([prop, u, v, scale, flip, tint]) => ({
     id: prop,
     x: r2(cx + rx * u),
@@ -400,6 +427,7 @@ function archipelagoIsland(entry, scene) {
     cx, cy: r2(cy + ry * 0.2), rx: r2(rx + 5), ry: r2(ry * 1.5 + 6), class: 'sc-halo',
   }),
   body,
+  n('rect', { ...hit, rx: 10, class: 'sc-halo-rim' }),
   n('rect', { ...hit, rx: 10, class: 'sc-halo-box' }),
   islandBadge(entry, scene));
 }
@@ -417,7 +445,7 @@ function islandTip(entry) {
     where: entry.meta,
     anchor: {
       x: entry.cx,
-      top: r2(entry.cy - entry.ry),
+      top: islandExtent(entry).top,
       under: r2(waterline(entry) + ISLAND_BADGE.height + 6),
       point: r2(entry.cy - entry.ry * 0.3),
     },
@@ -643,6 +671,7 @@ function placeNode(place, scene) {
   n('rect', { ...slot.hit, rx: 8, class: 'sc-hit' }),
   // Halo au sol : il souligne le lieu survolé sans redessiner une case rectangulaire.
   ell(slot.x, r2(slot.y + 1), r2(slot.hit.width * 0.42), r2(slot.hit.width * 0.15), 'sc-spot'),
+  n('rect', { ...slot.hit, rx: 8, class: 'sc-halo-rim' }),
   n('rect', { ...slot.hit, rx: 8, class: 'sc-halo-box' }),
   n('g', { class: 'sc-place-art', 'aria-hidden': 'true' },
     use(place.kind, { scene, x: slot.x, y: slot.y, scale: r2(slot.scale * fit) })),
@@ -698,7 +727,27 @@ function textBox(node, size) {
     const box = node.getBBox();
     if (box.width > 0 && box.height > 0) return { width: box.width, height: box.height };
   } catch { /* pas encore rendu */ }
-  return { width: (node.textContent || '').length * size * 0.52, height: size * 1.2 };
+  return estimateText(node.textContent, size);
+}
+
+/** Encombrement estimé d'un texte quand le SVG n'est pas rendu (et dans les tests). Pur. */
+export const estimateText = (text, size) => ({ width: (text || '').length * size * 0.52, height: size * 1.2 });
+
+/**
+ * Où tombe le panneau : sa boîte `{ x, y, width, height }` et s'il est replié sous l'île. Pur —
+ * `show` s'en sert avec les mesures réelles, `tests/map.test.js` avec l'estimation.
+ */
+export function tipPlacement(anchor, top, sub) {
+  const width = r2(Math.min(174, Math.max(top.width, sub.width, 34) + TIP_PAD.x * 2));
+  const height = r2(TIP_PAD.y * 2 + top.height + TIP_GAP + sub.height);
+  // Au-dessus du décor, et replié dessous si le haut de la scène manque de place. Le panneau
+  // reste dans la ZONE SÛRE : au-delà, le cadrage portrait d'un téléphone le couperait.
+  const above = anchor.top - height - 5;
+  const under = above < SAFE.y;
+  const y = r2(under ? Math.min(anchor.under, SAFE.y + SAFE.height - height) : above);
+  const room = SAFE.x + SAFE.width + 2 - width;
+  const x = r2(Math.min(Math.max(room, SAFE.x - 2), Math.max(SAFE.x - 2, anchor.x - width / 2)));
+  return { x, y, width, height, under };
 }
 
 /**
@@ -729,15 +778,7 @@ function wireTips(svg, targets, { selector = '.sc-place', key = 'place' } = {}) 
     parts.where.textContent = target.where;
     const top = textBox(parts.name, 7);
     const sub = textBox(parts.where, 5.4);
-    const width = r2(Math.min(174, Math.max(top.width, sub.width, 34) + TIP_PAD.x * 2));
-    const height = r2(TIP_PAD.y * 2 + top.height + TIP_GAP + sub.height);
-    // Au-dessus du décor, et replié dessous si le haut de la scène manque de place. Le panneau
-    // reste dans la ZONE SÛRE : au-delà, le cadrage portrait d'un téléphone le couperait.
-    const above = anchor.top - height - 5;
-    const under = above < SAFE.y;
-    const y = r2(under ? Math.min(anchor.under, SAFE.y + SAFE.height - height) : above);
-    const room = SAFE.x + SAFE.width + 2 - width;
-    const x = r2(Math.min(Math.max(room, SAFE.x - 2), Math.max(SAFE.x - 2, anchor.x - width / 2)));
+    const { x, y, width, height, under } = tipPlacement(anchor, top, sub);
     for (const box of [parts.shadow, parts.board, parts.line]) {
       box.setAttribute('x', x);
       box.setAttribute('y', box === parts.shadow ? r2(y + 1.4) : y);
