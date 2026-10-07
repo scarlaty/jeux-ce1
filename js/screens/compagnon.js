@@ -314,7 +314,8 @@ export default {
       const adoption = companion.hatched && adoptionCard();
       const teaser = companion.hatched && !adoption && COMPANION_ANIMALS.find((a) => a.unlock > companion.stars);
       const accessories = (companion.hatched || chest.accessories.length) ? accessoriesSection(art) : null;
-      root.replaceChildren(
+      // replaceChildren (natif) écrirait « null » : on filtre les parties absentes.
+      root.replaceChildren(...[
         h('div', { class: 'card pet__card' },
           art,
           h('h1', { class: 'page-title pet__name', text: name }),
@@ -329,7 +330,8 @@ export default {
         teaser ? h('p', { class: 'pet__teaser cursive', text: `${teaser.label} arrive à ${teaser.unlock} étoiles (encore ${teaser.unlock - companion.stars}).` }) : null,
         edit || null,
         h('div', { class: 'end__actions pet__actions' },
-          h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' }))));
+          h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' }))),
+      ].filter(Boolean));
     }
 
     function show() {
