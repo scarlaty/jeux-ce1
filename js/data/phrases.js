@@ -172,8 +172,8 @@ export const ORDER_2 = [
   'Nous avons un chat.', 'Tu as une belle robe.', 'Le boulanger vend du pain.', 'Lola range sa chambre.',
   'Le singe mange une banane.', 'Les enfants dessinent un soleil.', 'Mamie tricote une écharpe.',
   'Tom lance le ballon.', 'Papa lave la voiture.',
-  'Où est mon cartable ?', 'Où est ma trousse ?', 'Qui a pris mon crayon ?', 'Aimes-tu les fraises ?',
-  'Veux-tu jouer avec moi ?', 'As-tu un crayon rouge ?', 'Est-ce que tu as faim ?', 'Vas-tu à l\'école ?',
+  'Où est mon cartable ?', 'Où est ma trousse ?', 'Qui a pris mon crayon ?', 'Aimes-tu manger des fraises ?',
+  'Veux-tu venir jouer avec moi ?', 'As-tu un crayon rouge ?', 'Est-ce que tu as faim ?', 'Vas-tu à la grande piscine ?',
   'Comme il fait froid !', 'Comme ce bébé est mignon !', 'Que ce chien est gros !', 'Comme tu es grand !',
   'Comme ta robe est jolie !', 'Comme ce gâteau est bon !', 'Quelle belle glace tu manges !',
 ];
@@ -195,8 +195,8 @@ export const ORDER_3 = [
   'Papa ne mange pas de fromage.', 'Léa a mis sa robe rouge.', 'Je vais manger une pomme verte.',
   'Tu vas jouer avec ta sœur.', 'Nous ne jouons pas dans la cour.', 'Mon chien ne mange pas ses croquettes.',
   'Léa dessine un gros soleil jaune.',
-  'Est-ce que tu as un crayon rouge ?', 'Veux-tu venir jouer avec moi ?', 'Est-ce que tu veux une pomme ?',
-  'Est-ce que ta sœur aime les pommes ?', 'As-tu mangé une pomme verte ?',
+  'Est-ce que tu as un crayon rouge ?', 'Est-ce que tu as mangé une pomme ?', 'Est-ce que tu veux une pomme ?',
+  'Est-ce que ta sœur aime les pommes ?', 'Est-ce que tu veux manger une pomme ?',
   'Comme ton petit chat est mignon !', 'Comme ma petite sœur est gentille !', 'Quel beau gâteau tu as fait !',
   'Quel gros poisson tu as pêché !', 'Comme ce petit chien est drôle !', 'Que ma petite sœur est drôle !',
 ];

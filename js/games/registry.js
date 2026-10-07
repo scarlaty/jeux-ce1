@@ -63,6 +63,13 @@ export const GAMES = [
     load: () => import('./devinettes.js'),
   },
   {
+    id: 'phrase',
+    title: 'La phrase',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./phrase.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
