@@ -11,7 +11,16 @@ import { MOTS_FREQUENTS, sameSound } from '../data/mots-frequents.js';
 /** Images qu'une enfant pourrait confondre : jamais côte à côte. */
 const CONFUSABLE = [['main', 'doigt'], ['jambe', 'main'], ['poule', 'poussin'], ['coq', 'poule'], ['canard', 'oiseau'],
   ['moto', 'vélo'], ['arbre', 'plante'], ['chapeau', 'écharpe'], ['pastèque', 'melon'], ['cactus', 'plante'],
-  ['coq', 'poussin'], ['dent', 'bouche'], ['soleil', 'feu']];
+  ['coq', 'poussin'], ['dent', 'bouche'], ['soleil', 'feu'],
+  // Une image « contient » l'autre (un sapin est un arbre, une rose une fleur, un hibou un oiseau…) ou lui ressemble.
+  ['sapin', 'arbre'], ['sapin', 'plante'], ['rose', 'fleur'], ['rose', 'plante'], ['fleur', 'plante'],
+  ['hibou', 'oiseau'], ['cygne', 'oiseau'], ['cygne', 'canard'], ['poule', 'oiseau'], ['coq', 'oiseau'],
+  ['poussin', 'oiseau'], ['dinde', 'oiseau'], ['dinde', 'coq'], ['dinde', 'poule'], ['hibou', 'écureuil'],
+  ['mouche', 'moustique'], ['loup', 'chien'], ['renard', 'chien'], ['loup', 'renard'], ['ours', 'panda'],
+  ['cheval', 'licorne'], ['dauphin', 'requin'], ['cochon', 'sanglier'], ['tomate', 'poivron'], ['tomate', 'cerise'],
+  ['cerise', 'fraise'], ['orange', 'citron'], ['orange', 'pêche'], ['tente', 'maison'], ['château', 'maison'],
+  ['glace', 'glaçon'], ['gâteau', 'chocolat'], ['gâteau', 'pain'], ['ananas', 'avocat'], ['serpent', 'dragon'],
+  ['crocodile', 'dragon'], ['chat', 'tigre'], ['chameau', 'cheval'], ['fée', 'licorne'], ['étoile', 'lune']];
 const confusable = (a, b) => CONFUSABLE.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 
 const WITH_IMAGE = SYLLABLE_WORDS.filter((w) => w.emoji);
