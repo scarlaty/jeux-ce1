@@ -427,6 +427,7 @@ function archipelagoIsland(entry, scene) {
     cx, cy: r2(cy + ry * 0.2), rx: r2(rx + 5), ry: r2(ry * 1.5 + 6), class: 'sc-halo',
   }),
   body,
+  n('rect', { ...hit, rx: 10, class: 'sc-halo-rim' }),
   n('rect', { ...hit, rx: 10, class: 'sc-halo-box' }),
   islandBadge(entry, scene));
 }
@@ -670,6 +671,7 @@ function placeNode(place, scene) {
   n('rect', { ...slot.hit, rx: 8, class: 'sc-hit' }),
   // Halo au sol : il souligne le lieu survolé sans redessiner une case rectangulaire.
   ell(slot.x, r2(slot.y + 1), r2(slot.hit.width * 0.42), r2(slot.hit.width * 0.15), 'sc-spot'),
+  n('rect', { ...slot.hit, rx: 8, class: 'sc-halo-rim' }),
   n('rect', { ...slot.hit, rx: 8, class: 'sc-halo-box' }),
   n('g', { class: 'sc-place-art', 'aria-hidden': 'true' },
     use(place.kind, { scene, x: slot.x, y: slot.y, scale: r2(slot.scale * fit) })),

@@ -213,6 +213,13 @@
   --stone-deep: #8d8099;
   --map-glow: #ffe49a;
   --map-haze: #fbf8f1;          /* brume des îles lointaines (couleur du papier) */
+  /* Anneau de focus des îles et des lieux : DEUX traits, un liseré clair sous un trait sombre.
+     Aucun trait seul ne tient 3:1 sur la mer, l'herbe et le sable à la fois ; la paire, si (#102). */
+  --map-focus-rim: #ffffff;
+  --map-focus-ink: #3a1f2d;
+  /* Étoiles de la planchette crème : l'étoile gagnée doit ressortir plus que la vide (#102). */
+  --map-star: #f5b700;
+  --map-star-edge: #9a6a00;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -335,6 +342,10 @@
     --stone-deep: #6c6379;
     --map-glow: #ffdf8c;
     --map-haze: #27322f;
+    --map-focus-rim: #d6e9f6;
+    --map-focus-ink: #2a1520;
+    --map-star: #f0a800;
+    --map-star-edge: #6b4400;
   }
 }
 
@@ -454,6 +465,10 @@
   --stone-deep: #6c6379;
   --map-glow: #ffdf8c;
   --map-haze: #27322f;
+  --map-focus-rim: #d6e9f6;
+  --map-focus-ink: #2a1520;
+  --map-star: #f0a800;
+  --map-star-edge: #6b4400;
 }
 
 /* Couleur de l'île courante : un conteneur porte data-island="…" et ses enfants utilisent --island*. */

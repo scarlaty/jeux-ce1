@@ -281,11 +281,22 @@
 .sc-link { cursor: pointer; outline: none; }
 .sc-link:hover .sc-halo { opacity: 1; }
 .sc-link:hover .sc-spot { opacity: .45; }
-.sc-link:focus-visible .sc-halo,
+/* Au clavier : un DOUBLE anneau, liseré clair large sous un trait sombre. Un trait seul (le rose de
+   --focus) tombait à 1,1:1 sur le sable de l'ardoise ; la paire tient 3:1 sur chaque fond de la
+   carte, dans les deux thèmes (tests/map.test.js, tokens --map-focus-*). `outline: none` ci-dessus
+   ne laisse aucun repli natif : cet anneau est le seul indicateur. */
+.sc-halo-rim {
+  fill: none;
+  stroke: var(--map-focus-rim);
+  stroke-width: 5.6;
+  opacity: 0;
+}
+.sc-link:focus-visible .sc-halo { opacity: 1; }
+.sc-link:focus-visible .sc-halo-rim { opacity: 1; }
 .sc-link:focus-visible .sc-halo-box {
   opacity: 1;
-  stroke: var(--focus);
-  stroke-width: 3.4;
+  stroke: var(--map-focus-ink);
+  stroke-width: 2.6;
 }
 /* Le lieu désigné se soulève d'un cheveu : c'est le seul mouvement de la scène qui réagisse au
    doigt, et il ne porte aucune information (le halo et le panneau de nom s'en chargent). */
@@ -356,7 +367,7 @@
 }
 
 /* ---------- Étoiles ---------- */
-.sc-star { fill: var(--star); stroke: var(--star-edge); stroke-width: .5; }
+.sc-star { fill: var(--map-star); stroke: var(--map-star-edge); stroke-width: .6; }
 /* Étoile pas encore gagnée : creuse. Un aplat se lirait comme une étoile d'une autre couleur. */
 .sc-star-empty { fill: none; stroke: var(--star-empty-edge); stroke-width: .9; }
 

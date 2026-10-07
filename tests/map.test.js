@@ -9,6 +9,7 @@ import {
   archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, SHORT_TITLES,
 } from '../js/core/map.js';
 import { GAMES, ISLANDS } from '../js/games/registry.js';
+import { themes, contrast } from './helpers/tokens.js';
 import { PROPS } from '../js/core/ui/art/scenery.js';
 import {
   ISLAND_TRIM, PROP_TOP, islandExtent, tipPlacement, estimateText,
@@ -299,5 +300,49 @@ test('le panneau de nom ne recouvre aucune île, ouverte ou fermée, au-dessus c
         `${entry.id} : le panneau (${box.y}→${box.y + box.height}) recouvre l'île (${extent.top}→${extent.bottom})`);
       if (!box.under) assert.ok(box.y + box.height <= extent.top, `${entry.id} : le panneau doit finir avant le haut de l'île`);
     }
+  }
+});
+
+// --- Contraste (#102) : calculé depuis css/tokens.css, dans les deux thèmes -----------------------
+//
+// WCAG 1.4.11 : un indicateur de focus et un symbole d'état tiennent au moins 3:1 sur leur fond.
+// `.sc-link { outline: none }` ne laisse aucun repli natif : l'anneau dessiné est le SEUL repère.
+
+const MAP_BACKGROUNDS = [
+  '--sea-deep', '--sea', '--sea-shallow', '--land-grass', '--land-grass-light', '--land-grass-deep', '--land-sand',
+];
+const bothThemes = () => {
+  const { light, dark } = themes();
+  return [['clair', light], ['ardoise', dark]];
+};
+
+test('l\'anneau de focus (liseré + trait) tient 3:1 sur chaque fond réel de la carte, en clair et en ardoise', () => {
+  for (const [theme, vars] of bothThemes()) {
+    const [rim, ink] = [vars['--map-focus-rim'], vars['--map-focus-ink']];
+    assert.match(rim, /^#[0-9a-f]{6}$/i, `${theme} : --map-focus-rim manquant`);
+    assert.match(ink, /^#[0-9a-f]{6}$/i, `${theme} : --map-focus-ink manquant`);
+    assert.ok(contrast(rim, ink) >= 3, `${theme} : le liseré et le trait se confondent (${contrast(rim, ink).toFixed(2)})`);
+    for (const name of MAP_BACKGROUNDS) {
+      const best = Math.max(contrast(rim, vars[name]), contrast(ink, vars[name]));
+      assert.ok(best >= 3, `${theme} : l'anneau sur ${name} = ${best.toFixed(2)}:1 (< 3:1)`);
+    }
+  }
+});
+
+test('les deux blocs ardoise (automatique et forcé) portent les mêmes tokens de la carte', () => {
+  const { darkAuto, darkForced } = themes();
+  for (const name of ['--map-focus-rim', '--map-focus-ink', '--map-star', '--map-star-edge']) {
+    assert.ok(darkAuto[name], `${name} manque dans le thème sombre automatique`);
+    assert.equal(darkAuto[name], darkForced[name], `${name} diffère entre les deux blocs sombres`);
+  }
+});
+
+test('une étoile gagnée ressort mieux qu\'une étoile vide sur la planchette, en clair et en ardoise', () => {
+  for (const [theme, vars] of bothThemes()) {
+    const board = vars['--kawaii-creme'];
+    const earned = contrast(vars['--map-star-edge'], board);
+    const empty = contrast(vars['--star-empty-edge'], board);
+    assert.ok(earned >= 3, `${theme} : le contour de l'étoile gagnée = ${earned.toFixed(2)}:1 (< 3:1)`);
+    assert.ok(earned > empty, `${theme} : l'étoile vide (${empty.toFixed(2)}) ressort plus que la gagnée (${earned.toFixed(2)})`);
   }
 });
