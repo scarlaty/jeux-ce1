@@ -15,10 +15,12 @@
   border: 3px solid var(--border);
   background: var(--sea-deep);
   box-shadow: 0 6px 0 var(--shadow);
-  /* Les plaques de nom : leur taille est en unités du dessin, donc elle grandit avec la scène.
+  /* Les textes de la scène : leur taille est en unités du dessin, donc elle grandit avec la scène.
      Sur téléphone, le cadrage portrait zoome déjà ; on remonte un peu la graisse du texte. */
   --map-name: 5.9px;
   --map-meta: 5px;
+  --map-tip: 7px;
+  --map-tip-sub: 5.4px;
   overflow: hidden;
   touch-action: manipulation;
 }
@@ -28,6 +30,8 @@
     aspect-ratio: 200 / 212;
     --map-name: 6.8px;
     --map-meta: 5.8px;
+    --map-tip: 8.4px;
+    --map-tip-sub: 6.4px;
   }
 }
 
@@ -51,6 +55,10 @@
   stroke-linecap: round;
   opacity: .7;
 }
+/* L'écume de l'horizon : une ligne claire posée SOUS le bord de la mer lointaine. Avec la brume,
+   c'est ce qui remplace la démarcation au cordeau entre le ciel et l'eau. */
+.sc-foam--far { stroke-width: .9; opacity: .4; }
+.sc-haze { fill: var(--map-haze); opacity: .5; }
 
 /* ---------- Le volume d'une île : quatre couches, pas un aplat ---------- */
 .sc-cast { fill: var(--kawaii-shadow); }
@@ -74,16 +82,17 @@
 .sc-trail {
   fill: none;
   stroke: var(--land-sand-deep);
-  stroke-width: 9;
+  stroke-width: 6.4;
   stroke-linecap: round;
-  opacity: .7;
+  opacity: .55;
 }
 .sc-trail-top {
   fill: none;
   stroke: var(--land-sand);
-  stroke-width: 5;
+  stroke-width: 3.4;
   stroke-linecap: round;
-  stroke-dasharray: .1 7;
+  stroke-dasharray: .1 6;
+  opacity: .9;
 }
 
 /* ---------- Contours : le marqueur n°1 du style ----------
@@ -183,7 +192,7 @@
 .sc-mill-sails { opacity: 1; }
 .sc-glow-fill { fill: var(--map-glow); }
 .sc-glow-light { fill: var(--kawaii-citron-light); }
-.sc-beam { opacity: .4; }
+.sc-beam { opacity: .28; }
 .sc-echo {
   fill: none;
   stroke: var(--kawaii-citron-light);
@@ -223,8 +232,16 @@
 .sc-island.is-locked { opacity: .62; cursor: default; }
 .sc-island.is-locked .sc-plaque-name { fill: var(--ink-faint); }
 
-/* ---------- Lieux : zones touchables et surbrillance ---------- */
+/* ---------- Lieux : zones touchables et surbrillance ----------
+   La zone cliquable, c'est le DÉCOR : un rectangle invisible l'enveloppe, et rien ne se dessine
+   dessus. Au survol, un halo au sol désigne le lieu (jamais un cadre : un cadre rendrait la
+   grille de boutons qu'on vient d'enlever). Au clavier, en revanche, il faut une cible nette :
+   le focus garde donc un contour rectangulaire, qui ne s'affiche que là. */
 .sc-hit { fill: transparent; }
+.sc-spot {
+  fill: var(--kawaii-shine);
+  opacity: 0;
+}
 .sc-halo,
 .sc-halo-box {
   fill: none;
@@ -233,17 +250,69 @@
   opacity: 0;
 }
 .sc-link { cursor: pointer; outline: none; }
-.sc-link:hover .sc-halo,
-.sc-link:hover .sc-halo-box,
-.sc-link:focus-visible .sc-halo,
-.sc-link:focus-visible .sc-halo-box { opacity: 1; }
+.sc-link:hover .sc-halo { opacity: 1; }
+.sc-link:hover .sc-spot { opacity: .45; }
 .sc-link:focus-visible .sc-halo,
 .sc-link:focus-visible .sc-halo-box {
+  opacity: 1;
   stroke: var(--focus);
   stroke-width: 3.4;
 }
 .sc-link:hover .sc-plaque-board,
 .sc-link:focus-visible .sc-plaque-board { fill: var(--kawaii-creme-light); }
+/* Le lieu désigné se soulève d'un cheveu : c'est le seul mouvement de la scène qui réagisse au
+   doigt, et il ne porte aucune information (le halo et le panneau de nom s'en chargent). */
+.sc-place-art { transition: transform .18s ease-out; }
+.sc-link:hover .sc-place-art,
+.sc-link:focus-visible .sc-place-art { transform: translateY(-2px); }
+
+/* ---------- Le repère d'étoiles d'un lieu ----------
+   Tout ce que la scène affiche en permanence pour un lieu : une pastille de bois grande comme un
+   galet, plantée dans l'herbe À CÔTÉ du décor. Le nom vit dans le panneau de survol et dans la
+   liste HTML sous la scène. */
+.sc-badge-board { fill: var(--kawaii-creme); }
+.sc-badge-light { fill: var(--kawaii-creme-light); opacity: .85; }
+.sc-badge-shadow { fill: var(--kawaii-shadow); }
+.sc-ln--badge { stroke-width: 1; }
+/* « À découvrir » : la même pastille en bois terni, et trois étoiles creuses. */
+.sc-badge.is-new .sc-badge-board { fill: var(--surface-sunk); }
+.sc-badge.is-new .sc-badge-light { fill: var(--surface); opacity: .5; }
+
+/* ---------- Le panneau de nom, au survol / au focus / au toucher ----------
+   Un seul panneau pour toute la scène, dessiné en dernier : il passe donc au-dessus de tout
+   (SVG n'a pas de `z-index`). Il ne capte jamais le pointeur, sinon il couperait le survol
+   du lieu qu'il désigne. */
+.sc-tip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .14s ease-out;
+}
+.sc-tip.is-on { opacity: 1; }
+.sc-tip-board { fill: var(--kawaii-creme); }
+.sc-tip-light { fill: var(--kawaii-creme-light); opacity: .85; }
+.sc-tip-shadow { fill: var(--kawaii-shadow); }
+.sc-ln--tip { stroke-width: 1.3; }
+.sc-tip-stem {
+  fill: none;
+  stroke: var(--kw-outline);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: .6;
+}
+.sc-tip-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: var(--map-tip, 7px);
+  fill: var(--kawaii-creme-ink);
+  dominant-baseline: middle;
+}
+.sc-tip-where {
+  font-family: var(--font-text);
+  font-size: var(--map-tip-sub, 5.4px);
+  fill: var(--kawaii-creme-ink);
+  opacity: .8;
+  dominant-baseline: middle;
+}
 
 /* ---------- Plaques de bois ---------- */
 .sc-plaque-board { fill: var(--kawaii-creme); }
@@ -282,12 +351,18 @@
 
 @keyframes sc-turn { to { transform: rotate(360deg); } }
 @keyframes sc-breathe { 0%, 100% { opacity: .8; } 50% { opacity: .35; } }
-@keyframes sc-pulse { 0%, 100% { opacity: .22; } 50% { opacity: .5; } }
+@keyframes sc-pulse { 0%, 100% { opacity: .14; } 50% { opacity: .34; } }
 
 @media (prefers-reduced-motion: reduce) {
   .sc-mill-sails,
   .sc-ripples,
   .sc-beam { animation: none; }
+  /* Le soulèvement et le fondu du panneau disparaissent ; le halo, le panneau et son texte
+     restent — aucune information n'est portée par le mouvement. */
+  .sc-place-art,
+  .sc-tip { transition: none; }
+  .sc-link:hover .sc-place-art,
+  .sc-link:focus-visible .sc-place-art { transform: none; }
 }
 
 /* ---------- La même carte en liste ----------

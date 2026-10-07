@@ -4,12 +4,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SCENE, SAFE, PLACE_HEIGHT, STARS_PER_GAME, MAX_LINE, MAX_LINES,
+  SCENE, SAFE, PLACE_HEIGHT, STARS_PER_GAME, MAX_LINE, MAX_LINES, BADGE,
   placeLayout, placeKind, wrapLabel, shortTitle, islandPlaces,
-  archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, SHORT_TITLES,
+  archipelago, islandLabel, islandMeta, ISLAND_GEOMETRY, ISLAND_PLAQUE, SHORT_TITLES,
 } from '../js/core/map.js';
 import { GAMES, ISLANDS } from '../js/games/registry.js';
 import { PROPS } from '../js/core/ui/art/scenery.js';
+import { ISLAND_TRIM } from '../js/core/ui/map-scene.js';
 
 const boxesOverlap = (a, b) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -48,31 +49,23 @@ test('chaque jeu a un nom court, et il n\'est jamais vide', () => {
 });
 
 // --- Emplacements des lieux ----------------------------------------------------------------------
-
-test('les plaques de lieu ne se chevauchent jamais, quel que soit le nombre de jeux', () => {
-  for (let count = 1; count <= 9; count += 1) {
-    const layout = placeLayout(count);
-    assert.equal(layout.slots.length, count);
-    const boxes = layout.slots.map((slot) => plaqueBox(slot, layout.plaque));
-    for (let i = 0; i < boxes.length; i += 1) {
-      assert.ok(inside(boxes[i]), `${count} lieux : plaque ${i} hors de la zone sûre`);
-      for (let j = i + 1; j < boxes.length; j += 1) {
-        assert.ok(!boxesOverlap(boxes[i], boxes[j]), `${count} lieux : plaques ${i} et ${j} superposées`);
-      }
-    }
-  }
-});
+//
+// Depuis le second lot, un lieu N'EST QUE son décor : plus de plaque de nom posée sur l'île. Ce
+// qui doit tenir, c'est donc la zone touchable — assez grande pour un doigt, jamais à cheval sur
+// celle du voisin, et entièrement dans la partie de la scène visible aux deux cadrages.
 
 test('les zones touchables ne se chevauchent pas et restent confortables au doigt', () => {
-  // 360 px d'écran, cadrage portrait : la scène montre ~172 unités de large sur 328 px, soit
+  // 360 px d'écran, cadrage portrait : la scène montre ~170 unités de large sur 328 px, soit
   // 1,9 px par unité. Une zone de 30 unités fait donc au moins 56 px, la taille tactile minimale.
   const MIN_UNITS = 30;
   for (let count = 1; count <= 9; count += 1) {
     const layout = placeLayout(count);
+    assert.equal(layout.slots.length, count);
     const hits = layout.slots.map((slot) => slot.hit);
     for (let i = 0; i < hits.length; i += 1) {
       assert.ok(hits[i].width >= MIN_UNITS && hits[i].height >= MIN_UNITS,
         `${count} lieux : zone ${i} trop petite (${hits[i].width} × ${hits[i].height})`);
+      assert.ok(inside(hits[i]), `${count} lieux : zone ${i} hors de la zone sûre`);
       for (let j = i + 1; j < hits.length; j += 1) {
         assert.ok(!boxesOverlap(hits[i], hits[j]), `${count} lieux : zones ${i} et ${j} superposées`);
       }
@@ -80,27 +73,44 @@ test('les zones touchables ne se chevauchent pas et restent confortables au doig
   }
 });
 
-test('le décor d\'un lieu est posé au-dessus de sa plaque, dans la scène', () => {
+test('le décor d\'un lieu tient dans sa zone touchable, le repère d\'étoiles aussi', () => {
   for (let count = 1; count <= 9; count += 1) {
     const layout = placeLayout(count);
     for (const slot of layout.slots) {
-      assert.ok(slot.ay < slot.y, 'le décor doit être au-dessus de sa plaque');
-      assert.ok(slot.ay - layout.height >= 0, 'le décor sort du haut de la scène');
-      assert.ok(Math.abs(slot.ax - slot.x) <= 6, 'le décor doit rester près de sa plaque');
+      const art = {
+        x: slot.x - 20, y: slot.y - PLACE_HEIGHT * slot.scale, width: 40, height: PLACE_HEIGHT * slot.scale,
+      };
+      assert.ok(art.y >= slot.hit.y - 0.01, 'le décor dépasse du haut de sa zone');
+      assert.ok(slot.y <= slot.hit.y + slot.hit.height, 'le pied du décor sort de sa zone');
+      const badge = {
+        x: slot.badge.x - BADGE.width / 2, y: slot.badge.y, width: BADGE.width, height: BADGE.height,
+      };
+      assert.ok(inside(badge, slot.hit), 'le repère d\'étoiles sort de la zone de son lieu');
+      // Et surtout : il est planté SOUS la ligne de sol, donc jamais devant le bâtiment.
+      assert.ok(badge.y > slot.y, 'le repère recouvre le décor qu\'il désigne');
     }
   }
 });
 
-test('une île de sept jeux passe à la grille serrée sans rien casser', () => {
-  const six = placeLayout(6);
-  const seven = placeLayout(7);
-  assert.equal(six.rows.length, 2);
-  assert.equal(seven.rows.length, 3);
-  assert.ok(seven.decor < six.decor, 'la grille serrée réduit la taille des décors');
-  assert.ok(seven.plaque.height < six.plaque.height);
+test('un lieu n\'est plus une plaque : l\'emplacement ne donne que le décor et son repère', () => {
+  const layout = placeLayout(6);
+  assert.equal(layout.plaque, undefined, 'les plaques de lieu doivent avoir disparu');
+  for (const slot of layout.slots) {
+    assert.ok(slot.scale > 0, 'chaque décor a sa propre taille');
+    assert.ok(Math.abs(slot.badge.x - slot.x) >= 8, 'le repère doit être décalé à côté du décor');
+  }
 });
 
-test('au-delà de neuf jeux, la grille ne plante pas (elle se remplit jusqu\'au dernier emplacement)', () => {
+test('une île de sept jeux passe au palier serré sans rien casser', () => {
+  const four = placeLayout(4);
+  const six = placeLayout(6);
+  const seven = placeLayout(7);
+  assert.ok(four.scale > six.scale, 'moins de lieux, des décors plus grands');
+  assert.ok(seven.scale < six.scale, 'le palier serré réduit la taille des décors');
+  assert.ok(seven.slots.length === 7 && six.slots.length === 6);
+});
+
+test('au-delà de neuf jeux, la composition ne plante pas (elle se remplit jusqu\'au dernier)', () => {
   const layout = placeLayout(20);
   assert.equal(layout.slots.length, 9);
 });
@@ -159,7 +169,7 @@ test('les cinq îles ont une place sur la carte, de la plus lointaine à la plus
 
 test('les plaques des îles ne se chevauchent pas et tiennent dans la zone sûre', () => {
   const entries = archipelago(ISLANDS, fakeRead());
-  const boxes = entries.map((e) => plaqueBox(e.plaque, { width: 46, height: 22 }));
+  const boxes = entries.map((e) => plaqueBox(e.plaque, ISLAND_PLAQUE));
   for (let i = 0; i < boxes.length; i += 1) {
     assert.ok(inside(boxes[i]), `plaque de ${entries[i].id} hors de la zone sûre`);
     for (let j = i + 1; j < boxes.length; j += 1) {
@@ -167,6 +177,27 @@ test('les plaques des îles ne se chevauchent pas et tiennent dans la zone sûre
         `plaques superposées : ${entries[i].id} et ${entries[j].id}`);
     }
   }
+});
+
+test('chaque île de l\'archipel a sa silhouette et son semis (elles étaient identiques)', () => {
+  const shapes = Object.entries(ISLAND_GEOMETRY).map(([id, g]) => {
+    assert.ok(g.squareness >= 2 && g.squareness <= 3.6, `${id} : galbe hors limites`);
+    assert.ok(g.wave && g.wave.amp > 0 && g.wave.amp <= 0.25, `${id} : ondulation hors limites`);
+    assert.ok(Number.isInteger(g.wave.k) && g.wave.k >= 2, `${id} : l'ondulation doit se refermer`);
+    return `${g.squareness}|${g.wave.amp}|${g.wave.k}|${g.wave.phase}`;
+  });
+  assert.equal(new Set(shapes).size, shapes.length, 'deux îles ont exactement la même côte');
+
+  const trims = ISLANDS.map((island) => {
+    const trim = ISLAND_TRIM[island.id];
+    assert.ok(Array.isArray(trim) && trim.length >= 8, `semis trop pauvre : ${island.id}`);
+    for (const [prop, u, v] of trim) {
+      assert.ok(PROPS[prop], `${island.id} : objet de décor inconnu « ${prop} »`);
+      assert.ok(Math.hypot(u, v) <= 1.05, `${island.id} : « ${prop} » posé hors de l'île`);
+    }
+    return trim.map(([prop, u, v]) => `${prop}${u}${v}`).join(',');
+  });
+  assert.equal(new Set(trims).size, trims.length, 'deux îles portent le même décor');
 });
 
 test('le corps de chaque île tient dans la scène', () => {

@@ -13,7 +13,7 @@ export const SCENE = { width: 200, height: 180 };
 export const SAFE = { x: 20, y: 22, width: 160, height: 138 };
 
 /** Hauteur maximale d'un décor de lieu (à l'échelle 1) : la composition en dépend. */
-export const PLACE_HEIGHT = 30;
+export const PLACE_HEIGHT = 36;
 
 const STARS_PER_LEVEL = 3;
 const LEVELS_PER_GAME = 3;
@@ -23,72 +23,77 @@ const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 // --- Emplacements de lieu ----------------------------------------------------------------------
 //
-// Un lieu occupe une case : le décor en haut, sa plaque de bois juste en dessous. Les cases pavent
-// la zone sûre sans se chevaucher — c'est ce qui garantit, à TOUTE taille d'écran, que deux noms ne
-// se marchent jamais dessus (le défaut de la maquette), et que la zone touchable fait au moins
-// 56 px même sur un téléphone de 360 px.
+// Deuxième version (#96, second lot). La première pavait la zone sûre de cases rectangulaires
+// « décor + plaque de bois » : la non-collision était garantie, mais les six plaques occupaient la
+// moitié de la scène et cachaient l'île. On a commandé un décor, pas une grille de boutons.
 //
-// Un 7ᵉ jeu ne casse pas la composition : l'île passe simplement d'une grille de 2 rangées à une
-// grille de 3 rangées, un peu plus serrée (décors et plaques réduits d'autant). Les deux grilles
-// sont vérifiées par tests/map.test.js.
-
-const COLUMNS = [52, 100, 148];
-
-/** Jitter du décor : il n'est jamais exactement au-dessus de sa plaque, sinon la scène s'aligne. */
-const JITTER = [2, -3, 0, -2, 3, 1, -1, 2, -2];
+// Ici, un lieu N'EST QUE son décor. L'emplacement donne :
+//   - `x, y`   : le point de contact au sol du décor (il monte vers les y négatifs) ;
+//   - `hit`    : la zone touchable — l'emprise du décor, et rien d'autre ;
+//   - `badge`  : où poser le petit repère d'étoiles, À CÔTÉ du décor et jamais devant ;
+//   - `scale`  : chaque décor a sa taille propre (la place libérée leur revient).
+// Le nom complet, lui, n'apparaît qu'au survol, au focus et au toucher (ui/map-scene.js), et la
+// liste HTML sous la scène le porte en permanence.
+//
+// Les emplacements sont posés à la main, par paliers, pour que la composition respire : décalés en
+// x comme en y, jamais alignés. tests/map.test.js vérifie ce qui doit l'être — aucun recouvrement
+// entre deux zones touchables, chacune assez grande pour un doigt, le tout dans la zone sûre.
 
 /**
- * Grille de l'île : deux rangées jusqu'à six lieux, trois au-delà.
- * `gap` est l'écart entre le point de contact au sol du décor et le haut de sa plaque.
+ * Paliers : jusqu'à 4 lieux (grands), jusqu'à 6 (le cas d'aujourd'hui), jusqu'à 9 (resserré).
+ * `anchors` : [x, y, côté du repère d'étoiles (-1 à gauche, +1 à droite), variation de taille].
+ * `hit` : emprise d'une zone touchable ; `foot` = ce qu'elle descend sous le point de contact.
  */
-const GRIDS = [
+const TIERS = [
+  {
+    max: 4,
+    scale: 1.15,
+    hit: { width: 62, height: 56, foot: 12 },
+    anchors: [[58, 84, 1, 0.04], [146, 80, -1, -0.03], [54, 146, 1, 0], [148, 142, -1, 0.05]],
+  },
   {
     max: 6,
-    rows: [90, 146],
-    // Décalage vertical par colonne : sans lui, les plaques forment deux barres bien alignées
-    // et la scène redevient un tableau. Les colonnes ne se recouvrent jamais en x, donc décaler
-    // en y ne peut pas créer de collision.
-    stagger: [-6, 4, -2],
-    order: [[0, 0], [2, 0], [1, 0], [0, 1], [2, 1], [1, 1]],
-    plaque: { width: 46, height: 25 }, decor: 1, lift: 15,
+    scale: 1,
+    hit: { width: 50, height: 50, foot: 12 },
+    anchors: [
+      [48, 82, 1, 0.05], [100, 76, 1, -0.04], [152, 84, -1, 0.02],
+      [46, 140, 1, -0.02], [100, 146, 1, 0.05], [154, 142, -1, -0.05],
+    ],
   },
   {
     max: 9,
-    rows: [74, 112, 150],
-    stagger: [-4, 3, -1],
-    order: [[0, 0], [2, 0], [1, 0], [0, 1], [2, 1], [1, 1], [0, 2], [2, 2], [1, 2]],
-    plaque: { width: 44, height: 19 }, decor: 0.56, lift: 10,
+    scale: 0.76,
+    hit: { width: 48, height: 40, foot: 11 },
+    anchors: [
+      [50, 60, 1, 0.04], [100, 56, 1, -0.03], [152, 60, -1, 0.02],
+      [46, 102, 1, -0.02], [100, 106, 1, 0.05], [154, 102, -1, -0.04],
+      [50, 144, 1, 0.03], [100, 148, 1, -0.02], [152, 144, -1, 0.04],
+    ],
   },
 ];
 
+/** Taille du repère d'étoiles posé au pied d'un lieu : minuscule devant un décor de 36 de haut. */
+export const BADGE = { width: 21, height: 8.6 };
+
 /**
- * Disposition des lieux d'une île : la grille, et une case par lieu
- * `{ x, y }` (centre de la plaque), `{ ax, ay }` (point de contact du décor au sol),
- * `hit` (la zone touchable, qui couvre le décor ET la plaque). Pure.
+ * Disposition des lieux d'une île : le palier, et un emplacement par lieu. Pure.
+ * Renvoyer `scale` par emplacement (et non une seule échelle) évite la rangée d'objets calibrés
+ * au millimètre, qui est exactement ce qui faisait « grille » dans la version précédente.
  */
 export function placeLayout(count) {
-  const grid = GRIDS.find((g) => count <= g.max) || GRIDS[GRIDS.length - 1];
-  const height = PLACE_HEIGHT * grid.decor;
-  // Seule la rangée du fond est décalée : devant, le décor viendrait buter sur la plaque d'arrière.
-  const rowY = (col, row) => grid.rows[row] + (row === 0 ? grid.stagger[col] : 0);
-  const slots = grid.order.slice(0, Math.max(count, 0)).map(([col, row], i) => {
-    const x = COLUMNS[col];
-    const y = rowY(col, row);
-    const bottom = y + grid.plaque.height / 2;
-    // La zone touchable couvre le décor ET sa plaque, mais s'arrête au pied de la case du dessus :
-    // le décor d'un lieu de devant peut recouvrir la plaque d'un lieu du fond (c'est ce recouvrement
-    // qui crée la profondeur) ; le DOIGT, lui, ne doit jamais être dans deux zones à la fois.
-    const ceiling = row > 0 ? rowY(col, row - 1) + grid.plaque.height / 2 : -Infinity;
-    const top = Math.max(y - grid.lift - height, ceiling);
-    return {
-      x,
-      y,
-      ax: x + JITTER[i % JITTER.length],
-      ay: y - grid.lift,
-      hit: { x: x - grid.plaque.width / 2, y: top, width: grid.plaque.width, height: bottom - top },
-    };
-  });
-  return { ...grid, height, slots };
+  const tier = TIERS.find((t) => count <= t.max) || TIERS[TIERS.length - 1];
+  const { width, height, foot } = tier.hit;
+  const slots = tier.anchors.slice(0, Math.max(count, 0)).map(([x, y, side, vary]) => ({
+    x,
+    y,
+    side,
+    scale: Number((tier.scale * (1 + vary)).toFixed(3)),
+    hit: { x: x - width / 2, y: y - height + foot, width, height },
+    // Le repère est planté dans l'herbe, SOUS la ligne de sol et décalé sur le côté : il ne
+    // recouvre donc jamais le bâtiment qu'il désigne — c'est tout le reproche fait aux plaques.
+    badge: { x: x + side * 12, y: y + 1.5 },
+  }));
+  return { ...tier, height: PLACE_HEIGHT * tier.scale, slots };
 }
 
 /** Le lieu qui représente chaque jeu. Un jeu sans lieu attitré prend un emplacement de réserve. */
@@ -114,9 +119,10 @@ export function placeKind(gameId, index = 0) {
 
 // --- Noms des lieux ------------------------------------------------------------------------------
 //
-// Les titres de jeu sont faits pour une liste, pas pour une plaque de bois. On en donne un nom
-// court, puis on le coupe en au plus deux lignes : c'est ce qui permet une plaque de taille fixe,
-// donc une composition qui tient de 360 px à 1366 px.
+// Les titres de jeu sont faits pour une liste, pas pour une bulle posée sur un dessin. On en donne
+// un nom court, qui tient sur une ligne même sur un téléphone de 360 px : c'est ce nom-là qui
+// apparaît au survol, au focus et au toucher. Le titre complet reste dans le nom accessible du
+// lien et dans la liste HTML sous la scène. `wrapLabel` sert encore aux plaques de l'archipel.
 
 export const SHORT_TITLES = {
   sons: 'Les sons',
@@ -180,7 +186,6 @@ export function islandPlaces(games, progressFor = () => null) {
       id: game.id,
       title: game.title,
       name,
-      lines: wrapLabel(name),
       kind,
       where,
       stars,
@@ -202,12 +207,34 @@ export function islandPlaces(games, progressFor = () => null) {
 // saturée), les suivantes plus petites, plus hautes dans l'image et plus pâles. Les plaques de nom
 // sont également placées à la main, et le test vérifie qu'elles ne se chevauchent pas.
 
+// Chaque île a sa SILHOUETTE : `squareness` règle le galbe du contour (2 = ovale, 3,5 = plateau
+// aux coins ronds) et `wave` y creuse des baies — `amp` leur profondeur, `k` leur nombre, `phase`
+// leur orientation. L'ondulation ne fait que RENTRER (jamais sortir), donc une île ne peut pas
+// déborder de son rayon : la composition et les tests restent valables.
+/** La plaque de nom d'une île. Les lieux, eux, n'en ont plus : seul l'archipel en garde. */
+export const ISLAND_PLAQUE = { width: 42, height: 19 };
+
 export const ISLAND_GEOMETRY = {
-  mots: { cx: 52, cy: 134, rx: 42, ry: 15, plaque: { x: 48, y: 116 }, depth: 1 },
-  nombres: { cx: 152, cy: 128, rx: 31, ry: 12, plaque: { x: 154, y: 104 }, depth: 0.78 },
-  mesures: { cx: 102, cy: 82, rx: 27, ry: 10.5, plaque: { x: 102, y: 114 }, depth: 0.58 },
-  monde: { cx: 44, cy: 50, rx: 24, ry: 9, plaque: { x: 46, y: 80 }, depth: 0.45 },
-  ailleurs: { cx: 158, cy: 46, rx: 22, ry: 8.5, plaque: { x: 156, y: 78 }, depth: 0.38 },
+  mots: {
+    cx: 52, cy: 134, rx: 42, ry: 15, plaque: { x: 48, y: 110 }, depth: 1,
+    squareness: 2.6, wave: { amp: 0.14, k: 3, phase: 0.6 },
+  },
+  nombres: {
+    cx: 152, cy: 128, rx: 31, ry: 12, plaque: { x: 154, y: 104 }, depth: 0.78,
+    squareness: 2.1, wave: { amp: 0.2, k: 4, phase: 1.5 },
+  },
+  mesures: {
+    cx: 102, cy: 82, rx: 27, ry: 10.5, plaque: { x: 102, y: 102 }, depth: 0.58,
+    squareness: 3.1, wave: { amp: 0.1, k: 5, phase: 0.2 },
+  },
+  monde: {
+    cx: 44, cy: 50, rx: 24, ry: 9, plaque: { x: 46, y: 80 }, depth: 0.45,
+    squareness: 2.3, wave: { amp: 0.22, k: 3, phase: 2.3 },
+  },
+  ailleurs: {
+    cx: 158, cy: 46, rx: 22, ry: 8.5, plaque: { x: 156, y: 78 }, depth: 0.38,
+    squareness: 2, wave: { amp: 0.16, k: 2, phase: 1.1 },
+  },
 };
 
 /**

@@ -447,9 +447,11 @@ const LIGHTHOUSE = () => [
   path('M-4.6 -34.4L0 -39.4l4.6 5Z', 'sc-roof'),
   ln('M-4.6 -34.4L0 -39.4l4.6 5Z'),
   circ(0, -40.6, 1.2, 'sc-gold'),
+  // Le faisceau : court et très pâle. Dessiné large, il faisait une tache rectangulaire sur
+  // l'herbe — on croyait à un défaut d'affichage, pas à de la lumière.
   n('g', { class: 'sc-beam' },
-    path('M4 -32.4L17 -36.4L17 -27.4Z', 'sc-glow-fill'),
-    path('M-4 -32.4L-17 -36.4L-17 -27.4Z', 'sc-glow-fill')),
+    path('M4 -31.8L12.6 -34.4L12.6 -29.2Z', 'sc-glow-fill'),
+    path('M-4 -31.8L-12.6 -34.4L-12.6 -29.2Z', 'sc-glow-fill')),
   path('M-2 -24h4v2.6h-4Z', 'sc-window'),
   ln('M-2 -24h4v2.6h-4Z'),
 ];
