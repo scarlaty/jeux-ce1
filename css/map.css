@@ -379,9 +379,12 @@
   /* Le soulèvement et le fondu du panneau disparaissent ; le halo, le panneau et son texte
      restent — aucune information n'est portée par le mouvement. */
   .sc-place-art,
+  .sc-island-body,
   .sc-tip { transition: none; }
   .sc-link:hover .sc-place-art,
-  .sc-link:focus-visible .sc-place-art { transform: none; }
+  .sc-link:focus-visible .sc-place-art,
+  .sc-link:hover .sc-island-body,
+  .sc-link:focus-visible .sc-island-body { transform: none; }
 }
 
 /* ---------- La même carte en liste ----------

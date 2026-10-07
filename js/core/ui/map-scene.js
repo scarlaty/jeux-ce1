@@ -412,7 +412,9 @@ function islandTip(entry) {
   return {
     id: entry.id,
     name: entry.name,
-    where: `${entry.subject} · ${entry.meta}`,
+    // Le panneau ne porte QUE l'avancement : « Grandeurs, mesures et géométrie » l'élargissait
+    // jusqu'à couvrir l'île voisine. La matière reste dans la liste et dans le nom accessible.
+    where: entry.meta,
     anchor: {
       x: entry.cx,
       top: r2(entry.cy - entry.ry),
