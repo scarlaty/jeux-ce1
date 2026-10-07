@@ -96,12 +96,18 @@ function readIsland(island, { profile, rewards, stars }) {
 
 /**
  * La même carte en liste : chaque île y est une ligne complète, atteignable au clavier.
- * L'avancement ne doit jamais tenir à la seule position d'une île sur le dessin.
+ * L'avancement ne doit jamais tenir à la seule position d'une île sur le dessin — et depuis que la
+ * scène ne montre plus les cinq noms à la fois (#96), c'est cette liste qui porte la lecture :
+ * nom, matière, étoiles, gommettes, état fermé et seuil à atteindre.
  */
 function islandRow(entry) {
+  const detail = entry.unlocked
+    ? `${entry.stickers} / ${entry.total} gommettes`
+    : `Encore ${plural(entry.starsLeft, 'étoile')} pour l'ouvrir`;
   const body = h('span', { class: 'map-row__body' },
     h('span', { class: 'map-row__name', text: entry.name }),
-    h('span', { class: 'map-row__meta', text: entry.subject }));
+    h('span', { class: 'map-row__meta', text: entry.subject }),
+    h('span', { class: 'map-row__meta', text: detail }));
   const mascot = mascotSticker(entry.id, { face: islandFace(entry.unlocked), className: 'map-row__art' });
   if (!entry.unlocked) {
     return h('li', {},
