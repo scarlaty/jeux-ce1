@@ -233,6 +233,13 @@ function fakeGame() {
   };
 }
 
+/** Questions toutes identiques à l'écran (seule la clé change) : l'avis de doublon est attendu ici. */
+function createSessionQuiet(...args) {
+  const origWarn = console.warn;
+  console.warn = () => {};
+  try { return createSession(...args); } finally { console.warn = origWarn; }
+}
+
 function setup() {
   const store = createStore(createStorage({ backend: createMemoryBackend() }));
   store.setProfile(defaultProfile({ id: 'p1' }));
@@ -243,7 +250,7 @@ function setup() {
 }
 
 function playGame(events, goods, total = 10) {
-  const session = createSession(fakeGame(), 1, { events, count: total, record: null });
+  const session = createSessionQuiet(fakeGame(), 1, { events, count: total, record: null });
   for (let i = 0; i < total; i++) {
     session.answer(i < goods ? 'oui' : 'non');
     session.next();
@@ -271,7 +278,7 @@ test('la 3e partie annonce l\'éclosion dans l\'écran de fin, sans point ni rep
   const { events } = setup();
   playGame(events, 0);
   playGame(events, 0);
-  const s = createSession(fakeGame(), 1, { events, count: 1, record: null });
+  const s = createSessionQuiet(fakeGame(), 1, { events, count: 1, record: null });
   s.answer('oui');
   s.next();
   assert.equal(companionSummary(s).ready, true);

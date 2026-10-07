@@ -254,7 +254,11 @@ function setup(seed = 11) {
 }
 
 function play(game, events, outcomes) {
+  // Questions toutes identiques à l'écran (seule la clé change) : l'avis de doublon est attendu ici.
+  const origWarn = console.warn;
+  console.warn = () => {};
   const session = createSession(game, 1, { events, count: outcomes.length, record: null });
+  console.warn = origWarn;
   for (const ok of outcomes) { session.answer(ok ? 'oui' : 'non'); session.next(); }
   return session;
 }
