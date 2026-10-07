@@ -324,3 +324,83 @@
 
 .kw-field { display: grid; gap: var(--space-1); justify-items: center; }
 .kw-field__label { font-family: var(--font-title); font-weight: 600; color: var(--ink-soft); }
+
+/* ---------- Les mascottes sur les écrans (#89) ----------
+   .mascot = conteneur du dessin (js/core/ui/mascot.js) : c'est lui qui bouge. Largeur seule. */
+
+.mascot { display: inline-block; flex: none; width: 72px; line-height: 0; }
+.mascot .kw { width: 100%; height: auto; }
+
+/* Accueil : titre entre deux petites décorations, mascotte en tête de chaque île. */
+.home__title-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+}
+.home__deco { flex: none; width: 48px; line-height: 0; }
+.home__deco .kw { width: 100%; height: auto; }
+.home__deco--left { rotate: -12deg; }
+.home__deco--right { rotate: 10deg; }
+@media (max-width: 520px) {
+  .home__title-row { gap: var(--space-2); }
+  .home__deco { width: 36px; }
+}
+.island-card__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }
+.island-card.is-locked .island-card__mascot { opacity: .8; }
+
+/* Choix du niveau : la mascotte de l'île accueille, à côté du titre du jeu (sans boucle). */
+.play-intro--mascot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+.play-intro__mascot { width: 104px; }
+.play-intro__text { min-width: 0; }
+@media (max-width: 520px) {
+  .play-intro--mascot { gap: var(--space-3); }
+  .play-intro__mascot { width: 80px; }
+}
+
+/* Fin de partie : la mascotte au-dessus du tampon, encadrée de deux étincelles dès 2 étoiles. */
+.end__buddy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+.end__mascot { width: 136px; }
+.end__deco { width: 36px; line-height: 0; }
+.end__deco .kw { width: 100%; height: auto; }
+.end__deco--left { align-self: flex-start; }
+.end__deco--right { align-self: flex-end; animation-delay: -1.3s; }
+@media (max-width: 520px) {
+  .end__mascot { width: 96px; }
+}
+
+/* Bienvenue, « Qui joue ? » : une petite rangée de mascottes au-dessus du titre. */
+.mascot-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.mascot-row .mascot { width: 88px; }
+@media (max-width: 520px) {
+  .mascot-row { gap: var(--space-2); }
+  .mascot-row .mascot { width: 72px; }
+}
+
+/* Album : la mascotte de chaque île veille sur sa collection (immobile : une page à parcourir). */
+.album-island__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }
+
+/* Pendant la partie : la mascotte est dans l'en-tête, à droite du compteur, hors des zones de
+   réponse. Immobile ; elle saute (bonne réponse) ou encourage (erreur) une seule fois. */
+.play-head__mascot { width: 84px; margin: -22px -8px -22px 0; pointer-events: none; }
+@media (max-width: 520px) {
+  .play-head__mascot { width: 68px; margin: -14px -4px -8px 0; }
+}

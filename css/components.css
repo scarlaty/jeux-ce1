@@ -907,6 +907,26 @@
 @media (max-width: 520px) {
   .appbar { min-height: 64px; gap: var(--space-2); }
   .appbar__title { font-size: 1.3rem; text-align: left; }
+  /* Titres longs (titleLength, posé par app.js) : jamais tronqués. Moyens : deux lignes, plus
+     petits. Très longs : sur leur propre ligne, sous les boutons. */
+  .appbar { flex-wrap: wrap; row-gap: 0; }
+  .appbar__tools { margin-left: auto; }
+  .appbar__title {
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .appbar__title[data-length="long"] { font-size: 1.05rem; }
+  .appbar__title[data-length="xlong"] {
+    order: 3;
+    flex-basis: 100%;
+    font-size: 1.15rem;
+    text-align: center;
+    padding-bottom: var(--space-1);
+  }
   .page { padding-top: var(--space-4); }
   .card { padding: var(--space-4); }
   .play-head { flex-wrap: wrap; justify-content: space-between; }

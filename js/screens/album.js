@@ -2,6 +2,7 @@
 // l'enfant voit ce qu'il lui reste à gagner, sans jamais être mise en échec.
 import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
+import { mascotSticker, albumFace } from '../core/ui/mascot.js';
 import { ISLANDS } from '../games/registry.js';
 import {
   readRewards, islandStickers, gradeProgress, stickerCount, stickerTotal, GRADES, gradeRank,
@@ -26,7 +27,11 @@ function islandSection(island, owned) {
   const have = new Set(owned);
   return h('section', { class: 'album-island', dataset: { island: island.id }, 'aria-labelledby': `album-${island.id}` },
     h('div', { class: 'album-island__head' },
-      h('span', { class: 'island-card__dot', 'aria-hidden': 'true' }),
+      mascotSticker(island.id, {
+        face: albumFace(have.size, catalog.length),
+        loop: albumFace(have.size, catalog.length) === 'joyful' ? 'bounce' : null,
+        className: 'album-island__mascot' })
+        || h('span', { class: 'island-card__dot', 'aria-hidden': 'true' }),
       h('h2', { class: 'album-island__name', id: `album-${island.id}`, text: island.name }),
       h('span', { class: 'album-island__count', text: `${have.size} / ${catalog.length}` })),
     h('ul', { class: 'sticker-grid' }, catalog.map((s) => stickerSlot(s, have.has(s.id)))));

@@ -77,6 +77,7 @@ const PRECACHE = [
   'js/core/ui/index.js',
   'js/core/ui/keypad.js',
   'js/core/ui/letters.js',
+  'js/core/ui/mascot.js',
   'js/core/ui/order.js',
   'js/core/ui/svg.js',
 

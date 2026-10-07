@@ -59,6 +59,18 @@ export function content(item, { cursive = false } = {}) {
   return parts;
 }
 
+/**
+ * Longueur d'un titre de la barre du haut, pour l'ajuster sur téléphone sans le tronquer :
+ * 'short' (tient sur une ligne), 'long' (deux lignes, plus petit), 'xlong' (sa propre ligne
+ * sous les boutons). Compte les caractères, pas les octets. Pure.
+ */
+export function titleLength(text) {
+  const n = [...String(text ?? '').trim()].length;
+  if (n <= 8) return 'short';
+  if (n <= 18) return 'long';
+  return 'xlong';
+}
+
 // Largeur approximative (en em, police des titres) de chaque morceau d'un calcul : la feuille
 // de style s'en sert pour réduire le calcul jusqu'à ce qu'il tienne sur une ligne.
 const MATH_EM = { digit: 0.53, sign: 0.56, hole: 1.2, gap: 0.3, letter: 0.36 };

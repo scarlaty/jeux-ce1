@@ -3,6 +3,8 @@
 // et le défi du jour a sa propre carte.
 import { h } from '../core/ui/dom.js';
 import { icon } from '../core/ui/icons.js';
+import { mascotSticker, islandFace } from '../core/ui/mascot.js';
+import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { GAMES, ISLANDS } from '../games/registry.js';
 import { getGameProgress } from '../core/history.js';
 import {
@@ -71,7 +73,8 @@ function islandCard(island, { games, profile, rewards, stars }) {
     'aria-labelledby': `ile-${island.id}`,
   },
   h('div', { class: 'island-card__head' },
-    h('span', { class: 'island-card__dot', 'aria-hidden': 'true' }),
+    mascotSticker(island.id, { face: islandFace(open), className: 'island-card__mascot' })
+      || h('span', { class: 'island-card__dot', 'aria-hidden': 'true' }),
     h('div', { class: 'island-card__id' },
       h('h2', { class: 'island-card__name', id: `ile-${island.id}`, text: island.name }),
       h('p', { class: 'island-card__subject', text: island.subject })),
@@ -107,7 +110,10 @@ export default {
 
     view.append(h('div', { class: 'page home' },
       h('div', { class: 'home__hero' },
-        h('h1', { class: 'home__title', text: 'Jeux CE1' }),
+        h('div', { class: 'home__title-row' },
+          h('span', { class: 'home__deco home__deco--left', 'aria-hidden': 'true' }, drawDeco({ shape: 'star', face: 'happy' })),
+          h('h1', { class: 'home__title', text: 'Jeux CE1' }),
+          h('span', { class: 'home__deco home__deco--right', 'aria-hidden': 'true' }, drawDeco({ shape: 'heart', face: 'joyful' }))),
         h('p', { class: 'home__subtitle cursive', text: 'Choisis une île et joue !' })),
       rewardBar(rewards),
       dailyCard(rewards, realGames.length > 0),
