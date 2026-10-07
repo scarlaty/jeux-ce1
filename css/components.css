@@ -462,6 +462,8 @@
   min-width: 0;
 }
 .show__content { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--space-3); }
+.show__content.is-hidden { visibility: hidden; }  /* display.show.flash : le mot a disparu, la place reste */
+.show__replay { flex: none; }
 .show__content .emoji { font-size: clamp(4rem, 3rem + 5vw, 6rem); filter: drop-shadow(0 6px 6px var(--shadow)); }
 /* Un mot long (« rhinocéros ») ne passe jamais à la ligne : sa taille diminue pour tenir dans la
    largeur de l'illustration (--text-len = nombre de caractères, posé par content() dans ui/dom.js ;

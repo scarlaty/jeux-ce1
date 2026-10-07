@@ -20,6 +20,24 @@ const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !',
 const AUTO_NEXT_MS = 1100;
 const GAIN_MS = 1000;
 
+/** `display.show.flash` (durée en ms) : l'illustration ne reste visible que ce temps, puis un bouton « Revoir »
+ *  la remontre. Le contenu garde sa place (pas de saut de mise en page) et se cache aux lecteurs d'écran. */
+function flashControls(contentEl, ms) {
+  let timer = null;
+  const reveal = () => {
+    clearTimeout(timer);
+    contentEl.classList.remove('is-hidden');
+    contentEl.removeAttribute('aria-hidden');
+    timer = setTimeout(() => {
+      contentEl.classList.add('is-hidden');
+      contentEl.setAttribute('aria-hidden', 'true');
+    }, ms);
+  };
+  reveal();
+  return h('button', { type: 'button', class: 'btn btn--secondary btn--small show__replay', onclick: reveal },
+    h('span', { text: 'Revoir' }));
+}
+
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 
 /** Bouton « écouter » ; absent si le navigateur ne sait pas lire à voix haute. */
@@ -150,13 +168,15 @@ export function createGameView(root, { app, game, onEnd }) {
 
     const show = question.display?.show;
     const lang = question.lang || 'fr-FR';
+    const showContent = show && h('div', { class: `show__content${show.text && !show.emoji ? ' show__content--text' : ''}` }, content(show, { cursive: Boolean(show.cursive) }));
     stage.className = `stage stage--${question.type}${show ? ' stage--with-show' : ''}`;
     stage.replaceChildren(...[
       h('div', { class: 'prompt' },
         listenButton(question.speak || question.prompt, { lang }),
         h('p', { class: 'prompt__text', text: question.prompt })),
       show && h('div', { class: 'show' },
-        h('div', { class: `show__content${show.text && !show.emoji ? ' show__content--text' : ''}` }, content(show, { cursive: Boolean(show.cursive) })),
+        showContent,
+        show.flash && flashControls(showContent, show.flash),
         show.speak && listenButton(show.speak, { lang: show.lang || 'fr-FR', label: 'Écouter le mot', className: 'listen--word' })),
       h('div', { class: `answer answer--${question.type}` }, ui.el),
       feedback,

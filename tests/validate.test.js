@@ -35,3 +35,12 @@ test('type personnalisé avec sa propre vérification', () => {
   assert.ok(validateQuestion(q).length);
   assert.deepEqual(validateQuestion(q, { checks: { clock: () => {} } }), []);
 });
+
+test('display.show.flash : durée en ms entre 300 et 5000', async () => {
+  const { validateQuestion } = await import('../js/core/validate.js');
+  const q = (flash) => ({ key: 'k', type: 'choice', prompt: 'p', answer: 'a',
+    display: { show: { text: 'mot', flash }, choices: [{ value: 'a', text: 'a' }, { value: 'b', text: 'b' }] } });
+  assert.deepEqual(validateQuestion(q(1200)), []);
+  assert.ok(validateQuestion(q(50)).length > 0);
+  assert.ok(validateQuestion(q('vite')).length > 0);
+});

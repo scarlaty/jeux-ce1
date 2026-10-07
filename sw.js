@@ -85,6 +85,7 @@ const PRECACHE = [
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
   'js/data/mots-illustres.js',
   'js/data/nombres-en-lettres.js',
+  'js/data/mots-frequents.js',
   'js/data/syllabes.js',
 
   'js/screens/index.js',
@@ -103,6 +104,7 @@ const PRECACHE = [
   'js/games/cdu.js',
   'js/games/demo.js',
   'js/games/ecrire-nombres.js',
+  'js/games/lecture-eclair.js',
   'js/games/lettres-qui-changent.js',
   'js/games/lettres-soeurs.js',
   'js/games/sons.js',
