@@ -40,21 +40,39 @@ const starMark = (x, y, size, filled) => path(
 
 // --- Ciel et mer ---------------------------------------------------------------------------------
 
-/** Le ciel : deux nappes (le haut plus froid, l'horizon plus chaud), le soleil, des nuages. */
+/**
+ * Le ciel : deux nappes (le haut plus froid, l'horizon plus chaud), le soleil, des nuages.
+ * Les nuages sont posés sur TROIS niveaux — les plus hauts petits et pâles, les plus bas grands et
+ * francs. Un seul rang de nuages alignés se lisait comme une frise ; trois rangs font une
+ * profondeur.
+ */
 function sky({ horizon, scene }) {
-  // Tout reste SOUS la ligne de crop du cadrage paysage : un soleil coupé en deux se lit comme
-  // une erreur, pas comme un cadrage.
   return [
     n('rect', { x: 0, y: 0, width: SCENE.width, height: SCENE.height, class: 'sc-sky' }),
     path(`M0 ${r2(horizon - 12)}Q50 ${r2(horizon - 18)} 100 ${r2(horizon - 11)}T200 ${r2(horizon - 14)}`
       + `V${r2(horizon + 2)}H0Z`, 'sc-sky-low'),
+    // Niveau haut : loin, donc petit et effacé. Rien au-dessus de horizon − 10 : le cadrage
+    // paysage coupe au-dessus de y = 14, et un nuage sans sommet se lit comme une erreur.
+    n('g', { class: 'sc-sky-far' },
+      use('cloud', { scene, x: 60, y: r2(horizon - 10), scale: 0.4 }),
+      use('cloud', { scene, x: 118, y: r2(horizon - 10), scale: 0.34, flip: true }),
+      use('cloud', { scene, x: 186, y: r2(horizon - 9), scale: 0.44 }),
+      use('bird', { scene, x: 110, y: r2(horizon - 11), scale: 0.5 }),
+      use('bird', { scene, x: 118, y: r2(horizon - 13), scale: 0.38 })),
     use('sun', { scene, x: 30, y: r2(horizon + 1), scale: 0.56 }),
+    // Niveau moyen
     use('cloud', { scene, x: 86, y: r2(horizon - 4), scale: 0.78 }),
     use('cloud', { scene, x: 160, y: r2(horizon - 7), scale: 0.6, flip: true }),
     use('cloud', { scene, x: 126, y: r2(horizon - 1), scale: 0.46 }),
+    // Niveau bas : posés presque sur l'horizon, c'est eux qui ferment la scène.
+    use('cloud', { scene, x: 8, y: r2(horizon - 2), scale: 0.66, flip: true }),
+    use('cloud', { scene, x: 196, y: r2(horizon - 2), scale: 0.7 }),
+    use('cloud', { scene, x: 54, y: r2(horizon + 1), scale: 0.38 }),
     use('bird', { scene, x: 60, y: r2(horizon - 9), scale: 0.85 }),
     use('bird', { scene, x: 70, y: r2(horizon - 13), scale: 0.6 }),
     use('bird', { scene, x: 182, y: r2(horizon - 4), scale: 0.7 }),
+    use('bird', { scene, x: 142, y: r2(horizon - 10), scale: 0.75 }),
+    use('bird', { scene, x: 150, y: r2(horizon - 13), scale: 0.5 }),
   ];
 }
 
@@ -214,6 +232,52 @@ const starRow = (x, y, size, step, earned, max) =>
 const ARCHIPELAGO_PROPS = [
   'sun', 'cloud', 'bird', 'palm', 'tree', 'bush', 'rock', 'boat', 'frond', 'lock', 'tuft',
   'flower', 'pebble', 'mushroom', 'tent', 'lantern', 'shell', 'starfish',
+];
+
+/**
+ * La mer de l'archipel. Les cinq pancartes retirées, l'eau était un grand aplat vide — l'écart le
+ * plus net avec les références. On la meuble, en se tenant à deux règles :
+ *   - RIEN dans l'emprise cliquable d'une île (core/map.js) : on ne pose pas un crabe là où le
+ *     doigt cherche une île. Les zones libres sont les marges, les couloirs entre les îles et la
+ *     bande du premier plan ;
+ *   - tout reste petit et pâle. Les cinq îles doivent rester les cinq seules grandes formes.
+ * Le semis est dessiné AVANT les îles : un objet qui mord sur une île passe derrière elle.
+ */
+const ARCHIPELAGO_SEA = [
+  // Le large, juste sous l'horizon : la baleine souffle, un banc de poissons passe.
+  { id: 'whale', x: 100, y: 50, scale: 0.52, tint: 'lavande' },
+  { id: 'school', x: 112, y: 64, scale: 0.45 },
+  { id: 'swirl', x: 80, y: 60, scale: 0.6 },
+  // La baie de gauche, sous l'île du Monde : la bouée, un poisson qui saute, un banc de sable.
+  { id: 'sandbar', x: 44, y: 98, scale: 0.5 },
+  { id: 'reef', x: 19, y: 86, scale: 0.5 },
+  { id: 'gull', x: 19, y: 82, scale: 0.38 },
+  { id: 'buoy', x: 26, y: 97, scale: 0.55, tint: 'rose' },
+  { id: 'fish', x: 46, y: 105, scale: 0.5, tint: 'peche' },
+  { id: 'school', x: 62, y: 92, scale: 0.5 },
+  { id: 'swirl', x: 32, y: 110, scale: 0.6 },
+  // La baie de droite, sous l'île d'Ailleurs : un récif, sa mouette et son crabe. Rien au-delà de
+  // x = 184 : le cadrage portrait d'un téléphone coupe à 185, et un crabe coupé est un défaut.
+  { id: 'reef', x: 179, y: 102, scale: 0.55 },
+  { id: 'gull', x: 178, y: 97, scale: 0.42 },
+  { id: 'crab', x: 167, y: 110, scale: 0.5, tint: 'peche' },
+  { id: 'fish', x: 140, y: 99, scale: 0.5, tint: 'ciel' },
+  { id: 'swirl', x: 136, y: 85, scale: 0.6 },
+  { id: 'school', x: 154, y: 83, scale: 0.45 },
+  // Le détroit du milieu, entre les Mots et les Nombres : la pieuvre curieuse lève la tête.
+  { id: 'octopus', x: 102, y: 139, scale: 0.55, tint: 'lavande' },
+  { id: 'school', x: 102, y: 154, scale: 0.5 },
+  // Les bords : encore visibles en portrait, mais petits — c'est là que le cadrage mord.
+  { id: 'swirl', x: 16, y: 128, scale: 0.7 },
+  { id: 'buoy', x: 16, y: 156, scale: 0.5, tint: 'citron' },
+  { id: 'school', x: 18, y: 146, scale: 0.45 },
+  { id: 'fish', x: 180, y: 140, scale: 0.5, tint: 'menthe' },
+  { id: 'swirl', x: 190, y: 68, scale: 0.6 },
+  // Le premier plan : le banc de sable et son crabe, juste au bord du cadrage paysage.
+  { id: 'sandbar', x: 100, y: 166, scale: 0.5 },
+  { id: 'crab', x: 106, y: 164, scale: 0.5, tint: 'rose' },
+  { id: 'sandbar', x: 168, y: 174, scale: 0.6 },
+  { id: 'swirl', x: 54, y: 170, scale: 0.7 },
 ];
 
 /**
@@ -380,12 +444,14 @@ export function archipelagoScene(entries) {
     'aria-label': 'Carte de l\'archipel : cinq îles posées sur la mer.',
     focusable: 'false',
   },
-  n('defs', { 'aria-hidden': 'true' }, propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(foreground), 'pebble', 'starfish'])),
+  n('defs', { 'aria-hidden': 'true' },
+    propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(ARCHIPELAGO_SEA), ...idsOf(foreground)])),
   sky({ horizon, scene }),
   sea({ horizon }),
-  use('boat', { scene, x: 188, y: 70, scale: 0.8, tint: 'citron' }),
-  use('boat', { scene, x: 14, y: 100, scale: 0.62, tint: 'rose' }),
-  use('boat', { scene, x: 120, y: 56, scale: 0.5, tint: 'menthe' }),
+  use('boat', { scene, x: 84, y: 46, scale: 0.5, tint: 'menthe' }),
+  use('boat', { scene, x: 157, y: 109, scale: 0.6, tint: 'citron' }),
+  use('boat', { scene, x: 100, y: 118, scale: 0.52, tint: 'rose' }),
+  n('g', { class: 'sc-sea-life' }, scatter(scene, ARCHIPELAGO_SEA)),
   entries.map((entry) => archipelagoIsland(entry, scene)),
   n('g', { class: 'sc-foreground' }, scatter(scene, foreground)),
   tipLayer());

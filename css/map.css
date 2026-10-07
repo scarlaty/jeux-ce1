@@ -55,6 +55,37 @@
    c'est ce qui remplace la démarcation au cordeau entre le ciel et l'eau. */
 .sc-foam--far { stroke-width: .9; opacity: .4; }
 .sc-haze { fill: var(--map-haze); opacity: .5; }
+/* Le rang de nuages le plus haut est aussi le plus lointain : il s'efface. */
+.sc-sky-far { opacity: .72; }
+
+/* ---------- La mer vivante ----------
+   Ce qui flotte, ce qui saute, ce qui passe dessous. Tout reste PÂLE : la lecture des cinq îles
+   passe avant le décor. Un objet immergé (banc de poissons, banc de sable) n'a pas de contour —
+   c'est ce qui le place sous la surface plutôt que dessus. */
+.sc-splash { fill: var(--sea-foam); opacity: .45; }
+.sc-school { fill: var(--sea-deep); opacity: .45; }
+.sc-bar { fill: var(--land-sand); opacity: .3; }
+.sc-bar-lt { fill: var(--land-sand); opacity: .55; }
+.sc-spout {
+  fill: none;
+  stroke: var(--sea-foam);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+  opacity: .85;
+}
+.sc-tentacle {
+  fill: none;
+  stroke: var(--sc-tint-dk, var(--kawaii-rose-deep));
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.6);
+  stroke-linecap: round;
+}
+.sc-beak { fill: var(--kawaii-peche-deep); }
+.sc-leg {
+  fill: none;
+  stroke: var(--kawaii-peche-deep);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+}
 
 /* ---------- Le volume d'une île : quatre couches, pas un aplat ---------- */
 .sc-cast { fill: var(--kawaii-shadow); }

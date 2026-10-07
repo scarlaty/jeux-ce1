@@ -32,6 +32,13 @@ const ln = (d) => path(d, 'sc-ln');
 const dt = (d) => path(d, 'sc-dt');
 /** Ombre portée au sol. */
 const ground = (rx, ry = rx * 0.34) => ell(0, 0, rx, ry, 'sc-shadow');
+/** Remous clair au point de contact avec l'eau : l'équivalent marin de l'ombre portée. */
+const splash = (rx, ry = rx * 0.3) => ell(0, 0, rx, ry, 'sc-splash');
+/** Un œil rond avec son reflet : tous les visages de la carte sont faits de ces deux cercles. */
+const eye = (cx, cy, rad) => [circ(cx, cy, rad, 'sc-ink'), circ(r2(cx + rad * 0.34), r2(cy - rad * 0.42), r2(rad * 0.38), 'sc-shine')];
+/** Les deux joues roses posées en transparence. */
+const blush = (dx, cy, rx = 1.5, ry = 0.95) =>
+  [ell(r2(-dx), cy, rx, ry, 'sc-blush'), ell(dx, cy, rx, ry, 'sc-blush')];
 /** Reflet blanc d'une surface ronde. */
 const gloss = (cx, cy, rx, ry, rotate = -38) =>
   n('ellipse', { cx, cy, rx, ry, transform: `rotate(${rotate} ${cx} ${cy})`, class: 'sc-shine' });
@@ -333,6 +340,165 @@ const LOCK = () => [
   path('M-0.6 -0.4h1.2v2.4h-1.2Z', 'sc-ink'),
 ];
 
+// --- La mer vivante -----------------------------------------------------------------------------
+//
+// Troisième lot (#96). Les cinq pancartes retirées, la mer était un grand aplat vide : c'est le
+// point où l'on restait le plus loin des références. Ces objets-là la meublent — et quatre d'entre
+// eux ont un VISAGE (point 5 de la direction artistique : jusqu'ici seuls le soleil et la mascotte
+// en avaient un). Ils restent petits et pâles : la lecture des cinq îles passe avant.
+
+/** Un poisson qui saute : le sourire le plus visible de la mer. */
+const FISH = () => {
+  const body = 'M-6 0C-6 -3.6 -2.6 -6 1 -6C5 -6 7.6 -3.4 7.6 0C7.6 3.4 5 6 1 6C-2.6 6 -6 3.6 -6 0Z';
+  const tail = 'M-5.4 0L-11.2 -4.4V4.4Z';
+  const fin = 'M0.4 -5.4L2.6 -9.6L5.2 -4.8Z';
+  return [
+    splash(7),
+    n('g', { transform: 'translate(0 -9.5) rotate(-22)' },
+      path(tail, 'sc-tint-dk'), ln(tail),
+      path(fin, 'sc-tint-dk'), ln(fin),
+      path(body, 'sc-tint'),
+      path('M-6 0C-6 -3.6 -2.6 -6 1 -6C2.4 -4 1.4 -1.4 -0.8 0.8C-2.8 2.8 -5 3 -6 1.6Z', 'sc-tint-lt'),
+      ln(body),
+      dt('M-2.8 -3.6Q-1.6 0 -2.8 3.6M-0.2 -4.6Q1 0 -0.2 4.6'),
+      ...eye(4.4, -1.4, 1.2),
+      path('M3.4 1.8q1.6 1.2 3 -0.2', 'sc-smile'),
+      ell(1, 2.2, 1.5, 0.95, 'sc-blush')),
+  ];
+};
+
+/** Un banc de poissons VU À TRAVERS l'eau : des silhouettes pâles, sans contour. */
+const SCHOOL = () => {
+  const little = (x, y, s) => n('g', { transform: `translate(${x} ${y}) scale(${r2(s)})` },
+    path('M-3.4 0C-3.4 -1.9 -1.7 -3 0.3 -3C2.3 -3 3.7 -1.7 3.7 0C3.7 1.7 2.3 3 0.3 3C-1.7 3 -3.4 1.9 -3.4 0Z', 'sc-school'),
+    path('M-3.2 0L-6.2 -2.4V2.4Z', 'sc-school'));
+  return [
+    little(-8, -5, 1), little(1, -9, 0.82), little(6, -2, 0.9),
+    little(-3, 0, 0.74), little(11, -7, 0.68), little(-11, -0.6, 0.6),
+  ];
+};
+
+/** Une mouette posée : elle regarde passer les bateaux. */
+const GULL = () => {
+  const bodyPath = 'M-6.4 -4.4C-6.4 -8 -3.6 -10.4 -0.4 -10.4C3 -10.4 5.4 -8 5.4 -4.6C5.4 -2.2 3 -0.8 -0.6 -0.8C-4 -0.8 -6.4 -2.2 -6.4 -4.4Z';
+  const wing = 'M-5.6 -6.2C-3 -7.6 0.6 -7.2 3 -5.4C0.8 -3.4 -3 -3.8 -5.6 -6.2Z';
+  const beak = 'M7.8 -11.8L11.6 -10.6L7.8 -9.4Z';
+  return [
+    ground(5),
+    path('M-1.8 0V-2.4M1.6 0V-2.4', 'sc-leg'),
+    path(bodyPath, 'sc-creme'),
+    path('M-6.4 -4.4C-6.4 -8 -3.6 -10.4 -0.4 -10.4C-1.8 -8 -2.2 -4.8 -1.8 -1C-4.4 -1.2 -6.4 -2.4 -6.4 -4.4Z', 'sc-cloud-lt'),
+    ln(bodyPath),
+    path(wing, 'sc-stone'),
+    ln(wing),
+    circ(4.4, -11.6, 3.4, 'sc-creme'),
+    path('M4.4 -15a3.4 3.4 0 0 0 -2.8 5.3C0.6 -11 1.8 -13.6 4.4 -15Z', 'sc-cloud-lt'),
+    ln('M4.4 -15a3.4 3.4 0 1 0 .01 0'),
+    path(beak, 'sc-beak'),
+    ln(beak),
+    ...eye(5.2, -12.4, 1),
+    ell(2.6, -10, 1.4, 0.9, 'sc-blush'),
+  ];
+};
+
+/** Un crabe : il tient sur un rocher ou sur le sable, pinces levées. */
+const CRAB = () => {
+  const shell = 'M-5.2 -5C-5.2 -8.2 -2.8 -9.8 0 -9.8C2.8 -9.8 5.2 -8.2 5.2 -5C5.2 -2.4 2.8 -1.4 0 -1.4C-2.8 -1.4 -5.2 -2.4 -5.2 -5Z';
+  const claw = 'M-4.8 -5.6C-7.2 -6.6 -9.2 -5.4 -9 -3.4C-7.4 -2.6 -5.2 -3.2 -4.8 -5.6Z';
+  return [
+    ground(6),
+    path('M-4.2 -2.2L-7.8 -0.4M-4.4 -3.8L-8.2 -3.8M4.2 -2.2L7.8 -0.4M4.4 -3.8L8.2 -3.8', 'sc-leg'),
+    path(claw, 'sc-tint'), ln(claw),
+    n('g', { transform: 'scale(-1 1)' }, path(claw, 'sc-tint'), ln(claw)),
+    path(shell, 'sc-tint'),
+    path('M-5.2 -5C-5.2 -8.2 -2.8 -9.8 0 -9.8C-1.4 -8.2 -2.2 -5.6 -2.2 -1.8C-4 -2.2 -5.2 -3.2 -5.2 -5Z', 'sc-tint-lt'),
+    ln(shell),
+    dt('M-3.4 -6.6h6.8'),
+    path('M-2.2 -9.6V-11.8M2.2 -9.6V-11.8', 'sc-leg'),
+    circ(-2.2, -12.8, 1.3, 'sc-tint-lt'), circ(2.2, -12.8, 1.3, 'sc-tint-lt'),
+    path('M-2.2 -14.1a1.3 1.3 0 1 0 .01 0M2.2 -14.1a1.3 1.3 0 1 0 .01 0', 'sc-ln sc-ln--thin'),
+    ...eye(-2.2, -12.8, 0.6), ...eye(2.2, -12.8, 0.6),
+    path('M-1.6 -4.4q1.6 1.4 3.2 0', 'sc-smile'),
+    ...blush(3.6, -4),
+  ];
+};
+
+/** Une baleine au loin : le dos, le jet, et un œil qui sourit. */
+const WHALE = () => {
+  const back = 'M-12 0C-12 -6.2 -6 -10.6 1.6 -10.6C9 -10.6 14 -6 14 0Z';
+  const fluke = 'M-10.6 -3C-13.6 -5.6 -15.4 -4.6 -17.2 -8C-13.8 -8.8 -11.6 -7 -9.8 -5Z';
+  return [
+    splash(14, 3.4),
+    path(fluke, 'sc-tint-dk'), ln(fluke),
+    path(back, 'sc-tint'),
+    path('M-12 0C-12 -6.2 -6 -10.6 1.6 -10.6C-2.2 -7.6 -4.6 -4 -5.2 0Z', 'sc-tint-lt'),
+    ln(back),
+    dt('M-9 -1.4h18'),
+    path('M3.4 -10.4q-1.4 -4 0.4 -7.6M4 -18q2.2 2.6 1.6 5.2', 'sc-spout'),
+    ...eye(8, -5.6, 1.2),
+    path('M9.4 -2.8q2 1.4 3.4 -0.6', 'sc-smile'),
+    ell(5.6, -2.8, 1.8, 1.1, 'sc-blush'),
+  ];
+};
+
+/** Une pieuvre curieuse : elle sort la tête de l'eau. */
+const OCTOPUS = () => {
+  const head = 'M-6.4 -2C-6.4 -7.6 -3.4 -11.2 0 -11.2C3.4 -11.2 6.4 -7.6 6.4 -2C6.4 0.4 -6.4 0.4 -6.4 -2Z';
+  return [
+    splash(9),
+    path('M-6 -1q-2.6 -2.6 -5.2 -0.6M6 -1q2.6 -2.6 5.2 -0.6', 'sc-tentacle'),
+    path(head, 'sc-tint'),
+    path('M-6.4 -2.4C-6.2 -7.6 -3.4 -11.2 0 -11.2C-1.8 -8.6 -2.8 -5 -2.8 -0.8Z', 'sc-tint-lt'),
+    ln(head),
+    ...eye(-2.4, -6.2, 1.3), ...eye(2.4, -6.2, 1.3),
+    path('M-1.4 -3.4q1.4 1.4 2.8 0', 'sc-smile'),
+    ...blush(4.4, -3.6, 1.6, 1),
+    gloss(-3, -8.8, 1.6, 1),
+  ];
+};
+
+/** Une bouée à bandes, avec sa petite lampe. */
+const BUOY = () => {
+  const float = 'M-4.6 -1C-4.6 -5.6 -2.6 -9.6 0 -9.6C2.6 -9.6 4.6 -5.6 4.6 -1C4.6 1.2 -4.6 1.2 -4.6 -1Z';
+  return [
+    splash(6.6),
+    path(float, 'sc-tint'),
+    path('M-4.6 -1.4C-4.4 -5.8 -2.6 -9.6 0 -9.6C-0.8 -6.6 -1.2 -3.4 -1.2 -0.2Z', 'sc-tint-lt'),
+    path('M-4.4 -4.8C-1.4 -5.6 1.4 -5.6 4.4 -4.8L4.6 -2.2C1.4 -3 -1.4 -3 -4.6 -2.2Z', 'sc-creme'),
+    ln(float),
+    path('M0 -9.6V-13.4', 'sc-post'),
+    circ(0, -14.8, 1.6, 'sc-gold'),
+    ln('M0 -16.4a1.6 1.6 0 1 0 .01 0'),
+    gloss(-2.4, -6.8, 1.1, 0.7),
+  ];
+};
+
+/** Un rocher émergé, avec son collier d'écume. */
+const REEF = () => {
+  const stone = 'M-8.4 0.4C-9 -4.4 -5.6 -9.8 -1.4 -11C2.8 -10.4 6.8 -6.4 7.8 0.4Z';
+  return [
+    splash(10.5, 2.8),
+    path(stone, 'sc-stone'),
+    path('M-8.4 0C-8.8 -4.6 -5.4 -9.8 -1.4 -11C0.4 -8.8 -1.4 -4 -4 0Z', 'sc-stone-lt'),
+    path('M1.4 -10.4C4.6 -8.4 7 -4.6 7.8 0.4H4.6C4.6 -3.6 3.4 -7.6 1.4 -10.4Z', 'sc-stone-dk'),
+    ln(stone),
+    dt('M-4.4 -8.6Q-2 -5.6 -2.4 -1.4'),
+    gloss(-4.8, -7.4, 1.6, 0.9),
+  ];
+};
+
+/** Un banc de sable : du clair sous l'eau, sans contour — il est immergé. */
+const SANDBAR = () => [
+  path('M-22 0C-22 -4.6 -12 -7.6 0 -7.6C12 -7.6 22 -4.6 22 0C22 3.8 12 5.8 0 5.8C-12 5.8 -22 3.8 -22 0Z', 'sc-bar'),
+  path('M-16 -1.4C-16 -3.8 -8 -5.4 0 -5.4C8 -5.4 16 -3.8 16 -1.4C16 0.6 8 1.8 0 1.8C-8 1.8 -16 0.6 -16 -1.4Z', 'sc-bar-lt'),
+  path('M-9 -2.4q3 -1.6 6 0M3 0.6q3 -1.6 6 0', 'sc-ripple'),
+];
+
+/** Un remous : une spirale d'eau, là où rien d'autre ne se passe. */
+const SWIRL = () => [
+  path('M-6 0a6 2.8 0 1 0 12 0a4 1.9 0 1 0 -8 0', 'sc-ripple'),
+];
+
 // --- Les lieux : un jeu = un endroit du décor ---------------------------------------------------
 //
 // Un lieu est un objet comme un autre, en plus grand et en plus détaillé (c'est le point focal de
@@ -530,6 +696,17 @@ export const PROPS = {
   frond: { label: 'Palme', parts: FROND },
   sign: { label: 'Panneau de bois', parts: SIGN },
   lock: { label: 'Cadenas', parts: LOCK },
+  // La mer vivante (#96, troisième lot)
+  fish: { label: 'Poisson qui saute', parts: FISH },
+  school: { label: 'Banc de poissons', parts: SCHOOL },
+  gull: { label: 'Mouette', parts: GULL },
+  crab: { label: 'Crabe', parts: CRAB },
+  whale: { label: 'Baleine', parts: WHALE },
+  octopus: { label: 'Pieuvre', parts: OCTOPUS },
+  buoy: { label: 'Bouée', parts: BUOY },
+  reef: { label: 'Rocher émergé', parts: REEF },
+  sandbar: { label: 'Banc de sable', parts: SANDBAR },
+  swirl: { label: 'Remous', parts: SWIRL },
   // Les lieux portent leur hauteur : la scène s'en sert pour les ramener tous à la même
   // emprise, quelle que soit leur silhouette (un phare est haut, des rochers sont bas).
   cave: { label: 'Grotte', parts: CAVE, height: 22 },
