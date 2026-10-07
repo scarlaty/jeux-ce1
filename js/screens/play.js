@@ -9,7 +9,7 @@ import { h, content } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
-import { mascotSticker, hasMascot, endFace } from '../core/ui/mascot.js';
+import { mascotSticker, hasMascot, endFace, answerReaction, react } from '../core/ui/mascot.js';
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
@@ -118,6 +118,8 @@ export function createGameView(root, { app, game, onEnd }) {
   let ui = null;
   let timer = null;
   let offPoints = null;
+  let buddy = null;
+  let buddyFace = 'happy';
   const gainTimers = new Set();
 
   function clearGains() {
@@ -171,11 +173,14 @@ export function createGameView(root, { app, game, onEnd }) {
       record: record === undefined ? (result) => app.record(result) : record,
     });
     const dots = session.questions.map((_, i) => h('li', { class: 'dot', 'aria-label': `question ${i + 1}` }));
+    // La mascotte reste dans l'en-tête, loin de la consigne et des réponses ; immobile entre deux réactions.
+    buddy = mascotSticker(mascotIsland(game), { face: 'happy', blink: false, className: 'play-head__mascot' });
     const head = h('div', { class: 'play-head' },
       h('span', { class: 'chip', text: game.levels[level - 1].label }),
       h('ol', { class: 'dots', 'aria-label': 'Progression' }, dots),
       pointsCounter(session),
-      h('span', { class: 'play-head__count', 'aria-live': 'polite' }));
+      h('span', { class: 'play-head__count', 'aria-live': 'polite' }),
+      buddy);
     const stage = h('div', { class: 'stage' });
     root.replaceChildren(head, stage);
     renderQuestion(session, head, dots, stage);
@@ -193,6 +198,11 @@ export function createGameView(root, { app, game, onEnd }) {
     const index = session.index;
     dots.forEach((d, i) => d.classList.toggle('is-current', i === index));
     head.querySelector('.play-head__count').textContent = `${index + 1} / ${session.total}`;
+
+    if (buddyFace !== 'happy') {
+      buddyFace = 'happy';
+      react(buddy, mascotIsland(game), { face: 'happy' });
+    }
 
     const Ui = getQuestionUI(question.type);
     const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
@@ -226,6 +236,9 @@ export function createGameView(root, { app, game, onEnd }) {
       dot.classList.remove('is-current');
       dot.classList.add(fb.correct ? 'is-right' : 'is-wrong');
       dot.replaceChildren(badge(fb.correct ? 'right' : 'wrong'));
+      const reaction = answerReaction(fb.correct);
+      buddyFace = reaction.face;
+      react(buddy, mascotIsland(game), reaction);
       if (fb.correct) {
         audio.playSound('success');
         stage.append(h('div', { class: 'stamp stamp--ok', 'aria-hidden': 'true', text: PRAISE[Math.floor(Math.random() * PRAISE.length)] }));

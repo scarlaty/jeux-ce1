@@ -397,3 +397,10 @@
 
 /* Album : la mascotte de chaque île veille sur sa collection (immobile : une page à parcourir). */
 .album-island__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }
+
+/* Pendant la partie : la mascotte est dans l'en-tête, à droite du compteur, hors des zones de
+   réponse. Immobile ; elle saute (bonne réponse) ou encourage (erreur) une seule fois. */
+.play-head__mascot { width: 84px; margin: -22px -8px -22px 0; pointer-events: none; }
+@media (max-width: 520px) {
+  .play-head__mascot { width: 68px; margin: -14px -4px -8px 0; }
+}
