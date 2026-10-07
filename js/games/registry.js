@@ -56,6 +56,13 @@ export const GAMES = [
     load: () => import('./lecture-eclair.js'),
   },
   {
+    id: 'devinettes',
+    title: 'Devinettes',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./devinettes.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
