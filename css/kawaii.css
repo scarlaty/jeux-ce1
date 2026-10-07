@@ -348,3 +348,18 @@
 }
 .island-card__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }
 .island-card.is-locked .island-card__mascot { opacity: .8; }
+
+/* Choix du niveau : la mascotte de l'île accueille, à côté du titre du jeu (sans boucle). */
+.play-intro--mascot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: left;
+}
+.play-intro__mascot { width: 104px; }
+.play-intro__text { min-width: 0; }
+@media (max-width: 520px) {
+  .play-intro--mascot { gap: var(--space-3); }
+  .play-intro__mascot { width: 80px; }
+}

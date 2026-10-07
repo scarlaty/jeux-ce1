@@ -9,6 +9,8 @@ import { h, content } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
+import { mascotSticker } from '../core/ui/mascot.js';
+import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
 import { getGameProgress } from '../core/history.js';
 import { rewardEvents, rewardSummary, liveTotal } from '../core/rewards-live.js';
@@ -301,11 +303,15 @@ export default {
           !open && h('span', { class: 'level-card__lock-text', text: `Gagne 3 étoiles au niveau ${level - 1} pour l'ouvrir.` })),
         open ? starRow(best?.stars || 0, { size: 22 }) : h('span', { class: 'level-card__lock' }, icon('lock', { size: 28 }))));
       });
+      const buddy = mascotSticker(game.island, { face: 'happy', className: 'play-intro__mascot' });
       root.replaceChildren(
-        h('div', { class: 'play-intro' },
-          h('h1', { class: 'page-title', text: game.title }),
-          h('p', { class: 'play-intro__lead cursive', text: 'Choisis ton niveau.' })),
+        h('div', { class: `play-intro${buddy ? ' play-intro--mascot' : ''}` },
+          buddy,
+          h('div', { class: 'play-intro__text' },
+            h('h1', { class: 'page-title', text: game.title }),
+            h('p', { class: 'play-intro__lead cursive', text: 'Choisis ton niveau.' }))),
         h('ol', { class: 'level-list' }, cards));
+      play(buddy, 'pop');
     }
 
     // --- Fin de partie -----------------------------------------------------------------------
