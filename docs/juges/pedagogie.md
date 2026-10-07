@@ -21,17 +21,49 @@ Sur 500 tirages par niveau :
 
 **Mesure à produire** : nombre de questions à réponse multiple, sur combien de tirages.
 
+**Et la phrase qui écarte un intrus doit être vraie.** Défaut distinct de l'ambiguïté : la réponse
+peut être unique alors que la correction affirme une fausseté. Relevé sur les devinettes :
+« La souris n'est pas minuscule. », « La chèvre ne se mange pas. », « Le chat ne protège pas du
+froid. » Ces phrases ne sortaient que rarement, et seulement parce qu'un autre mécanisme les
+masquait par chance — ce n'est pas une garantie.
+
+- [ ] échantillonne les phrases de correction et vérifie qu'elles sont **factuellement vraies**.
+
 ## 2. Chaque indice est nécessaire
 
-C'est le critère qui a fait tomber les devinettes (#97) : **100 % des questions de niveau 1 se
-résolvaient avec un seul indice**, les autres étaient décoratifs.
+**C'est le critère le plus rentable de cette grille.** Sur les devinettes (#97), il a été le seul des
+sept à attraper le vrai défaut : 99,2 % des questions de niveau 1 se résolvaient avec un seul indice,
+les autres étaient décoratifs. Les six autres critères étaient conformes.
+
+Ce n'est pas une case à cocher : **c'est une mesure chiffrée obligatoire, avec un seuil.** Sans seuil,
+deux juges rendront deux verdicts opposés sur les mêmes 99 %.
+
+**Mesures à produire**, sur plusieurs milliers de tirages par niveau :
+
+| Mesure | Comment | Seuil indicatif |
+|---|---|---|
+| part des questions résolubles avec **un seul** indice | énumérer les sous-ensembles stricts, compter les survivants **parmi les choix réellement affichés** | > 50 % = à corriger |
+| part où **chaque** indice suffit séparément | idem | > 25 % = à corriger |
+| part des intrus ne partageant **aucun** indice | | > 20 % = à corriger |
 
 - [ ] retirer n'importe quel indice rend la réponse ambiguë parmi les choix proposés ;
 - [ ] les distracteurs partagent **tous les indices sauf un** — un château n'est pas un leurre pour
       un fruit à pépins ;
 - [ ] aucune question ne se résout en regardant un seul mot de l'énoncé.
 
-**Mesure à produire** : part des questions résolubles avec un sous-ensemble strict des indices.
+## 2 bis. Aucun raccourci de surface
+
+Un critère distinct, que l'ambiguïté et la redondance ne captent pas : la bonne réponse ne doit pas
+s'obtenir par un **indice de forme**, sans comprendre l'énoncé.
+
+Trouvé sur les devinettes : au niveau 3, le mot nommé dans « Je ne suis pas un ail » figure
+**4 000 fois sur 4 000** parmi les choix. L'enfant barre le mot qu'elle voit recopié dans la question
+et choisit au hasard dans ce qui reste — sans jamais traiter la négation.
+
+- [ ] la réponse ne s'obtient pas en **recopiant ou en barrant** un mot de l'énoncé ;
+- [ ] elle ne s'obtient pas par la **position**, la longueur, ou le fait d'être le seul élément
+      d'une catégorie visible ;
+- [ ] **mesure** : part des questions franchissables par le raccourci que tu as identifié.
 
 ## 3. La difficulté est réelle et progressive
 
@@ -69,8 +101,11 @@ Mauvais : « La bonne réponse était 12. »
 - [ ] un émoji n'est utilisé comme image que si une enfant de 7 ans le nomme **sans hésiter**.
       Déjà écartés après vérification à l'écran : 🌬️ « vent », ⚖️ « balance », 💐 « bouquet »,
       et 🐔 lu « coq » autant que « poule » (#93) ;
-- [ ] le **nom accessible d'un dessin ne donne jamais la réponse** : un cadran décrit la position des
-      aiguilles, pas l'heure ; le matériel de numération décrit les pièces, pas le nombre ;
+- [ ] le **nom accessible d'un dessin ne donne jamais la réponse** — *mais seulement quand le dessin
+      est délibérément non-nommant* : un cadran décrit la position des aiguilles et pas l'heure, le
+      matériel de numération décrit les pièces et pas le nombre. **Quand l'image EST l'objet**
+      (un émoji de pomme pour « pomme »), la nommer est correct : le lecteur d'écran reçoit
+      exactement ce que l'enfant voyante voit, ni plus ;
 - [ ] deux images distinctes ne portent pas le même nom accessible.
 
 ## 7. Les mathématiques sont exactes

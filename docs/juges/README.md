@@ -76,6 +76,17 @@ tout le temps — on les déclenche selon ce que la branche touche.
 
 Les juges tournent **en parallèle** : ils sont indépendants les uns des autres.
 
+## Les dettes de modélisation
+
+Un critère révèle parfois, non pas un défaut de ce qui est produit, mais un **défaut de la structure
+qui le produit**. Ce n'est ni bloquant ni cosmétique : c'est ce qui fabriquera les défauts de demain.
+
+Exemples relevés au rodage sur les devinettes : un champ `det` qui porte à la fois le déterminant
+**et** le genre, donc impossible d'écrire « du raisin » sans casser les accords ; des tags `maybe`
+incohérents entre la vache, le mouton et la chèvre.
+
+- [ ] quand tu en trouves une, **dis-la à part**, avec ce qu'elle empêche de corriger proprement.
+
 ## Verdict
 
 Chaque juge rend :
