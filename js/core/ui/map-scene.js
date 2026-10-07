@@ -44,17 +44,19 @@ const starMark = (x, y, size, filled) => path(
 
 /** Le ciel : deux nappes (le haut plus froid, l'horizon plus chaud), le soleil, des nuages. */
 function sky({ horizon, scene }) {
+  // Tout reste SOUS la ligne de crop du cadrage paysage : un soleil coupé en deux se lit comme
+  // une erreur, pas comme un cadrage.
   return [
     n('rect', { x: 0, y: 0, width: SCENE.width, height: SCENE.height, class: 'sc-sky' }),
     path(`M0 ${r2(horizon - 12)}Q50 ${r2(horizon - 18)} 100 ${r2(horizon - 11)}T200 ${r2(horizon - 14)}`
       + `V${r2(horizon + 2)}H0Z`, 'sc-sky-low'),
-    use('sun', { scene, x: 28, y: r2(horizon - 2), scale: 0.72 }),
-    use('cloud', { scene, x: 84, y: 16, scale: 0.9 }),
-    use('cloud', { scene, x: 158, y: 12, scale: 0.68, flip: true }),
-    use('cloud', { scene, x: 124, y: 26, scale: 0.52 }),
-    use('bird', { scene, x: 58, y: 14, scale: 0.9 }),
-    use('bird', { scene, x: 68, y: 9, scale: 0.6 }),
-    use('bird', { scene, x: 180, y: 24, scale: 0.75 }),
+    use('sun', { scene, x: 30, y: r2(horizon + 1), scale: 0.56 }),
+    use('cloud', { scene, x: 86, y: r2(horizon - 4), scale: 0.78 }),
+    use('cloud', { scene, x: 160, y: r2(horizon - 7), scale: 0.6, flip: true }),
+    use('cloud', { scene, x: 126, y: r2(horizon - 1), scale: 0.46 }),
+    use('bird', { scene, x: 60, y: r2(horizon - 9), scale: 0.85 }),
+    use('bird', { scene, x: 70, y: r2(horizon - 13), scale: 0.6 }),
+    use('bird', { scene, x: 182, y: r2(horizon - 4), scale: 0.7 }),
   ];
 }
 
@@ -445,18 +447,17 @@ export function islandScene(island, places, layout) {
   sea({ horizon }),
   use('boat', { scene, x: 176, y: 46, scale: 0.7, tint: 'ciel' }),
   use('boat', { scene, x: 22, y: 44, scale: 0.55, tint: 'citron' }),
-  // Les collines du fond : du relief avant même les lieux
+  islandBody(body),
+  // Les collines du fond : du relief posé SUR l'herbe, derrière la première rangée de lieux
   path('M24 80q26-26 50 0t46-8 46 10q-38 10-72 10t-70-12Z', 'sc-hill'),
   path('M40 77q18-19 38-2t30-5q-24 8-38 8t-30-1Z', 'sc-hill-lt'),
-  islandBody(body),
-  grassMarks(100, 100, 72, 40),
+  grassMarks(100, 102, 70, 36),
   trail(layout.slots),
   n('g', { class: 'sc-scatter' }, scatter(scene, ISLAND_SCATTER)),
-  // La guirlande de fanions, tendue entre les deux palmiers du bord
   // La guirlande traverse l'arrière de l'île : elle passe derrière les lieux, comme une corde tendue.
   use('bunting', { scene, x: 100, y: 70, scale: 1.5 }),
   places.map((place) => placeNode(place, layout, scene)),
-  mascotNode(island.id, { x: 30, y: 128, size: 24 }),
+  mascotNode(island.id, { x: 38, y: 118, size: 21 }),
   n('g', { class: 'sc-foreground' }, scatter(scene, ISLAND_FOREGROUND)));
   return toNode(tree);
 }

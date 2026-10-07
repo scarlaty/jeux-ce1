@@ -178,6 +178,9 @@
   opacity: .8;
 }
 .sc-ray--short { opacity: .45; }
+.sc-rays { opacity: .9; }
+.sc-stripes { opacity: .95; }
+.sc-mill-sails { opacity: 1; }
 .sc-glow-fill { fill: var(--map-glow); }
 .sc-glow-light { fill: var(--kawaii-citron-light); }
 .sc-beam { opacity: .4; }
@@ -208,6 +211,7 @@
   fill: var(--island-ink, var(--island-mots-ink));
   text-anchor: middle;
 }
+.sc-flag { opacity: 1; }
 .sc-flag-fill { fill: var(--sc-tint, var(--kawaii-rose)); }
 .sc-flag-light { fill: var(--sc-tint-lt, var(--kawaii-rose-light)); }
 .sc-flag--0 { --sc-tint: var(--kawaii-rose); --sc-tint-lt: var(--kawaii-rose-light); }
@@ -258,11 +262,15 @@
   fill: var(--kawaii-creme-ink);
   dominant-baseline: middle;
 }
+/* « À découvrir » : la même plaque, en bois plus clair et sans étoiles. Le bandeau de lumière
+   doit se ternir LUI AUSSI, sinon le nom se retrouve en gris clair sur crème (illisible). */
 .sc-plaque.is-dim .sc-plaque-board { fill: var(--surface-sunk); }
-.sc-plaque.is-dim .sc-plaque-name,
+.sc-plaque.is-dim .sc-plaque-light { fill: var(--surface); opacity: .5; }
+.sc-plaque.is-dim .sc-plaque-name { fill: var(--ink); }
 .sc-plaque.is-dim .sc-plaque-meta { fill: var(--ink-soft); }
 .sc-star { fill: var(--star); stroke: var(--star-edge); stroke-width: .5; }
-.sc-star-empty { fill: var(--star-empty); stroke: var(--star-empty-edge); stroke-width: .5; }
+/* Étoile pas encore gagnée : creuse. Un aplat se lirait comme une étoile d'une autre couleur. */
+.sc-star-empty { fill: none; stroke: var(--star-empty-edge); stroke-width: .9; }
 
 /* ---------- Mascotte posée dans la scène ---------- */
 .map-mascot { overflow: visible; }
@@ -326,7 +334,9 @@
   flex-wrap: wrap;
 }
 .isle-head__mascot { width: 72px; flex: none; }
-.isle-head__id { flex: 1; min-width: 0; }
+/* `flex-basis` plutôt que `flex: 1` : sous 200 px l'identité passe à la ligne au lieu
+   de se comprimer — sinon le nom de l'île se casse en trois lignes sur un téléphone. */
+.isle-head__id { flex: 1 1 210px; min-width: 0; }
 .isle-head__name { font-size: var(--text-l); color: var(--island-ink); margin: 0; }
 .isle-head__subject { font-size: var(--text-s); color: var(--ink-soft); margin: 0; }
 .isle-head__stats {

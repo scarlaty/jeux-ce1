@@ -69,21 +69,23 @@ const GRIDS = [
 export function placeLayout(count) {
   const grid = GRIDS.find((g) => count <= g.max) || GRIDS[GRIDS.length - 1];
   const height = PLACE_HEIGHT * grid.decor;
+  // Seule la rangée du fond est décalée : devant, le décor viendrait buter sur la plaque d'arrière.
+  const rowY = (col, row) => grid.rows[row] + (row === 0 ? grid.stagger[col] : 0);
   const slots = grid.order.slice(0, Math.max(count, 0)).map(([col, row], i) => {
     const x = COLUMNS[col];
-    // Seule la rangée du fond est décalée : devant, le décor viendrait buter sur la plaque d'arrière.
-    const y = grid.rows[row] + (row === 0 ? grid.stagger[col] : 0);
+    const y = rowY(col, row);
+    const bottom = y + grid.plaque.height / 2;
+    // La zone touchable couvre le décor ET sa plaque, mais s'arrête au pied de la case du dessus :
+    // le décor d'un lieu de devant peut recouvrir la plaque d'un lieu du fond (c'est ce recouvrement
+    // qui crée la profondeur) ; le DOIGT, lui, ne doit jamais être dans deux zones à la fois.
+    const ceiling = row > 0 ? rowY(col, row - 1) + grid.plaque.height / 2 : -Infinity;
+    const top = Math.max(y - grid.lift - height, ceiling);
     return {
       x,
       y,
       ax: x + JITTER[i % JITTER.length],
       ay: y - grid.lift,
-      hit: {
-        x: x - grid.plaque.width / 2,
-        y: y - grid.lift - height,
-        width: grid.plaque.width,
-        height: height + grid.lift + grid.plaque.height / 2,
-      },
+      hit: { x: x - grid.plaque.width / 2, y: top, width: grid.plaque.width, height: bottom - top },
     };
   });
   return { ...grid, height, slots };
