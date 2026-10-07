@@ -141,7 +141,7 @@ export default {
       const art = companionSticker(companion, { face: 'joyful', loop: 'bounce', className: 'pet__art', decorative: false });
       root.replaceChildren(h('div', { class: 'card pet__card' },
         h('div', { class: 'end__buddy' }, sparkle('left', 'citron'), art, sparkle('right', 'rose')),
-        h('h1', { class: 'end__title stamp stamp--static' }),
+        h('h1', { class: 'page-title end__title' }),
         h('p', { class: 'pet__lead cursive', text: 'Il grandira avec les étoiles que tu gagnes.' }),
         h('div', { class: 'end__actions' },
           h('button', { type: 'button', class: 'btn btn--primary', onclick: () => { step = 'main'; show(); } },
