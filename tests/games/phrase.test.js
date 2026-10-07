@@ -347,8 +347,12 @@ test('explication de l\'ordre : une stratégie adaptée à la phrase, pas une fo
     const body = withoutSign(s);
     // « Cherche l'action » est interdit sur une phrase sans action (être, avoir possessif).
     if (/qui fait l'action/.test(hint)) {
-      const passeCompose = /\b(a|ai|as|avons|avez|ont)\s+\S*(é|ée|és|ées|i|is|it|u|us|ue)\b/.test(body);
-      const sansVerbeDEtat = !/\b(est|sont|es|suis|sommes|êtes|a|ai|as|avons|avez|ont)\b/.test(body);
+      // Découpage en mots : `\b` voit une limite dans « Léa » et y reconnaissait le verbe « a ».
+      const m = body.toLowerCase().split(/[^a-zà-ÿ'-]+/).filter(Boolean);
+      const AVOIR = ['a', 'ai', 'as', 'avons', 'avez', 'ont'];
+      const avoir = m.find((w) => AVOIR.includes(w));
+      const passeCompose = avoir && /(é|ée|és|ées|i|is|it|u|us|ue)$/.test(m[m.indexOf(avoir) + 1] || '');
+      const sansVerbeDEtat = !avoir && !m.some((w) => ['est', 'sont', 'es', 'suis', 'sommes', 'êtes'].includes(w));
       assert.ok(signOf(s) === '.' && (passeCompose || sansVerbeDEtat),
         `« ${s} » : on propose de chercher l'action alors qu'il n'y en a pas`);
     }
@@ -363,6 +367,20 @@ test('explication de l\'ordre : une stratégie adaptée à la phrase, pas une fo
     if (/verbe collé à/.test(hint)) {
       assert.match(body, /\S+-(tu|il|elle|nous|vous|ils)\b/,
         `« ${s} » : on fait chercher un verbe inversé qui n'existe pas`);
+    }
+    // Règle générale : tout mot cité entre guillemets par la stratégie doit être sur une étiquette.
+    // Sinon l'enfant cherche un mot qui n'existe pas — le défaut des interrogatives, revenu par
+    // « est » cité sur « Les fleurs sont très belles. » et par le « a » de « Léa » (#107, 3e relecture).
+    const mots = body.toLowerCase().split(/[^a-zà-ÿ'-]+/).filter(Boolean);
+    for (const [, cite] of hint.matchAll(/« ([a-zà-ÿ']+) »/g)) {
+      // « ne »/« pas » et « tu » sont cités comme explication, pas comme étiquette à retrouver :
+      // les deux branches dédiées ci-dessus les vérifient déjà.
+      if (['ne', 'pas', 'tu'].includes(cite)) continue;
+      assert.ok(mots.includes(cite), `« ${s} » : la stratégie cite « ${cite} », absent des étiquettes`);
+    }
+    if (/« ne » et « pas »/.test(hint)) {
+      assert.ok(mots.includes('pas') && mots.some((m) => m === 'ne' || m.startsWith('n\'')),
+        `« ${s} » : on parle de la négation alors qu'il n'y en a pas`);
     }
   }
   assert.ok(seenStrategies.size >= 5, `trop peu de variantes : ${seenStrategies.size}`);

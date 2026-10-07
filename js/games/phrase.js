@@ -68,17 +68,27 @@ export function orderStrategy(sentence) {
   if (sign === '!') {
     return 'Dans une exclamation, le mot qui s\'étonne (quel, comme, que) se met en premier.';
   }
+  // `\b` se fonde sur [A-Za-z0-9_] : dans « Léa », il voit une limite avant le « a », et `\ba\b`
+  // reconnaissait donc le prénom. On découpe en mots, comme pour les mots interrogatifs ci-dessus.
+  const mots = body.toLowerCase().split(/[^a-zà-ÿ'-]+/).filter(Boolean);
+  const ACTION = 'Ici, quelqu\'un fait quelque chose : cherche qui fait l\'action, puis l\'action, puis le reste.';
+  // La négation encadre le verbe : c'est la difficulté de ces étiquettes-là, et la règle est refaisable.
+  if (mots.includes('pas') && mots.some((m) => m === 'ne' || m.startsWith('n\''))) {
+    return 'Ici, la phrase dit ce qu\'on ne fait pas : « ne » et « pas » entourent le verbe.';
+  }
   // Passé composé : « a mangé », « avons lu » — il y a bien une action, malgré l'auxiliaire « avoir ».
-  if (/\b(a|ai|as|avons|avez|ont)\s+\S*(é|ée|és|ées|i|is|it|u|us|ue)\b/.test(body)) {
-    return 'Ici, quelqu\'un fait quelque chose : cherche qui fait l\'action, puis l\'action, puis le reste.';
+  const AVOIR = ['a', 'ai', 'as', 'avons', 'avez', 'ont'];
+  const avoir = mots.find((m) => AVOIR.includes(m));
+  if (avoir && /(é|ée|és|ées|i|is|it|u|us|ue)$/.test(mots[mots.indexOf(avoir) + 1] || '')) return ACTION;
+  // On cite le verbe tel qu'il est écrit sur l'étiquette : « sont », pas « est » (#107).
+  const etre = mots.find((m) => ['est', 'sont', 'es', 'suis', 'sommes', 'êtes'].includes(m));
+  if (etre) {
+    return `Ici, la phrase dit comment est quelque chose : d'abord de quoi on parle, puis « ${etre} », puis le mot qui dit comment.`;
   }
-  if (/\b(est|sont|es|suis|sommes|êtes)\b/.test(body)) {
-    return 'Ici, la phrase dit comment est quelque chose : d\'abord de quoi on parle, puis « est », puis le mot qui dit comment.';
+  if (avoir) {
+    return `Ici, la phrase dit ce que quelqu'un a : d'abord qui, puis « ${avoir} », puis ce qu'il a.`;
   }
-  if (/\b(a|ai|as|avons|avez|ont)\b/.test(body)) {
-    return 'Ici, la phrase dit ce que quelqu\'un a : d\'abord qui, puis « a », puis ce qu\'il a.';
-  }
-  return 'Ici, quelqu\'un fait quelque chose : cherche qui fait l\'action, puis l\'action, puis le reste.';
+  return ACTION;
 }
 
 const SIGN_RULE = {
