@@ -52,7 +52,9 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 | Claude (session scarlaty) | #97 + #106 Devinettes (niveau trop faible, « un ail », émojis) | `feat/97-106-devinettes` |
 
 #105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles.
-Ensuite, sur demande de l'utilisateur (« traite les bugs ») : #87 (tables, défilement), #102 / #103 (contraste, carte).
+| Claude (session scarlaty) | #87 tables : défilement horizontal | `feat/87-tables-debordement` |
+
+Ensuite, sur demande de l'utilisateur (« traite les bugs ») : #102 / #103 (contraste, carte).
 **Règle du 07/10 : aucun nouveau ticket (jeu ou amélioration) sans l'accord de l'utilisateur.**
 Règle « Mixité » (CLAUDE.md) : textes épicènes, personnages variés — le jeu est pour filles et garçons.
 
