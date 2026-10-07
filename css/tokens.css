@@ -328,3 +328,16 @@
 [data-island="mesures"] { --island: var(--island-mesures); --island-soft: var(--island-mesures-soft); --island-ink: var(--island-mesures-ink); }
 [data-island="monde"] { --island: var(--island-monde); --island-soft: var(--island-monde-soft); --island-ink: var(--island-monde-ink); }
 [data-island="ailleurs"] { --island: var(--island-ailleurs); --island-soft: var(--island-ailleurs-soft); --island-ink: var(--island-ailleurs-ink); }
+
+/* Argent (ui/art/money.js) : des objets réels, donc les mêmes teintes en clair et en sombre
+   (contour sombre : ils ressortent aussi bien sur la page Seyès que sur l'ardoise). */
+:root {
+  --money-edge: #2a2a2a;
+  --money-n5: #b4bcc4;      --money-n5-ink: #1f2933;
+  --money-n10: #c8423b;     --money-n10-ink: #ffffff;
+  --money-n20: #3d74c4;     --money-n20-ink: #ffffff;
+  --money-n50: #f0932b;     --money-n50-ink: #2b1a00;
+  --money-copper: #c47a4a;  --money-copper-ink: #2b1608;
+  --money-gold: #e3c15a;    --money-gold-ink: #352a05;
+  --money-silver: #d3d7dc;  --money-silver-ink: #1f2933;
+}

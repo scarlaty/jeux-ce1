@@ -19,8 +19,9 @@ import * as keypad from './keypad.js';
 import * as order from './order.js';
 import * as drag from './drag.js';
 import * as letters from './letters.js';
+import * as amount from './amount.js';
 
-const registry = new Map(Object.entries({ choice, keypad, order, drag, letters }));
+const registry = new Map(Object.entries({ choice, keypad, order, drag, letters, amount }));
 
 export function registerQuestionUI(type, module) {
   registry.set(type, module);
