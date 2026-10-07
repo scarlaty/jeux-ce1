@@ -324,3 +324,27 @@
 
 .kw-field { display: grid; gap: var(--space-1); justify-items: center; }
 .kw-field__label { font-family: var(--font-title); font-weight: 600; color: var(--ink-soft); }
+
+/* ---------- Les mascottes sur les écrans (#89) ----------
+   .mascot = conteneur du dessin (js/core/ui/mascot.js) : c'est lui qui bouge. Largeur seule. */
+
+.mascot { display: inline-block; flex: none; width: 72px; line-height: 0; }
+.mascot .kw { width: 100%; height: auto; }
+
+/* Accueil : titre entre deux petites décorations, mascotte en tête de chaque île. */
+.home__title-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+}
+.home__deco { flex: none; width: 48px; line-height: 0; }
+.home__deco .kw { width: 100%; height: auto; }
+.home__deco--left { rotate: -12deg; }
+.home__deco--right { rotate: 10deg; }
+@media (max-width: 520px) {
+  .home__title-row { gap: var(--space-2); }
+  .home__deco { width: 36px; }
+}
+.island-card__mascot { width: 64px; margin: calc(-1 * var(--space-2)) 0; }
+.island-card.is-locked .island-card__mascot { opacity: .8; }
