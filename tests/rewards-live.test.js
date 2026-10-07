@@ -37,12 +37,19 @@ function setup() {
 
 /** Joue une partie complète ; `outcomes` : true = bonne réponse. */
 function play(game, events, outcomes, options = {}) {
-  const session = createSession(game, 1, { events, count: outcomes.length, record: null, ...options });
+  const session = createSessionQuiet(game, 1, { events, count: outcomes.length, record: null, ...options });
   for (const ok of outcomes) {
     session.answer(ok ? 'oui' : 'non');
     session.next();
   }
   return session;
+}
+
+/** Questions toutes identiques à l'écran (seule la clé change) : l'avis de doublon est attendu ici. */
+function createSessionQuiet(...args) {
+  const origWarn = console.warn;
+  console.warn = () => {};
+  try { return createSession(...args); } finally { console.warn = origWarn; }
 }
 
 beforeEach(() => resetRewardsForTests());
@@ -79,7 +86,7 @@ test('liveTotal additionne les points déjà acquis et ceux de la partie en cour
   play(game, events, [true, true]);                       // 25 points (2 × 10 + 5 de fin)
   const before = readRewards(store.getProfile('p1')).points;
   assert.equal(liveTotal(null), before);
-  const session = createSession(game, 1, { events, count: 3, record: null });
+  const session = createSessionQuiet(game, 1, { events, count: 3, record: null });
   assert.equal(liveTotal(session), before);
   session.answer('oui');
   assert.equal(liveTotal(session), before + POINTS_PER_CORRECT);

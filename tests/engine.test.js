@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  starsFor, sameAnswer, createSession, createEmitter, buildQuestions, QUESTIONS_PER_GAME,
+  starsFor, sameAnswer, createSession, createEmitter, buildQuestions, renderFingerprint, QUESTIONS_PER_GAME,
 } from '../js/core/engine.js';
 import { createMemoryBackend, createStorage, createStore } from '../js/core/storage.js';
 import { recordResult, getGameProgress } from '../js/core/history.js';
@@ -52,6 +52,76 @@ test('comparaison des réponses', () => {
   assert.ok(!sameAnswer({ a: 'x' }, { a: 'x', b: 'y' }));
 });
 
+test('renderFingerprint : ce que l\'enfant voit, rien de plus', () => {
+  const base = { prompt: 'Touche la couleur.', display: { choices: [{ value: 'a', art: { kind: 'colored', shape: 'swatch', color: 'blue' } }] } };
+  // `speak` et `lang` ne se voient pas : deux questions qui ne diffèrent que par eux sont le même rendu.
+  assert.equal(
+    renderFingerprint({ ...base, speak: 'blue', lang: 'en-GB' }),
+    renderFingerprint({ ...base, speak: 'yellow', lang: 'en-GB' }),
+  );
+  // Un texte, un émoji ou un dessin différent change bien le rendu.
+  assert.notEqual(
+    renderFingerprint({ prompt: 'A', display: {} }),
+    renderFingerprint({ prompt: 'B', display: {} }),
+  );
+  assert.notEqual(
+    renderFingerprint({ prompt: 'A', display: { show: { text: 'chat' } } }),
+    renderFingerprint({ prompt: 'A', display: { show: { text: 'chien' } } }),
+  );
+  assert.notEqual(
+    renderFingerprint({ prompt: 'A', display: { choices: [{ value: 1, art: { kind: 'colored', shape: 'swatch', color: 'blue' } }] } }),
+    renderFingerprint({ prompt: 'A', display: { choices: [{ value: 1, art: { kind: 'colored', shape: 'swatch', color: 'red' } }] } }),
+  );
+  // L'ordre des choix fait partie du rendu : un mélange différent n'est pas « le même écran ».
+  assert.notEqual(
+    renderFingerprint({ prompt: 'A', display: { choices: [1, 2] } }),
+    renderFingerprint({ prompt: 'A', display: { choices: [2, 1] } }),
+  );
+  // Une question sans `display` (jeu factice des tests) ne plante pas.
+  assert.equal(renderFingerprint({ prompt: 'A' }), renderFingerprint({ prompt: 'A', display: {} }));
+});
+
+test('buildQuestions évite les doublons de rendu quand une autre question est possible', () => {
+  // Reproduit l'issue #92 : deux clés différentes peuvent produire le même écran. Le générateur
+  // rejoue le même rendu (« A ») une seconde fois avant de proposer un rendu différent (« B ») :
+  // le garde-fou doit sauter ce doublon et garder « B », pas le reproposer tel quel.
+  const sequence = ['A', 'A', 'B'];
+  let i = 0;
+  const sameRenderTwice = {
+    id: 'sequence',
+    levels: [{ label: 'N1' }],
+    makeQuestion() {
+      const render = sequence[Math.min(i, sequence.length - 1)];
+      i += 1;
+      return { key: `sequence:${i}`, type: 'keypad', prompt: `Rendu ${render}`, answer: 1 };
+    },
+  };
+  const questions = buildQuestions(sameRenderTwice, 1, {}, 2);
+  assert.deepEqual(questions.map((q) => q.prompt), ['Rendu A', 'Rendu B']);
+});
+
+test('buildQuestions avertit (sans planter) quand il doit accepter un rendu déjà vu', () => {
+  // Un seul rendu possible, quel que soit le nombre d'essais : les questions 2 à 4 sont forcément
+  // des doublons d'écran (même si leur clé diffère) ; le moteur les accepte mais prévient.
+  let i = 0;
+  const poorRender = {
+    id: 'pauvre-rendu',
+    levels: [{ label: 'N1' }],
+    makeQuestion() {
+      i += 1;
+      return { key: `pauvre-rendu:${i}`, type: 'keypad', prompt: 'Toujours pareil', answer: 1 };
+    },
+  };
+  const calls = [];
+  const origWarn = console.warn;
+  console.warn = (...args) => calls.push(args.join(' '));
+  const questions = buildQuestions(poorRender, 1, {}, 4);
+  console.warn = origWarn;
+  assert.equal(questions.length, 4);
+  assert.equal(calls.length, 3);
+  assert.ok(calls.every((c) => c.includes('pauvre-rendu')));
+});
+
 test('une partie compte 10 questions sans doublon', () => {
   const s = createSession(fakeGame, 1, { seed: 5 });
   assert.equal(s.total, QUESTIONS_PER_GAME);
@@ -66,7 +136,12 @@ test('même graine, mêmes questions', () => {
 
 test('un générateur trop pauvre ne bloque pas le moteur', () => {
   const tiny = { ...fakeGame, makeQuestion: () => ({ key: 'seule', type: 'keypad', prompt: '1', answer: 1 }) };
-  assert.equal(buildQuestions(tiny, 1, { next: Math.random }, 10).length, 10);
+  // Une seule question possible : chaque répétition déclenche l'avis de doublon, attendu ici.
+  const origWarn = console.warn;
+  console.warn = () => {};
+  const questions = buildQuestions(tiny, 1, { next: Math.random }, 10);
+  console.warn = origWarn;
+  assert.equal(questions.length, 10);
 });
 
 test('score, série, questions ratées et étoiles', () => {
