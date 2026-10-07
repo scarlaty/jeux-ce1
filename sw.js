@@ -105,6 +105,7 @@ const PRECACHE = [
   'js/data/anglais.js',
   'js/data/nombres-en-lettres.js',
   'js/data/mots-frequents.js',
+  'js/data/phrases.js',
   'js/data/syllabes.js',
 
   'js/screens/index.js',
@@ -133,6 +134,7 @@ const PRECACHE = [
   'js/games/lecture-eclair.js',
   'js/games/lettres-qui-changent.js',
   'js/games/lettres-soeurs.js',
+  'js/games/phrase.js',
   'js/games/sons.js',
   'js/games/syllabes.js',
   'js/games/tables.js',

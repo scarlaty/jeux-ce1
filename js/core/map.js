@@ -104,6 +104,7 @@ export const PLACE_KINDS = {
   'lettres-qui-changent': { kind: 'rainbow-tree', where: 'l\'arbre aux deux feuillages' },
   'lecture-eclair': { kind: 'lighthouse', where: 'le phare' },
   devinettes: { kind: 'hut', where: 'la cabane au point d\'interrogation' },
+  phrase: { kind: 'tent', where: 'la tente des phrases' },
 };
 
 /** Décors de réserve, pour les jeux qui n'ont pas encore le leur. */
@@ -131,6 +132,7 @@ export const SHORT_TITLES = {
   'lettres-qui-changent': 'Lettres qui changent',
   'lecture-eclair': 'Lecture éclair',
   devinettes: 'Devinettes',
+  phrase: 'La phrase',
   'calcul-mental': 'Calcul mental',
   cdu: 'Centaines et dizaines',
   'ecrire-nombres': 'Écrire les nombres',
