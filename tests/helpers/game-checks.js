@@ -151,4 +151,7 @@ export function checkCluesNeeded(questions, accessors, {
   return m;
 }
 
-export { checkNoLengthShortcut, checkNoPromptEcho } from './shortcut-checks.js';
+export {
+  checkNoLengthShortcut, checkNoPromptEcho, checkNoSurfaceShortcut, checkCueCoverage, visibleOfQuestion,
+} from './shortcut-checks.js';
+export { checkEpicene, textsOfQuestion, genderedAgreements } from './epicene.js';
