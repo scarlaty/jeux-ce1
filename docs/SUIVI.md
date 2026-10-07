@@ -37,12 +37,12 @@ https://github.com/users/scarlaty/projects/1.
 Jeux disponibles : **Les sons** (#22), **Syllabes en folie** (#23), **Lettres sœurs** (#24), **Les lettres qui changent de son** (#25), **Calcul mental** (#52), **Centaines, dizaines, unités** (#47),
 **Écrire les nombres** (#50), **Les tables** (#54).
 
-### En cours (06/10, 21 h) — un seul jeu à la fois
+### En cours (07/10) — 2 agents au plus, une issue chacun
 
 | Qui | Issue | Branche |
 |---|---|---|
-| — | #89 libéré (interrompu sans code, voir le commentaire ⏸️ de l'issue) | — |
-| — | #26 libéré : travail partiel sur `feat/26-lecture-eclair` (voir commentaire ⏸️) | — |
+| Claude (session scarlaty) | #89 écrans kawaii | `feat/89-ecrans-kawaii` |
+| Claude (session scarlaty) | #26 Lecture éclair (fin : flash N3, vérification écran) | `feat/26-lecture-eclair` |
 
 ⚠️ 06/10 soir : quota de tokens de Claude presque épuisé. Les 2 agents ont reçu l'ordre de pousser leur état et de commenter « ⏸️ Interrompu : fait X, reste Y » sur leur issue s'ils ne finissent pas. **Avant de reprendre #89 ou #26, lire le dernier commentaire de l'issue et partir de la branche poussée.**
 
