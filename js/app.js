@@ -6,7 +6,7 @@ import { createRouter } from './core/router.js';
 import { setupOffline } from './core/offline.js';
 import { installRewards } from './core/rewards-live.js';
 import * as audio from './core/audio.js';
-import { h } from './core/ui/dom.js';
+import { h, titleLength } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
 import { avatarBubble } from './core/ui/avatar.js';
 import { SCREENS } from './screens/index.js';
@@ -26,7 +26,7 @@ function applyTheme(theme) {
 }
 
 function buildShell(store) {
-  const title = h('h1', { class: 'appbar__title', text: APP_TITLE });
+  const title = h('h1', { class: 'appbar__title', text: APP_TITLE, dataset: { length: titleLength(APP_TITLE) } });
 
   const soundButton = h('button', { type: 'button', class: 'icon-btn', onclick: () => {
     audio.setMuted(!audio.isMuted());
@@ -80,6 +80,7 @@ function buildShell(store) {
     renderProfile,
     setTitle: (text) => {
       title.textContent = text || APP_TITLE;
+      title.dataset.length = titleLength(title.textContent);
       document.title = text ? `${text} · ${APP_TITLE}` : APP_TITLE;
     },
     // Signalement discret quand rien ne peut être sauvegardé.
