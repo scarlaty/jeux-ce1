@@ -123,6 +123,20 @@
   --island-ailleurs-soft: #ece3fa;
   --island-ailleurs-ink: #55299a;
 
+  /* Couleurs à reconnaître (jeu d'anglais, ui/art/colored.js) : la couleur EST le contenu, donc les
+     mêmes teintes en clair et en sombre. Le contour d'encre garde le blanc et le noir visibles. */
+  --swatch-red: #e0312f;
+  --swatch-blue: #1f66d6;
+  --swatch-yellow: #fcd732;
+  --swatch-green: #3aa142;
+  --swatch-orange: #fb8a14;
+  --swatch-pink: #ff8fbd;
+  --swatch-purple: #8a3fb0;
+  --swatch-black: #1d1d22;
+  --swatch-white: #ffffff;
+  --swatch-brown: #8a5328;
+  --swatch-grey: #9ca0a8;
+
   /* --- Univers kawaii (#88) : autocollants pastel posés sur la page ---
      Chaque couleur : la teinte (remplissage), son contour « -deep » et une encre « -ink » lisible
      SUR la teinte (texte AA ≥ 4,5:1, vérifié par tests/kawaii.test.js). Les visages utilisent

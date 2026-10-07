@@ -611,6 +611,28 @@
 @media (min-width: 900px) { .amount .art--money { --money-scale: 1px; } .amount__piece .art--money { --money-scale: .75px; } }
 .amount__ok { min-height: 56px; }
 
+/* Pastilles de couleur et objets à compter (ui/art/colored.js) : contour d'encre pour que le blanc et
+   le noir se voient en clair comme en sombre. */
+.colored__shape { stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
+.colored__line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; }
+.colored__shine { fill: none; stroke: #fff; stroke-opacity: .55; stroke-width: 3; stroke-linecap: round; }
+.show__content .art--swatch { width: clamp(6rem, 5rem + 8vw, 9rem); }
+.choice .art--swatch { width: clamp(4.5rem, 3rem + 9vw, 6.5rem); }
+.choice .art--objects { width: min(100%, 11rem); }
+.choices:has(.art--objects) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
+.bubble__value .art { width: clamp(3.5rem, 20vw, 6.5rem); }
+
+/* Appareil sans voix anglaise : le texte à lire remplace l'écoute (screens/play.js, noVoiceNote). */
+.no-voice {
+  padding: var(--space-2) var(--space-3);
+  text-align: center;
+  color: var(--ink);
+  background: var(--island-soft, var(--surface-raised));
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--radius-m);
+}
+.no-voice strong { font-family: var(--font-title); font-size: 1.3em; }
+
 .answer { display: grid; justify-items: center; }
 
 /* Sur grand écran, l'illustration se place à gauche des réponses courtes (QCM, pavé)
@@ -621,6 +643,8 @@
   .stage--with-show:is(.stage--choice, .stage--keypad) .feedback { grid-column: 1 / -1; }
   .stage--with-show:is(.stage--choice, .stage--keypad) .show { min-height: 240px; align-self: center; }
   .stage--with-show.stage--choice .choices:not(.choices--images) { grid-template-columns: 1fr; max-width: 380px; }
+  .stage--with-show.stage--choice .choices:has(.art--swatch) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 380px; }
+  .stage--with-show.stage--choice .choices:has(.art--objects) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
   /* Un calcul a besoin de largeur : le pavé (330 px au plus) lui laisse le reste. */
   .stage--with-show.stage--keypad:has(.math) { grid-template-columns: minmax(0, 1fr) 340px; }
 }

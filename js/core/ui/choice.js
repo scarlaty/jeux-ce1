@@ -5,6 +5,7 @@
 //   cursive?: true,   // les textes des choix sont des mots français à lire (police cursive)
 //   large?: true,     // gros caractères : choix d'une seule lettre ou d'un son (b / d)
 //   show?: { … }      // illustration commune (voir ui/index.js)
+// Un choix dessiné peut porter `label` (son nom, sans le montrer) : la correction l'écrit à côté du dessin.
 // }
 // answer : la `value` du bon choix.
 import { h, content } from './dom.js';
@@ -70,6 +71,7 @@ export function describe(question) {
     emoji: right.emoji,
     text: right.text ?? right.label,
     lang: right.lang,
+    art: right.art,
     cursive: Boolean(question.display.cursive),
   };
 }

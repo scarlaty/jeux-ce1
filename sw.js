@@ -69,6 +69,7 @@ const PRECACHE = [
   'js/core/validate.js',
   'js/core/ui/art/base-ten.js',
   'js/core/ui/art/clock.js',
+  'js/core/ui/art/colored.js',
   'js/core/ui/art/index.js',
   'js/core/ui/art/kawaii-deco.js',
   'js/core/ui/art/kawaii-parts.js',
@@ -96,6 +97,7 @@ const PRECACHE = [
      logique pure) : sinon un jeu jamais ouvert serait indisponible hors ligne. */
   'js/data/devinettes.js',
   'js/data/mots-illustres.js',
+  'js/data/anglais.js',
   'js/data/nombres-en-lettres.js',
   'js/data/mots-frequents.js',
   'js/data/syllabes.js',
@@ -115,6 +117,7 @@ const PRECACHE = [
   'js/games/registry.js',
   'js/games/calcul-mental.js',
   'js/games/cdu.js',
+  'js/games/colors-numbers.js',
   'js/games/demo.js',
   'js/games/devinettes.js',
   'js/games/ecrire-nombres.js',
