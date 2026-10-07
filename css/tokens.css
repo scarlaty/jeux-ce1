@@ -168,6 +168,51 @@
   --kawaii-tongue: #ff7f9f;
   --kawaii-shadow: #3b2f1a38;   /* ombre portée de l'autocollant */
   --radius-xl: 32px;            /* arrondis généreux des cartes kawaii */
+
+  /* Troisième ton de chaque teinte (#96) : la lumière. Un objet kawaii se peint avec trois
+     tons de la MÊME teinte — « -deep » dans l'ombre, la teinte au milieu, « -light » du côté
+     éclairé (toujours en haut à gauche) — plus un reflet blanc sur les surfaces rondes. */
+  --kawaii-rose-light: #ffe4ee;
+  --kawaii-peche-light: #ffeadb;
+  --kawaii-citron-light: #fff8d2;
+  --kawaii-menthe-light: #e2f8ea;
+  --kawaii-ciel-light: #e4f1ff;
+  --kawaii-lavande-light: #f1eaff;
+  --kawaii-creme-light: #fffaf0;
+
+  /* Contour des dessins (#96) : jamais un noir pur, une prune très sombre. Variable dédiée,
+     car sur l'ardoise elle s'éclaircit — sinon le trait se perd dans le fond. */
+  --kw-outline: #4a2c3d;
+
+  /* --- Carte au trésor (#96) : ciel, mer, terre, matières ---
+     Des matières, pas des teintes d'interface : chacune a son ton clair, sa teinte et son ombre.
+     Sur l'ardoise, la scène passe au soir : la mer fonce, la terre reste lisible. */
+  --map-sky: #d9ecff;
+  --map-sky-low: #fbeedd;
+  --sea-deep: #4f93cf;
+  --sea: #7cb8e6;
+  --sea-shallow: #a9d8f2;
+  --sea-foam: #ffffff;
+  --land-grass: #8ed49e;
+  --land-grass-light: #b8e9c3;
+  --land-grass-deep: #4d9d6a;
+  --foliage: #6cc08a;
+  --foliage-light: #9adfae;
+  --foliage-deep: #3a8257;
+  --land-sand: #f7dcae;
+  --land-sand-deep: #ddb87f;
+  --land-cliff: #cda276;
+  --land-cliff-light: #e2bd94;
+  --land-cliff-deep: #8f6a45;
+  --land-under: #6f5338;
+  --wood: #d49a5e;
+  --wood-light: #efc48e;
+  --wood-deep: #8d5c30;
+  --stone: #cfc7d7;
+  --stone-light: #ece6f1;
+  --stone-deep: #8d8099;
+  --map-glow: #ffe49a;
+  --map-haze: #fbf8f1;          /* brume des îles lointaines (couleur du papier) */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -251,6 +296,45 @@
     --kawaii-lavande: #cebef3;
     --kawaii-creme: #f0e4cd;
     --kawaii-shadow: #00000066;
+    --kawaii-rose-light: #ffd9e6;
+    --kawaii-peche-light: #ffdfc6;
+    --kawaii-citron-light: #faeeb4;
+    --kawaii-menthe-light: #cfeedc;
+    --kawaii-ciel-light: #d3e7ff;
+    --kawaii-lavande-light: #e6dcff;
+    --kawaii-creme-light: #fbf2e4;
+    /* Sur l'ardoise le contour s'éclaircit : une prune moins sombre, qui tient encore sur les
+       pastels mais ne se noie plus dans le fond ni dans la mer du soir. */
+    --kw-outline: #5d3849;
+    --map-sky: #33455f;
+    --map-sky-low: #4d4a5e;
+    --sea-deep: #22405e;
+    --sea: #2f5c84;
+    --sea-shallow: #4a80a8;
+    --sea-foam: #d6e9f6;
+    --land-grass: #68b184;
+    --land-grass-light: #8ecaa4;
+    --land-grass-deep: #357355;
+  --foliage: #4f9a71;
+  --foliage-light: #74b891;
+  --foliage-deep: #2a5e45;
+    --foliage: #4f9a71;
+    --foliage-light: #74b891;
+    --foliage-deep: #2a5e45;
+    --land-sand: #d7b483;
+    --land-sand-deep: #ab8a5e;
+    --land-cliff: #a9825c;
+    --land-cliff-light: #c09c74;
+    --land-cliff-deep: #6f5238;
+    --land-under: #5a4331;
+    --wood: #c08a53;
+    --wood-light: #dba970;
+    --wood-deep: #71492a;
+    --stone: #a9a1b5;
+    --stone-light: #c6bed1;
+    --stone-deep: #6c6379;
+    --map-glow: #ffdf8c;
+    --map-haze: #27322f;
   }
 }
 
@@ -334,6 +418,42 @@
   --kawaii-lavande: #cebef3;
   --kawaii-creme: #f0e4cd;
   --kawaii-shadow: #00000066;
+  --kawaii-rose-light: #ffd9e6;
+  --kawaii-peche-light: #ffdfc6;
+  --kawaii-citron-light: #faeeb4;
+  --kawaii-menthe-light: #cfeedc;
+  --kawaii-ciel-light: #d3e7ff;
+  --kawaii-lavande-light: #e6dcff;
+  --kawaii-creme-light: #fbf2e4;
+  /* Sur l'ardoise le contour s'éclaircit : une prune moins sombre, qui tient encore sur les
+     pastels mais ne se noie plus dans le fond ni dans la mer du soir. */
+  --kw-outline: #5d3849;
+  --map-sky: #33455f;
+  --map-sky-low: #4d4a5e;
+  --sea-deep: #22405e;
+  --sea: #2f5c84;
+  --sea-shallow: #4a80a8;
+  --sea-foam: #d6e9f6;
+  --land-grass: #68b184;
+  --land-grass-light: #8ecaa4;
+  --land-grass-deep: #357355;
+  --foliage: #4f9a71;
+  --foliage-light: #74b891;
+  --foliage-deep: #2a5e45;
+  --land-sand: #d7b483;
+  --land-sand-deep: #ab8a5e;
+  --land-cliff: #a9825c;
+  --land-cliff-light: #c09c74;
+  --land-cliff-deep: #6f5238;
+  --land-under: #5a4331;
+  --wood: #c08a53;
+  --wood-light: #dba970;
+  --wood-deep: #71492a;
+  --stone: #a9a1b5;
+  --stone-light: #c6bed1;
+  --stone-deep: #6c6379;
+  --map-glow: #ffdf8c;
+  --map-haze: #27322f;
 }
 
 /* Couleur de l'île courante : un conteneur porte data-island="…" et ses enfants utilisent --island*. */

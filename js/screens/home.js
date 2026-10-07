@@ -10,6 +10,8 @@ import {
   progressOf, progressText, readCompanion, readyToHatch, STAGE_LABELS, stageOf,
 } from '../core/companion.js';
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
+import { archipelagoScene } from '../core/ui/map-scene.js';
+import { archipelago } from '../core/map.js';
 import { GAMES, ISLANDS } from '../games/registry.js';
 import { getGameProgress } from '../core/history.js';
 import {
@@ -78,38 +80,44 @@ function gameCard(game, profile) {
         icon('star', { size: 20 }), h('span', { text: `${stars} / ${STARS_PER_GAME}` }))));
 }
 
-/** Une île de la carte : ouverte (avec ses jeux) ou encore fermée. */
-function islandCard(island, { games, profile, rewards, stars }) {
-  const open = islandUnlocked(island.id, stars);
-  const left = islandStarsLeft(island.id, stars);
-  const earned = games.reduce((sum, g) => sum + gameStars(getGameProgress(profile, g.id)), 0);
-  const possible = games.length * STARS_PER_GAME;
-  const owned = (rewards.stickers[island.id] || []).length;
-  const catalog = islandStickers(island.id).length;
+/** Ce que la carte doit savoir d'une île : tout vient du profil, rien n'est écrit en dur. */
+function readIsland(island, { profile, rewards, stars }) {
+  const games = GAMES.filter((g) => !g.demo && g.island === island.id);
+  return {
+    unlocked: islandUnlocked(island.id, stars),
+    starsLeft: islandStarsLeft(island.id, stars),
+    earned: games.reduce((sum, g) => sum + gameStars(getGameProgress(profile, g.id)), 0),
+    possible: games.length * STARS_PER_GAME,
+    stickers: (rewards.stickers[island.id] || []).length,
+    total: islandStickers(island.id).length,
+    games: games.length,
+  };
+}
 
-  return h('section', {
-    class: `island-card${open ? '' : ' is-locked'}`,
-    dataset: { island: island.id },
-    'aria-labelledby': `ile-${island.id}`,
-  },
-  h('div', { class: 'island-card__head' },
-    mascotSticker(island.id, { face: islandFace(open), className: 'island-card__mascot' })
-      || h('span', { class: 'island-card__dot', 'aria-hidden': 'true' }),
-    h('div', { class: 'island-card__id' },
-      h('h2', { class: 'island-card__name', id: `ile-${island.id}`, text: island.name }),
-      h('p', { class: 'island-card__subject', text: island.subject })),
-    !open && h('span', { class: 'island-card__lock' }, icon('lock', { size: 26 }))),
-  open && h('ul', { class: 'island-card__stats' },
-    h('li', { class: 'island-stat' },
-      icon('star', { size: 18 }),
-      h('span', { text: possible ? `${earned} / ${possible} étoiles` : '0 étoile' })),
-    h('li', { class: 'island-stat island-stat--stickers' },
-      h('span', { class: 'emoji', 'aria-hidden': 'true', text: '🏵️' }),
-      h('span', { text: `${owned} / ${catalog} gommettes` }))),
-  open && (games.length
-    ? h('ul', { class: 'game-list' }, games.map((g) => gameCard(g, profile)))
-    : h('p', { class: 'island-card__empty cursive', text: 'Bientôt des jeux ici !' })),
-  !open && h('p', { class: 'island-card__locked-text', text: `Gagne encore ${plural(left, 'étoile')} pour aborder cette île.` }));
+/**
+ * La même carte en liste : chaque île y est une ligne complète, atteignable au clavier.
+ * L'avancement ne doit jamais tenir à la seule position d'une île sur le dessin.
+ */
+function islandRow(entry) {
+  const body = h('span', { class: 'map-row__body' },
+    h('span', { class: 'map-row__name', text: entry.name }),
+    h('span', { class: 'map-row__meta', text: entry.subject }));
+  const mascot = mascotSticker(entry.id, { face: islandFace(entry.unlocked), className: 'map-row__art' });
+  if (!entry.unlocked) {
+    return h('li', {},
+      h('div', { class: 'map-row map-row--locked', dataset: { island: entry.id }, 'aria-label': entry.label },
+        mascot, body,
+        h('span', { class: 'map-row__stars', 'aria-hidden': 'true' },
+          icon('lock', { size: 22 }), h('span', { text: `${entry.starsLeft} ⭐` }))));
+  }
+  return h('li', {},
+    h('a', {
+      class: 'map-row', href: `#/ile/${entry.id}`, dataset: { island: entry.id }, 'aria-label': entry.label,
+    },
+    mascot, body,
+    h('span', { class: 'map-row__stars', 'aria-hidden': 'true' },
+      icon('star', { size: 20 }),
+      h('span', { text: entry.games ? `${entry.earned} / ${entry.possible}` : '—' }))));
 }
 
 export default {
@@ -121,12 +129,10 @@ export default {
     // Tant qu'aucun vrai jeu n'existe, la démonstration est proposée sur l'accueil.
     const demos = realGames.length ? [] : GAMES.filter((g) => g.demo);
 
-    const islands = ISLANDS.map((island) => islandCard(island, {
-      games: realGames.filter((g) => g.island === island.id),
-      profile,
-      rewards,
-      stars,
-    }));
+    // Les îles triées de la plus lointaine à la plus proche (pour le dessin), puis remises dans
+    // l'ordre du registre pour la liste : on lit la liste dans l'ordre de la progression.
+    const entries = archipelago(ISLANDS, (id) => readIsland(ISLANDS.find((i) => i.id === id), { profile, rewards, stars }));
+    const byId = new Map(entries.map((entry) => [entry.id, entry]));
 
     view.append(h('div', { class: 'page home' },
       h('div', { class: 'home__hero' },
@@ -138,9 +144,11 @@ export default {
       rewardBar(rewards),
       companionCard(withAccessory(readCompanion(profile), profile)),
       dailyCard(rewards, realGames.length > 0),
-      h('div', { class: 'map' },
-        h('div', { class: 'map__sea', 'aria-hidden': 'true' }),
-        h('div', { class: 'island-grid' }, islands)),
+      h('section', { class: 'map-page', 'aria-labelledby': 'archipel' },
+        h('h2', { class: 'visually-hidden', id: 'archipel', text: 'L\'archipel' }),
+        archipelagoScene(entries),
+        h('ul', { class: 'map-list' }, ISLANDS.map((island) => islandRow(byId.get(island.id)))),
+        h('p', { class: 'map-hint', text: 'Touche une île pour y entrer.' })),
       demos.length > 0 && h('section', { class: 'workshop', 'aria-labelledby': 'atelier' },
         h('h2', { class: 'workshop__title', id: 'atelier', text: 'Atelier' }),
         h('ul', { class: 'game-list' }, demos.map((g) => gameCard(g, profile))))));

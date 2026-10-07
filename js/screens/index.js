@@ -17,6 +17,7 @@
 // Plus aucun écran provisoire : `soon.js` reste disponible pour les rubriques à venir.
 export const SCREENS = [
   { path: '/', load: () => import('./home.js') },
+  { path: '/ile/:id', load: () => import('./island.js') },
   { path: '/jeu/:id', load: () => import('./play.js') },
   { path: '/defi', load: () => import('./daily.js'), title: 'Défi du jour' },
   { path: '/album', load: () => import('./album.js'), title: 'Mon album' },

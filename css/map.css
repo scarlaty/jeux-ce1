@@ -1,0 +1,337 @@
+/* Carte au trésor (#96) : l'archipel et l'intérieur d'une île.
+   Toutes les couleurs viennent de tokens.css — rien en dur, thème clair ET ardoise.
+   Les objets du décor (js/core/ui/art/scenery.js) sont déclarés une fois puis posés par <use> :
+   ces classes-ci sont donc la seule définition de couleur de tout le décor. */
+
+/* ---------- Le cadre de la scène ----------
+   Une seule image de 200 × 180, cadrée par le ratio du conteneur (`slice` recadre au lieu de
+   déformer) : paysage sur tablette et PC, portrait sur téléphone. C'est ce qui donne une île
+   lisible en 360 px sans jamais dessiner la scène deux fois. */
+.map-scene {
+  display: block;
+  width: 100%;
+  aspect-ratio: 200 / 152;
+  border-radius: var(--radius-l);
+  border: 3px solid var(--border);
+  background: var(--sea-deep);
+  box-shadow: 0 6px 0 var(--shadow);
+  /* Les plaques de nom : leur taille est en unités du dessin, donc elle grandit avec la scène.
+     Sur téléphone, le cadrage portrait zoome déjà ; on remonte un peu la graisse du texte. */
+  --map-name: 5.9px;
+  --map-meta: 5px;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+@media (max-width: 620px) {
+  .map-scene {
+    aspect-ratio: 200 / 212;
+    --map-name: 6.8px;
+    --map-meta: 5.8px;
+  }
+}
+
+/* ---------- Ciel et mer ---------- */
+.sc-sky { fill: var(--map-sky); }
+.sc-sky-low { fill: var(--map-sky-low); opacity: .55; }
+.sc-sea-deep { fill: var(--sea-deep); }
+.sc-sea { fill: var(--sea); }
+.sc-sea-shallow { fill: var(--sea-shallow); }
+.sc-ripple {
+  fill: none;
+  stroke: var(--sea-foam);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: .55;
+}
+.sc-foam {
+  fill: none;
+  stroke: var(--sea-foam);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  opacity: .7;
+}
+
+/* ---------- Le volume d'une île : quatre couches, pas un aplat ---------- */
+.sc-cast { fill: var(--kawaii-shadow); }
+.sc-under { fill: var(--land-under); opacity: .9; }
+.sc-cliff { fill: var(--land-cliff); }
+.sc-cliff-lt { fill: var(--land-cliff-light); }   /* la falaise prend le jour à gauche */
+.sc-cliff-dk { fill: var(--land-cliff-deep); }    /* …et l'ombre à droite */
+.sc-sand { fill: var(--land-sand); }
+.sc-grass { fill: var(--land-grass); }
+.sc-grass-dk { fill: var(--land-grass-deep); opacity: .3; }
+.sc-grass-lt { fill: var(--land-grass-light); opacity: .85; }
+.sc-hill { fill: var(--land-grass-deep); }
+.sc-hill-lt { fill: var(--land-grass); }
+.sc-trail {
+  fill: none;
+  stroke: var(--land-sand-deep);
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: .55;
+}
+.sc-trail-top {
+  fill: none;
+  stroke: var(--land-sand);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: .1 7;
+}
+
+/* ---------- Contours : le marqueur n°1 du style ----------
+   Épaisseur constante partout grâce à --sc-stroke, que `use()` ajuste à l'échelle de l'objet :
+   un objet posé en petit garde le même trait qu'un objet posé en grand. */
+.sc-ln {
+  fill: none;
+  stroke: var(--kw-outline);
+  stroke-width: var(--sc-stroke, 1.5);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.sc-dt {
+  fill: none;
+  stroke: var(--kw-outline);
+  stroke-width: calc(var(--sc-stroke, 1.5) * .62);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: .7;
+}
+/* La falaise porte ses strates en trait fin, comme les planches d'un mur. */
+.sc-dt--land { stroke-width: 1; opacity: .35; }
+
+/* Le contour du terrain est plus épais : c'est la grande forme qui tient la composition. */
+.sc-ln--land { stroke-width: 1.9; }
+/* Les tout petits détails (pétales, baies, noix de coco) : un trait plus fin, sinon le contour
+   mange l'objet et la fleur devient une tache sombre. */
+.sc-ln--thin { stroke-width: calc(var(--sc-stroke, 1.45) * .55); }
+
+/* ---------- Matières : trois tons par matière, lumière en haut à gauche ---------- */
+.sc-leaf { fill: var(--foliage); }
+.sc-leaf-lt { fill: var(--foliage-light); }
+.sc-leaf-dk { fill: var(--foliage-deep); }
+.sc-cloud { fill: var(--kawaii-creme-light); }
+.sc-cloud-lt { fill: var(--kawaii-shine); }
+.sc-cloud-dk { fill: var(--kawaii-ciel); }
+.sc-shoal { fill: var(--sea-shallow); opacity: .75; }
+.sc-stem { fill: none; stroke: var(--foliage-deep); stroke-width: calc(var(--sc-stroke, 1.5) * .9); stroke-linecap: round; }
+.sc-wood { fill: var(--wood); }
+.sc-wood-lt { fill: var(--wood-light); }
+.sc-wood-dk { fill: var(--wood-deep); }
+.sc-stone { fill: var(--stone); }
+.sc-stone-lt { fill: var(--stone-light); }
+.sc-stone-dk { fill: var(--stone-deep); }
+.sc-creme { fill: var(--kawaii-creme); }
+.sc-iron { fill: var(--stone-deep); }
+.sc-gold { fill: var(--star); }
+.sc-gold-lt { fill: var(--kawaii-citron-light); }
+.sc-fruit { fill: var(--kawaii-citron); }
+.sc-dot { fill: var(--kw-outline); opacity: .45; }
+.sc-dot-light { fill: var(--kawaii-creme-light); }
+.sc-ink { fill: var(--kw-outline); }
+.sc-shine { fill: var(--kawaii-shine); opacity: .7; }
+.sc-shadow { fill: var(--kawaii-shadow); }
+.sc-blush { fill: var(--kawaii-blush); opacity: .5; }
+.sc-smile {
+  fill: none;
+  stroke: var(--kw-outline);
+  stroke-width: calc(var(--sc-stroke, 1.5) * .9);
+  stroke-linecap: round;
+}
+.sc-arm,
+.sc-post,
+.sc-rope {
+  fill: none;
+  stroke: var(--wood-deep);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+}
+.sc-bird {
+  fill: none;
+  stroke: var(--kw-outline);
+  stroke-width: calc(var(--sc-stroke, 1.5) * .9);
+  stroke-linecap: round;
+  opacity: .65;
+}
+
+/* Teinte variable d'un objet : la fleur, le fanion, le coquillage, la voile…
+   `use(id, { tint })` pose --sc-tint sur l'instance ; le dessin, lui, est partagé. */
+.sc-tint { fill: var(--sc-tint, var(--kawaii-rose)); }
+.sc-tint-lt { fill: var(--sc-tint-lt, var(--kawaii-rose-light)); }
+.sc-tint-dk { fill: var(--sc-tint-dk, var(--kawaii-rose-deep)); }
+
+/* Soleil, lanternes, phare : la lumière chaude de la scène. */
+.sc-sun { fill: var(--kawaii-citron); }
+.sc-sun-lt { fill: var(--kawaii-citron-light); }
+.sc-ray {
+  fill: none;
+  stroke: var(--kawaii-citron-deep);
+  stroke-width: calc(var(--sc-stroke, 1.5) * 1.1);
+  stroke-linecap: round;
+  opacity: .8;
+}
+.sc-ray--short { opacity: .45; }
+.sc-glow-fill { fill: var(--map-glow); }
+.sc-glow-light { fill: var(--kawaii-citron-light); }
+.sc-beam { opacity: .4; }
+.sc-echo {
+  fill: none;
+  stroke: var(--kawaii-citron-light);
+  stroke-width: calc(var(--sc-stroke, 1.5) * .8);
+  stroke-linecap: round;
+  opacity: .45;
+}
+.sc-cave-mouth { fill: var(--land-under); }
+
+/* Bâtiments : murs, toits, portes, fenêtres, rayures. */
+.sc-wall { fill: var(--kawaii-creme); }
+.sc-wall-lt { fill: var(--kawaii-creme-light); }
+.sc-wall-dk { fill: var(--kawaii-creme-deep); }
+.sc-roof { fill: var(--island, var(--island-mots)); }
+.sc-roof-lt { fill: var(--island, var(--island-mots)); opacity: .62; }
+.sc-stripe { fill: var(--island, var(--island-mots)); opacity: .85; }
+.sc-door { fill: var(--wood-deep); }
+.sc-window { fill: var(--map-glow); }
+.sc-sail { fill: var(--kawaii-creme-light); }
+.sc-sign-plate { fill: var(--kawaii-creme); }
+.sc-glyph {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 6px;
+  fill: var(--island-ink, var(--island-mots-ink));
+  text-anchor: middle;
+}
+.sc-flag-fill { fill: var(--sc-tint, var(--kawaii-rose)); }
+.sc-flag-light { fill: var(--sc-tint-lt, var(--kawaii-rose-light)); }
+.sc-flag--0 { --sc-tint: var(--kawaii-rose); --sc-tint-lt: var(--kawaii-rose-light); }
+.sc-flag--1 { --sc-tint: var(--kawaii-citron); --sc-tint-lt: var(--kawaii-citron-light); }
+.sc-flag--2 { --sc-tint: var(--kawaii-ciel); --sc-tint-lt: var(--kawaii-ciel-light); }
+
+/* ---------- Les îles de l'archipel ---------- */
+.sc-island { cursor: pointer; }
+.sc-island.is-locked { opacity: .62; cursor: default; }
+.sc-island.is-locked .sc-plaque-name { fill: var(--ink-faint); }
+
+/* ---------- Lieux : zones touchables et surbrillance ---------- */
+.sc-hit { fill: transparent; }
+.sc-halo,
+.sc-halo-box {
+  fill: none;
+  stroke: var(--sea-foam);
+  stroke-width: 3;
+  opacity: 0;
+}
+.sc-link { cursor: pointer; outline: none; }
+.sc-link:hover .sc-halo,
+.sc-link:hover .sc-halo-box,
+.sc-link:focus-visible .sc-halo,
+.sc-link:focus-visible .sc-halo-box { opacity: 1; }
+.sc-link:focus-visible .sc-halo,
+.sc-link:focus-visible .sc-halo-box {
+  stroke: var(--focus);
+  stroke-width: 3.4;
+}
+.sc-link:hover .sc-plaque-board,
+.sc-link:focus-visible .sc-plaque-board { fill: var(--kawaii-creme-light); }
+
+/* ---------- Plaques de bois ---------- */
+.sc-plaque-board { fill: var(--kawaii-creme); }
+.sc-plaque-light { fill: var(--kawaii-creme-light); opacity: .8; }
+.sc-plaque-shadow { fill: var(--kawaii-shadow); }
+.sc-plaque-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: var(--map-name, 6.4px);
+  fill: var(--kawaii-creme-ink);
+  dominant-baseline: middle;
+}
+.sc-plaque-meta {
+  font-family: var(--font-text);
+  font-size: var(--map-meta, 5.2px);
+  fill: var(--kawaii-creme-ink);
+  dominant-baseline: middle;
+}
+.sc-plaque.is-dim .sc-plaque-board { fill: var(--surface-sunk); }
+.sc-plaque.is-dim .sc-plaque-name,
+.sc-plaque.is-dim .sc-plaque-meta { fill: var(--ink-soft); }
+.sc-star { fill: var(--star); stroke: var(--star-edge); stroke-width: .5; }
+.sc-star-empty { fill: var(--star-empty); stroke: var(--star-empty-edge); stroke-width: .5; }
+
+/* ---------- Mascotte posée dans la scène ---------- */
+.map-mascot { overflow: visible; }
+
+/* ---------- Mouvements : discrets, et supprimés avec « réduire les animations » ---------- */
+.sc-mill-sails { transform-origin: 0 0; animation: sc-turn 18s linear infinite; }
+.sc-ripples { animation: sc-breathe 7s ease-in-out infinite; }
+.sc-beam { animation: sc-pulse 5s ease-in-out infinite; }
+
+@keyframes sc-turn { to { transform: rotate(360deg); } }
+@keyframes sc-breathe { 0%, 100% { opacity: .8; } 50% { opacity: .35; } }
+@keyframes sc-pulse { 0%, 100% { opacity: .22; } 50% { opacity: .5; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-mill-sails,
+  .sc-ripples,
+  .sc-beam { animation: none; }
+}
+
+/* ---------- La même carte en liste ----------
+   L'information ne tient jamais à la seule position : chaque île et chaque lieu est AUSSI une
+   ligne de liste, atteignable au clavier, avec son nom complet et ses étoiles. */
+.map-page { display: grid; gap: var(--space-5); }
+.map-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+
+@media (min-width: 720px) {
+  .map-list { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+}
+
+.map-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap-l);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-bottom-width: 4px;
+  border-radius: var(--radius-m);
+  color: var(--ink);
+  text-decoration: none;
+}
+.map-row:hover { border-color: var(--island, var(--primary)); }
+.map-row__body { flex: 1; min-width: 0; display: grid; }
+.map-row__name { font-family: var(--font-title); font-weight: 600; font-size: 1.15rem; }
+.map-row__meta { font-size: var(--text-s); color: var(--ink-soft); }
+.map-row__stars { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--ink-soft); }
+.map-row__stars .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
+.map-row__art { flex: none; width: 44px; height: 44px; }
+.map-row--locked {
+  background: var(--surface-sunk);
+  border-style: dashed;
+  color: var(--ink-soft);
+}
+
+/* ---------- En-tête d'une île ---------- */
+.isle-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.isle-head__mascot { width: 72px; flex: none; }
+.isle-head__id { flex: 1; min-width: 0; }
+.isle-head__name { font-size: var(--text-l); color: var(--island-ink); margin: 0; }
+.isle-head__subject { font-size: var(--text-s); color: var(--ink-soft); margin: 0; }
+.isle-head__stats {
+  display: flex;
+  gap: var(--space-2) var(--space-4);
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-soft);
+}
+.isle-head__stats li { display: inline-flex; align-items: center; gap: var(--space-1); }
+.isle-head__stats .icon { color: var(--star); stroke: var(--star-edge); stroke-width: 1.2; }
+
+.map-hint { margin: 0; color: var(--ink-soft); font-size: var(--text-s); text-align: center; }
