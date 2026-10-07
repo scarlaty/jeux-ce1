@@ -9,6 +9,7 @@
 
 import { defaultRewards, normalizeRewards } from './rewards.js';
 import { defaultCompanion } from './companion.js';
+import { defaultChest } from './chest.js';
 
 export const PREFIX = 'jeux-ce1:';
 export const SCHEMA_VERSION = 2;
@@ -144,6 +145,7 @@ export function defaultProfile({ id, name = '', avatar = null, createdAt = Date.
     weekly: [],     // agrégats hebdomadaires des parties les plus anciennes
     rewards: defaultRewards(),   // v2 : points, gommettes par île, défi du jour (voir rewards.js)
     companion: defaultCompanion(),   // #90 : l'œuf, puis le compagnon (voir companion.js)
+    chest: defaultChest(),           // #91 : accessoires gagnés et accessoire porté (voir chest.js)
   };
 }
 

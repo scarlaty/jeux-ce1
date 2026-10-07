@@ -6,6 +6,7 @@ import { createRouter } from './core/router.js';
 import { setupOffline } from './core/offline.js';
 import { installRewards } from './core/rewards-live.js';
 import { installCompanion } from './core/companion-live.js';
+import { installChest } from './core/chest-live.js';
 import * as audio from './core/audio.js';
 import { h, titleLength } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
@@ -137,6 +138,7 @@ function start() {
   let router = null;
   const app = createAppContext(store, shell, () => router);
   installRewards(app);   // points, grades et gommettes : branchés sur gameEvents, une fois pour toutes
+  installChest(app);   // le coffre surprise : après les récompenses, qui disent si la partie en donne un
   installCompanion(app);   // le compagnon grandit avec les étoiles de chaque partie (après les récompenses : ses lignes viennent après)
   let cleanup = null;
   let renderId = 0;

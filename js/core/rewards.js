@@ -225,6 +225,7 @@ export function stickerTotal() {
  * Applique le résultat d'une partie aux récompenses. Fonction pure : renvoie le nouvel état et
  * ce qui vient d'être gagné (pour l'écran de fin).
  * `daily` : { key } quand la partie est le défi du jour ; le bonus n'est donné qu'une fois par jour.
+ * Ne remet plus de gommette : elle vient du coffre (core/chest.js).
  */
 export function applyGameRewards(rewards, { island, stars = 0, points = 0, daily = null } = {}) {
   const before = normalizeRewards(rewards);
@@ -233,25 +234,22 @@ export function applyGameRewards(rewards, { island, stars = 0, points = 0, daily
   const gainedPoints = Math.max(0, Math.floor(points)) + bonus;
   const after = before.points + gainedPoints;
 
-  // Le défi du jour ne donne sa gommette qu'une fois par jour ; un jeu normal en donne à chaque
-  // partie réussie, tant que la collection de son île n'est pas complète.
+  // Depuis le coffre surprise (#91), la gommette ne se remet plus ici : une partie réussie (≥ 1 étoile)
+  // donne un COFFRE (`gained.chest`, tiré et rangé par chest-live.js). Le défi du jour n'en donne qu'un
+  // par jour ; un jeu normal, un à chaque partie réussie.
   const mayWin = daily ? firstDailyToday : true;
-  const owned = before.stickers[island] || [];
-  const won = mayWin ? nextStickers(owned, island, stickersWon(stars)) : [];
-  const stickers = won.length
-    ? { ...before.stickers, [island]: [...owned, ...won.map((s) => s.id)] }
-    : before.stickers;
+  const chest = mayWin && stars >= 1 ? { island, stars } : null;
 
   return {
     rewards: {
       points: after,
-      stickers,
+      stickers: before.stickers,
       daily: daily?.key ? { key: daily.key, stars, points: gainedPoints } : before.daily,
     },
     gained: {
       points: gainedPoints,
       dailyBonus: bonus,
-      stickers: won,
+      chest,
       grade: gradeGained(before.points, after),
       total: after,
     },

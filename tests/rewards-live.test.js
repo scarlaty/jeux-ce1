@@ -85,35 +85,35 @@ test('liveTotal additionne les points déjà acquis et ceux de la partie en cour
   assert.equal(liveTotal(session), before + POINTS_PER_CORRECT);
 });
 
-test('une partie réussie remplit l\'album de son île ; une partie ratée rapporte quand même', () => {
+test('une partie réussie donne un coffre (la gommette vient de lui) ; une partie ratée rapporte quand même', () => {
   const { store, events } = setup();
   const game = fakeGame();
-  play(game, events, [true, true, true, true]);           // 4 / 4 → 3 étoiles → 2 gommettes
+  const won = play(game, events, [true, true, true, true]);           // 4 / 4 → 3 étoiles
   let rewards = readRewards(store.getProfile('p1'));
-  assert.deepEqual(rewards.stickers.mots, STICKERS.mots.slice(0, 2).map((s) => s.id));
+  assert.deepEqual(rewards.stickers.mots, [], 'plus de gommette remise directement');
+  assert.deepEqual(rewardSummary(won).chest, { island: 'mots', stars: 3 });
 
   const points = rewards.points;
   play(game, events, [false, false, false, false]);       // 0 / 4 → aucune étoile
   rewards = readRewards(store.getProfile('p1'));
-  assert.equal(rewards.stickers.mots.length, 2, 'pas de gommette sans étoile');
+  assert.equal(rewardSummary(play(game, events, [false, false])).chest, null, 'pas de coffre sans étoile');
   assert.equal(rewards.points, points + COMPLETION_POINTS, 'mais jamais zéro point');
 });
 
 test('le défi du jour vise son île et ne donne son bonus qu\'une fois', () => {
   const { store, events } = setup();
   const game = fakeGame({ id: 'defi', island: 'defi', rewardIsland: 'monde', daily: { key: '2026-10-06' } });
-  play(game, events, [true, true]);
+  const first = play(game, events, [true, true]);
   let rewards = readRewards(store.getProfile('p1'));
-  assert.deepEqual(rewards.stickers.monde, STICKERS.monde.slice(0, 2).map((s) => s.id));
-  assert.deepEqual(rewards.stickers.mots, []);
+  assert.deepEqual(rewardSummary(first).chest, { island: 'monde', stars: 3 });
   assert.equal(rewards.points, runPoints([true, true]) + DAILY_BONUS_POINTS);
   assert.equal(rewards.daily.key, '2026-10-06');
 
   const points = rewards.points;
-  play(game, events, [true, true]);
+  const again = play(game, events, [true, true]);
   rewards = readRewards(store.getProfile('p1'));
   assert.equal(rewards.points, points + runPoints([true, true]), 'plus de bonus le même jour');
-  assert.equal(rewards.stickers.monde.length, 2, 'pas de gommette supplémentaire le même jour');
+  assert.equal(rewardSummary(again).chest, null, 'pas de coffre supplémentaire le même jour');
 });
 
 test('le passage de grade est signalé une seule fois', () => {
@@ -131,9 +131,7 @@ test('les lignes de fin de partie restent positives et lisibles', () => {
   const session = play(fakeGame(), events, [true, true, true]);
   const texts = session.result.extras.map((x) => x.text);
   assert.ok(texts.some((t) => /^\+ \d+ points$/.test(t)), texts.join(' | '));
-  assert.ok(texts.some((t) => t.startsWith('Nouvelle gommette :')));
   assert.ok(texts.every((t) => !/0 point\b/.test(t)));
-  assert.equal(session.result.extras.find((x) => x.icon)?.icon, STICKERS.mots[0].emoji);
 });
 
 test('un stockage indisponible ne casse pas la partie', () => {

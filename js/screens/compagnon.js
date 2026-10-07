@@ -12,6 +12,8 @@ import {
   COMPANION_ANIMALS, MAX_NAME, STAGE_LABELS, animalInfo, customize, hatch, nameOrDefault,
   progressOf, progressText, readCompanion, readyToHatch, saveCompanion, stageOf,
 } from '../core/companion.js';
+import { ACCESSORIES, equip, readChest, saveChest, withAccessory } from '../core/chest.js';
+import { accessoryPreview } from '../core/ui/chest.js';
 import * as audio from '../core/audio.js';
 
 const FRIEZE = [2, 3, 4];   // les stades montrés dans la frise une fois l'œuf éclos
@@ -74,7 +76,11 @@ function picker({ animal, name, onChange }) {
 export default {
   title: 'Mon compagnon',
   render(view, { app }) {
-    let companion = readCompanion(app.store.getProfile(app.profileId));
+    const load = () => {
+      const profile = app.store.getProfile(app.profileId);
+      return { companion: withAccessory(readCompanion(profile), profile), chest: readChest(profile) };
+    };
+    let { companion, chest } = load();
     let step = readyToHatch(companion) ? 'egg' : 'main';
     let stopConfetti = () => {};
     let timer = null;
@@ -82,7 +88,14 @@ export default {
     view.append(root);
 
     const save = (update) => {
-      companion = saveCompanion(app.store, app.profileId, update);
+      saveCompanion(app.store, app.profileId, update);
+      ({ companion, chest } = load());
+    };
+
+    /** L'enfant met (ou retire) un accessoire : un seul à la fois, ou aucun. Le dessin change sur place. */
+    const wear = (id) => {
+      saveChest(app.store, app.profileId, (c) => equip(c, id));
+      ({ companion, chest } = load());
     };
 
     // --- L'œuf est prêt : il frémit, l'enfant le touche ------------------------------------
@@ -152,6 +165,66 @@ export default {
       root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }
 
+    // --- Mes accessoires (#91) : ceux des coffres, un seul porté à la fois ---------------------------
+
+    function accessoriesSection(bigArt) {
+      const buttons = new Map();   // id (ou 'none') → bouton
+      let art = bigArt;
+      const refresh = () => {
+        const next = companionSticker(companion, {
+          loop: companion.hatched ? 'bounce' : null, className: 'pet__art', decorative: false });
+        art.replaceWith(next);
+        art = next;
+        play(next, 'pop');
+        for (const [id, el] of buttons) {
+          const worn = id === 'none' ? !chest.equipped : chest.equipped === id;
+          el.classList.toggle('is-worn', worn);
+          el.setAttribute('aria-pressed', String(worn));
+          const state = el.querySelector('.acc-item__state');
+          if (state) state.textContent = worn ? 'Porté' : (id === 'none' ? '' : 'Mettre');
+        }
+      };
+      const pick = (id) => {
+        audio.playSound('tap');
+        wear(id);
+        refresh();
+      };
+      const canWear = companion.hatched;
+      const none = h('button', {
+        type: 'button', class: `acc-item${chest.equipped ? '' : ' is-worn'}`, disabled: !canWear,
+        'aria-pressed': String(!chest.equipped), onclick: () => pick(null),
+      }, h('span', { class: 'acc-item__none', 'aria-hidden': 'true', text: '∅' }),
+      h('span', { class: 'acc-item__name', text: 'Rien' }),
+      h('span', { class: 'acc-item__state', text: chest.equipped ? '' : 'Porté' }));
+      buttons.set('none', none);
+      const items = ACCESSORIES.map((a) => {
+        if (!chest.accessories.includes(a.id)) {
+          return h('li', {}, h('div', { class: 'acc-item is-locked' },
+            h('span', { class: 'acc-item__hole', 'aria-hidden': 'true', text: '?' }),
+            h('span', { class: 'visually-hidden', text: 'Accessoire à gagner dans un coffre' })));
+        }
+        const worn = chest.equipped === a.id;
+        const button = h('button', {
+          type: 'button', class: `acc-item${worn ? ' is-worn' : ''}`, disabled: !canWear,
+          'aria-pressed': String(worn), onclick: () => pick(a.id),
+        }, accessoryPreview(a.id, companion, { className: 'acc-item__art' }),
+        h('span', { class: 'acc-item__name', text: a.name }),
+        h('span', { class: 'acc-item__state', text: worn ? 'Porté' : 'Mettre' }));
+        buttons.set(a.id, button);
+        return h('li', {}, button);
+      });
+      const section = h('section', { class: 'card acc', 'aria-labelledby': 'acc-title' },
+        h('div', { class: 'acc__head' },
+          h('h2', { class: 'acc__title', id: 'acc-title', text: 'Mes accessoires' }),
+          h('span', { class: 'acc__count', text: `${chest.accessories.length} / ${ACCESSORIES.length}` })),
+        h('p', { class: 'acc__lead cursive', text: canWear
+          ? 'Touche un accessoire pour le mettre.'
+          : 'Fais éclore ton œuf pour lui mettre des accessoires.' }),
+        h('ul', { class: 'acc-grid' }, h('li', {}, none), items),
+        h('p', { class: 'identity__hint', text: 'Les accessoires se trouvent dans les coffres, après une partie réussie.' }));
+      return section;
+    }
+
     // --- L'écran habituel --------------------------------------------------------------------
 
     function showMain() {
@@ -191,6 +264,7 @@ export default {
           h('button', { type: 'submit', class: 'btn btn--secondary' }, icon('check'), h('span', { text: 'Enregistrer' }))));
       })();
 
+      const accessories = (companion.hatched || chest.accessories.length) ? accessoriesSection(art) : null;
       root.replaceChildren(
         h('div', { class: 'card pet__card' },
           art,
@@ -200,6 +274,7 @@ export default {
           h('p', { class: 'pet__progress', text: progressText(companion) }),
           next === null && h('p', { class: 'pet__lead cursive', text: 'Merci de jouer avec lui !' }),
           !companion.hatched && h('p', { class: 'pet__lead cursive', text: 'Il éclot quand tu as terminé des parties.' })),
+        accessories,
         frieze || null,
         edit || null,
         h('div', { class: 'end__actions pet__actions' },
