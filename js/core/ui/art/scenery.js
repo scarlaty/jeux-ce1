@@ -518,20 +518,27 @@ export const PROPS = {
   frond: { label: 'Palme', parts: FROND },
   sign: { label: 'Panneau de bois', parts: SIGN },
   lock: { label: 'Cadenas', parts: LOCK },
-  cave: { label: 'Grotte', parts: CAVE },
-  mill: { label: 'Moulin', parts: MILL },
-  'twin-rocks': { label: 'Rochers jumeaux', parts: TWIN_ROCKS },
-  'rainbow-tree': { label: 'Arbre aux deux feuillages', parts: RAINBOW_TREE },
-  lighthouse: { label: 'Phare', parts: LIGHTHOUSE },
-  hut: { label: 'Cabane', parts: HUT },
-  tent: { label: 'Tente', parts: TENT },
-  well: { label: 'Puits', parts: WELL },
+  // Les lieux portent leur hauteur : la scène s'en sert pour les ramener tous à la même
+  // emprise, quelle que soit leur silhouette (un phare est haut, des rochers sont bas).
+  cave: { label: 'Grotte', parts: CAVE, height: 22 },
+  mill: { label: 'Moulin', parts: MILL, height: 37 },
+  'twin-rocks': { label: 'Rochers jumeaux', parts: TWIN_ROCKS, height: 16 },
+  'rainbow-tree': { label: 'Arbre aux deux feuillages', parts: RAINBOW_TREE, height: 34 },
+  lighthouse: { label: 'Phare', parts: LIGHTHOUSE, height: 42 },
+  hut: { label: 'Cabane', parts: HUT, height: 22 },
+  tent: { label: 'Tente', parts: TENT, height: 21 },
+  well: { label: 'Puits', parts: WELL, height: 26 },
 };
 
 export const PROP_IDS = Object.keys(PROPS);
 
 export function propLabel(id) {
   return PROPS[id]?.label || '';
+}
+
+/** Hauteur dessinée d'un objet (0 s'il n'est pas déclaré) : sert à normaliser les lieux. */
+export function propHeight(id) {
+  return PROPS[id]?.height || 0;
 }
 
 /** Les teintes utilisables comme accent d'un objet (fleur, fanion, coquillage, voile…). */

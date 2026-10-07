@@ -62,14 +62,21 @@
 .sc-grass { fill: var(--land-grass); }
 .sc-grass-dk { fill: var(--land-grass-deep); opacity: .3; }
 .sc-grass-lt { fill: var(--land-grass-light); opacity: .85; }
+.sc-blade {
+  fill: none;
+  stroke: var(--land-grass-deep);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  opacity: .55;
+}
 .sc-hill { fill: var(--land-grass-deep); }
 .sc-hill-lt { fill: var(--land-grass); }
 .sc-trail {
   fill: none;
   stroke: var(--land-sand-deep);
-  stroke-width: 8;
+  stroke-width: 9;
   stroke-linecap: round;
-  opacity: .55;
+  opacity: .7;
 }
 .sc-trail-top {
   fill: none;

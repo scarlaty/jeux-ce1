@@ -10,7 +10,7 @@
 // dessins à tenir à jour, mais deux fenêtres sur le même dessin.
 import { n, toNode, roundedStar } from './art/kawaii-parts.js';
 import { character, mascot } from './art/kawaii.js';
-import { propDefs, use, scatter, idsOf } from './art/scenery.js';
+import { propDefs, use, scatter, idsOf, propHeight } from './art/scenery.js';
 import { SCENE, PLACE_HEIGHT } from '../map.js';
 
 const r2 = (x) => Number(Number(x).toFixed(2));
@@ -78,43 +78,78 @@ function sea({ horizon }) {
 // --- Le corps d'une île --------------------------------------------------------------------------
 
 /**
- * Une île vue de trois quarts : ombre portée sur l'eau, dessous rocheux, falaise, plage, herbe.
- * C'est l'épaisseur (quatre couches) qui la pose sur la mer plutôt que de la coller dessus.
+ * Contour d'une masse de terre, en super-ellipse : `squareness` = 2 donne un simple ovale
+ * (les îles lointaines), 3,5 une forme plus carrée aux coins ronds. C'est ce second réglage qui
+ * permet à l'île que l'on visite de rester LARGE EN BAS — sinon la rangée de lieux du premier
+ * plan déborderait dans la mer.
  */
-function islandBody({ cx, cy, rx, ry, grassInset = 0.82, thickness = 0.95 }) {
-  const gx = r2(rx * grassInset);
-  const gy = r2(ry * grassInset);
-  const gcy = r2(cy - ry * 0.14);
-  const wall = r2(ry * thickness);   // la falaise : c'est elle qui donne l'épaisseur
-  const base = { cx, cy, rx, ry };
-  const cliff = `${bottomArc(base)}v${wall}a${rx} ${ry} 0 0 1 ${r2(-rx * 2)} 0Z`;
-  // Strates : trois arcs parallèles dans la falaise. Jamais d'aplat nu sur une grande surface.
-  const strata = [0.3, 0.56, 0.82].map((t) => `M${r2(cx - rx * 0.84)} ${r2(cy + ry * 0.56 + wall * t)}`
-    + `a${r2(rx * 0.86)} ${r2(ry * 0.86)} 0 0 0 ${r2(rx * 1.68)} 0`).join('');
+function landPoints(cx, cy, rx, ry, squareness = 2, steps = 48) {
+  const p = 2 / squareness;
+  return Array.from({ length: steps }, (_, i) => {
+    const t = (i / steps) * Math.PI * 2 - Math.PI / 2;
+    const c = Math.cos(t);
+    const si = Math.sin(t);
+    return [
+      r2(cx + rx * Math.sign(c) * Math.abs(c) ** p),
+      r2(cy + ry * Math.sign(si) * Math.abs(si) ** p),
+    ];
+  });
+}
+
+const mid = (a, b) => [r2((a[0] + b[0]) / 2), r2((a[1] + b[1]) / 2)];
+
+/** Tracé fermé et lisse passant par une suite de points (courbes par les milieux). */
+function closedPath(points) {
+  let d = `M${mid(points[points.length - 1], points[0]).join(' ')}`;
+  for (let i = 0; i < points.length; i += 1) {
+    const to = mid(points[i], points[(i + 1) % points.length]);
+    d += `Q${points[i][0]} ${points[i][1]} ${to[0]} ${to[1]}`;
+  }
+  return `${d}Z`;
+}
+
+const polyline = (points) => points.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('');
+
+/**
+ * Une île vue de trois quarts : hauts-fonds, ombre portée, falaise avec ses strates, plage, herbe.
+ * C'est cette épaisseur, et l'ombre sur l'eau, qui posent l'île sur la mer au lieu de l'y coller.
+ */
+function islandBody({
+  cx, cy, rx, ry, grassInset = 0.84, thickness = 0.9, squareness = 2.1,
+}) {
+  const wall = r2(ry * thickness);   // hauteur de la falaise
+  const pts = landPoints(cx, cy, rx, ry, squareness);
+  const half = pts.length / 4;
+  // Moitié basse du contour, de la droite vers la gauche en passant par le bas.
+  const lower = pts.slice(half, half * 3 + 1);
+  const down = (dy) => lower.map(([x, y]) => [x, r2(y + dy)]);
+  const cliff = `${polyline(lower)}${polyline([...down(wall)].reverse()).replace('M', 'L')}Z`;
+  const land = closedPath(pts);
+  const grass = closedPath(landPoints(cx, r2(cy - ry * 0.12), r2(rx * grassInset), r2(ry * grassInset), squareness));
+  // Strates : trois lignes parallèles au pied de la falaise. Jamais d'aplat nu sur une grande surface.
+  const strata = [0.28, 0.54, 0.8].map((t) => polyline(down(wall * t).slice(2, -2))).join('');
+  const lightSide = [...lower.slice(Math.round(lower.length * 0.55))];
+  const darkSide = [...lower.slice(0, Math.round(lower.length * 0.3))];
+  const sideBand = (part) => `${polyline(part)}${polyline(part.map(([x, y]) => [x, r2(y + wall)]).reverse()).replace('M', 'L')}Z`;
   return [
     // Hauts-fonds : l'eau s'éclaircit autour de la terre. C'est ce halo qui pose l'île sur la mer.
-    ell(cx, r2(cy + ry * 0.4), r2(rx * 1.16), r2(ry * 1.8), 'sc-shoal'),
-    ell(cx, r2(cy + ry + wall * 0.9), r2(rx * 0.84), r2(ry * 0.3), 'sc-cast'),
+    path(closedPath(landPoints(cx, r2(cy + ry * 0.26), r2(rx * 1.1), r2(ry * 1.42), squareness)), 'sc-shoal'),
+    ell(cx, r2(cy + ry + wall * 0.88), r2(rx * 0.82), r2(ry * 0.26), 'sc-cast'),
     // Falaise : éclairée à gauche, à l'ombre à droite.
     path(cliff, 'sc-cliff'),
-    path(`M${r2(cx - rx)} ${cy}a${rx} ${ry} 0 0 0 ${r2(rx * 0.56)} ${r2(ry * 0.83)}`
-      + `v${wall}a${rx} ${ry} 0 0 1 ${r2(-rx * 0.56)} ${r2(-ry * 0.83)}Z`, 'sc-cliff-lt'),
-    path(`M${r2(cx + rx * 0.56)} ${r2(cy + ry * 0.83)}a${rx} ${ry} 0 0 0 ${r2(rx * 0.44)} ${r2(-ry * 0.83)}`
-      + `v${wall}a${rx} ${ry} 0 0 1 ${r2(-rx * 0.44)} ${r2(ry * 0.83)}Z`, 'sc-cliff-dk'),
+    path(sideBand(lightSide), 'sc-cliff-lt'),
+    path(sideBand(darkSide), 'sc-cliff-dk'),
     n('path', { d: strata, class: 'sc-dt sc-dt--land' }),
     n('path', { d: cliff, class: 'sc-ln sc-ln--land' }),
     // Plage, puis l'écume juste au bord de l'eau
-    ell(cx, cy, rx, ry, 'sc-sand'),
-    n('ellipse', { cx, cy, rx, ry, class: 'sc-ln sc-ln--land' }),
-    path(`M${r2(cx - rx * 1.02)} ${r2(cy + ry * 0.1)}a${r2(rx * 1.06)} ${r2(ry * 1.06)} 0 0 0 ${r2(rx * 2.04)} 0`, 'sc-foam'),
+    path(land, 'sc-sand'),
+    n('path', { d: land, class: 'sc-ln sc-ln--land' }),
+    n('path', { d: polyline(lower.map(([x, y]) => [x, r2(y + 1.6)])), class: 'sc-foam' }),
     // Herbe, avec son ombre de relief et sa crête éclairée
-    ell(cx, gcy, gx, gy, 'sc-grass'),
-    path(`M${r2(cx - gx * 0.92)} ${r2(gcy + gy * 0.1)}q${r2(gx * 0.45)} ${r2(-gy * 0.62)} ${r2(gx * 0.95)} ${r2(-gy * 0.5)}`
-      + `t${r2(gx * 0.88)} ${r2(gy * 0.48)}q${r2(-gx * 0.5)} ${r2(gy * 0.72)} ${r2(-gx * 0.95)} ${r2(gy * 0.68)}`
-      + `t${r2(-gx * 0.88)} ${r2(-gy * 0.76)}Z`, 'sc-grass-dk'),
-    path(`M${r2(cx - gx * 0.74)} ${r2(gcy - gy * 0.2)}q${r2(gx * 0.5)} ${r2(-gy * 0.55)} ${r2(gx * 1.1)} ${r2(-gy * 0.3)}`
-      + `q${r2(-gx * 0.6)} ${r2(gy * 0.46)} ${r2(-gx * 1.1)} ${r2(gy * 0.3)}Z`, 'sc-grass-lt'),
-    n('ellipse', { cx, cy: gcy, rx: gx, ry: gy, class: 'sc-ln sc-ln--land' }),
+    path(grass, 'sc-grass'),
+    path(closedPath(landPoints(r2(cx + rx * 0.05), r2(cy - ry * 0.02), r2(rx * grassInset * 0.86), r2(ry * grassInset * 0.78), squareness)), 'sc-grass-dk'),
+    path(closedPath(landPoints(r2(cx - rx * 0.26), r2(cy - ry * 0.42), r2(rx * grassInset * 0.5), r2(ry * grassInset * 0.36), squareness)), 'sc-grass-lt'),
+    n('path', { d: grass, class: 'sc-ln sc-ln--land' }),
   ];
 }
 
@@ -180,7 +215,7 @@ function islandTrim(entry, scene) {
 function archipelagoIsland(entry, scene) {
   const { id, unlocked, plaque: at, lines, label, starsLeft } = entry;
   const body = n('g', { class: 'sc-island-body' },
-    islandBody({ ...entry, thickness: 0.52 }),
+    islandBody({ ...entry, thickness: 0.62, squareness: 2.2 }),
     islandTrim(entry, scene));
   const sign = unlocked
     ? plaque({
@@ -247,59 +282,92 @@ const ISLAND_PROPS = [
  * lieux (core/map.js), donc ils ne cachent jamais un nom.
  */
 const ISLAND_SCATTER = [
-  // Arrière-plan : la ligne d'arbres de la colline
-  { id: 'palm', x: 26, y: 72, scale: 0.86 },
-  { id: 'tree', x: 172, y: 70, scale: 0.8, flip: true },
-  { id: 'tree', x: 86, y: 58, scale: 0.6 },
-  { id: 'bush', x: 124, y: 62, scale: 0.7 },
-  { id: 'rock', x: 150, y: 60, scale: 0.55 },
-  { id: 'tuft', x: 64, y: 62, scale: 0.8 },
-  { id: 'tuft', x: 110, y: 58, scale: 0.7, flip: true },
-  { id: 'mushroom', x: 96, y: 64, scale: 0.7, tint: 'rose' },
-  // Plan moyen : la clairière entre les deux rangées de lieux
-  { id: 'bush', x: 20, y: 104, scale: 1 },
-  { id: 'bush', x: 182, y: 106, scale: 0.95, flip: true },
-  { id: 'flower', x: 34, y: 112, scale: 1, tint: 'rose' },
-  { id: 'flower', x: 40, y: 118, scale: 0.85, tint: 'citron' },
-  { id: 'flower', x: 164, y: 114, scale: 1, tint: 'lavande' },
-  { id: 'flower', x: 172, y: 120, scale: 0.85, tint: 'rose' },
-  { id: 'tuft', x: 76, y: 104, scale: 0.9 },
-  { id: 'tuft', x: 126, y: 102, scale: 0.85, flip: true },
-  { id: 'barrel', x: 92, y: 110, scale: 0.75 },
-  { id: 'chest', x: 108, y: 112, scale: 0.8 },
-  { id: 'lantern', x: 66, y: 114, scale: 0.9 },
-  { id: 'lantern', x: 140, y: 112, scale: 0.85, flip: true },
-  { id: 'mushroom', x: 116, y: 118, scale: 0.8, tint: 'peche' },
-  // Devant : la plage et ses trésors
-  { id: 'palm', x: 14, y: 140, scale: 1.1 },
-  { id: 'palm', x: 188, y: 142, scale: 1.05, flip: true },
-  { id: 'tuft', x: 32, y: 148, scale: 1 },
-  { id: 'tuft', x: 170, y: 150, scale: 0.95, flip: true },
-  { id: 'shell', x: 56, y: 156, scale: 0.9, tint: 'rose' },
-  { id: 'starfish', x: 148, y: 157, scale: 0.95, tint: 'peche' },
-  { id: 'pebble', x: 80, y: 158, scale: 1 },
-  { id: 'pebble', x: 88, y: 160, scale: 0.7 },
-  { id: 'pebble', x: 120, y: 157, scale: 0.9 },
-  { id: 'shell', x: 104, y: 160, scale: 0.75, tint: 'ciel' },
-  { id: 'flower', x: 96, y: 148, scale: 0.8, tint: 'citron' },
+  // Rive du fond : la ligne de végétation dépasse au-dessus des plaques, elle ferme la scène
+  { id: 'palm', x: 26, y: 72, scale: 0.8 },
+  { id: 'tree', x: 74, y: 70, scale: 0.72 },
+  { id: 'bush', x: 64, y: 73, scale: 0.78 },
+  { id: 'tree', x: 128, y: 68, scale: 0.68, flip: true },
+  { id: 'bush', x: 138, y: 72, scale: 0.72, flip: true },
+  { id: 'palm', x: 176, y: 74, scale: 0.76, flip: true },
+  { id: 'tuft', x: 88, y: 72, scale: 0.7 },
+  { id: 'tuft', x: 114, y: 69, scale: 0.65, flip: true },
+  { id: 'bush', x: 160, y: 68, scale: 0.6, flip: true },
+  { id: 'rock', x: 40, y: 70, scale: 0.5 },
+  { id: 'tuft', x: 50, y: 74, scale: 0.6 },
+  { id: 'tuft', x: 152, y: 75, scale: 0.6, flip: true },
+  // Couloir de gauche
+  { id: 'bush', x: 24, y: 114, scale: 1 },
+  { id: 'flower', x: 33, y: 122, scale: 0.95, tint: 'rose' },
+  { id: 'flower', x: 22, y: 128, scale: 0.85, tint: 'citron' },
+  { id: 'tuft', x: 36, y: 108, scale: 0.9 },
+  { id: 'lantern', x: 22, y: 102, scale: 0.8 },
+  { id: 'mushroom', x: 40, y: 128, scale: 0.7, tint: 'rose' },
+  // Clairière du milieu : entre les deux rangées, le coin où l'on pose ses affaires
+  { id: 'barrel', x: 74, y: 118, scale: 0.72 },
+  { id: 'chest', x: 84, y: 123, scale: 0.75 },
+  { id: 'tuft', x: 66, y: 126, scale: 0.85 },
+  { id: 'flower', x: 70, y: 131, scale: 0.8, tint: 'citron' },
+  { id: 'mushroom', x: 124, y: 120, scale: 0.75, tint: 'peche' },
+  { id: 'flower', x: 132, y: 127, scale: 0.9, tint: 'lavande' },
+  { id: 'tuft', x: 118, y: 129, scale: 0.8, flip: true },
+  { id: 'bush', x: 134, y: 114, scale: 0.8 },
+  { id: 'pebble', x: 108, y: 132, scale: 0.8 },
+  { id: 'pebble', x: 94, y: 133, scale: 0.7 },
+  // Couloir de droite
+  { id: 'bush', x: 176, y: 116, scale: 0.95, flip: true },
+  { id: 'flower', x: 167, y: 124, scale: 0.9, tint: 'citron' },
+  { id: 'flower', x: 178, y: 130, scale: 0.8, tint: 'rose' },
+  { id: 'tuft', x: 164, y: 110, scale: 0.85, flip: true },
+  { id: 'lantern', x: 178, y: 102, scale: 0.8, flip: true },
+  { id: 'mushroom', x: 160, y: 130, scale: 0.7, tint: 'lavande' },
+  // La plage, devant : palmiers des deux bords et petits trésors au bord de l'eau
+  { id: 'palm', x: 18, y: 148, scale: 1.05 },
+  { id: 'palm', x: 184, y: 150, scale: 1, flip: true },
+  { id: 'tuft', x: 30, y: 156, scale: 0.9 },
+  { id: 'tuft', x: 172, y: 157, scale: 0.85, flip: true },
+  { id: 'shell', x: 62, y: 162, scale: 0.85, tint: 'rose' },
+  { id: 'starfish', x: 140, y: 163, scale: 0.9, tint: 'peche' },
+  { id: 'pebble', x: 84, y: 164, scale: 0.9 },
+  { id: 'pebble', x: 92, y: 166, scale: 0.7 },
+  { id: 'shell', x: 116, y: 164, scale: 0.75, tint: 'ciel' },
+  { id: 'pebble', x: 124, y: 166, scale: 0.85 },
+  { id: 'starfish', x: 44, y: 165, scale: 0.8, tint: 'lavande' },
 ];
 
 const ISLAND_FOREGROUND = [
-  { id: 'frond', x: 4, y: 182, scale: 2.3 },
-  { id: 'frond', x: 28, y: 188, scale: 1.6 },
-  { id: 'frond', x: 198, y: 180, scale: 2.2, flip: true },
-  { id: 'frond', x: 174, y: 188, scale: 1.5, flip: true },
-  { id: 'pebble', x: 52, y: 178, scale: 1.3 },
-  { id: 'pebble', x: 150, y: 176, scale: 1.1 },
+  { id: 'frond', x: 2, y: 176, scale: 2.2 },
+  { id: 'frond', x: 24, y: 182, scale: 1.5 },
+  { id: 'frond', x: 198, y: 174, scale: 2.1, flip: true },
+  { id: 'frond', x: 176, y: 182, scale: 1.4, flip: true },
+  { id: 'pebble', x: 48, y: 174, scale: 1.3 },
+  { id: 'pebble', x: 152, y: 172, scale: 1.1 },
 ];
+
+/**
+ * Marques d'herbe : de petits « v » semés sur la pelouse. Sans eux, la plus grande surface de la
+ * scène resterait un aplat — la règle n°4 de la direction artistique l'interdit.
+ */
+function grassMarks(cx, cy, rx, ry) {
+  const seeds = [
+    [-0.78, -0.3], [-0.52, 0.12], [-0.3, -0.48], [-0.06, 0.34], [0.18, -0.2], [0.44, 0.26],
+    [0.68, -0.36], [0.82, 0.08], [-0.66, 0.42], [-0.18, 0.6], [0.3, 0.56], [0.6, 0.5],
+    [-0.42, -0.6], [0.06, -0.62], [0.52, -0.58], [-0.86, 0.16], [0.86, 0.38], [-0.08, -0.08],
+  ];
+  return n('g', { class: 'sc-grass-marks' }, seeds.map(([u, v]) => {
+    const x = r2(cx + rx * u);
+    const y = r2(cy + ry * v);
+    return path(`M${x} ${y}l-1.6-2.6M${r2(x + 1.4)} ${y}l1-2.4`, 'sc-blade');
+  }));
+}
 
 /** Le chemin qui relie les lieux : il ne numérote rien, il invite à se promener. */
 function trail(slots) {
   if (slots.length < 2) return [];
+  const mid = slots.reduce((sum, p) => sum + p.y, 0) / slots.length;
   const points = [...slots]
-    .map((s) => [s.ax, s.ay + 4])
-    .sort((a, b) => a[1] - b[1] || a[0] - b[0]);
-  const d = smooth([[14, 150], ...points, [188, 148]]);
+    .map((p, i) => [p.ax, r2(mid + (i % 2 ? 8 : -8))])
+    .sort((a, b) => a[0] - b[0]);
+  const d = smooth([[8, r2(mid + 24)], ...points, [192, r2(mid + 20)]]);
   return [path(d, 'sc-trail'), path(d, 'sc-trail-top')];
 }
 
@@ -314,7 +382,14 @@ function placeNode(place, layout, scene) {
   },
   n('rect', { ...slot.hit, rx: 6, class: 'sc-hit' }),
   n('rect', { ...slot.hit, rx: 6, class: 'sc-halo-box' }),
-  use(place.kind, { scene, x: slot.ax, y: slot.ay, scale: layout.decor }),
+  // Chaque lieu est ramené à la même emprise : un phare ne doit pas déborder sur la plaque du
+  // lieu de derrière, et des rochers bas ne doivent pas avoir l'air perdus dans leur case.
+  use(place.kind, {
+    scene,
+    x: slot.ax,
+    y: slot.ay,
+    scale: r2(layout.decor * Math.min(1.15, PLACE_HEIGHT / (propHeight(place.kind) || PLACE_HEIGHT))),
+  }),
   plaque({
     x: slot.x,
     y: slot.y,
@@ -354,7 +429,7 @@ function mascotNode(islandId, { x, y, size }) {
 export function islandScene(island, places, layout) {
   const scene = `isle-${island.id}`;
   const horizon = 34;
-  const body = { cx: 100, cy: 104, rx: 97, ry: 50 };
+  const body = { cx: 100, cy: 104, rx: 87, ry: 52, thickness: 0.2, squareness: 3.4, grassInset: 0.88 };
   const kinds = [...new Set(places.map((p) => p.kind))];
   const used = [...ISLAND_PROPS, ...kinds, ...idsOf(ISLAND_SCATTER), ...idsOf(ISLAND_FOREGROUND)];
   const tree = n('svg', {
@@ -368,17 +443,20 @@ export function islandScene(island, places, layout) {
   n('defs', {}, propDefs(scene, used)),
   sky({ horizon, scene }),
   sea({ horizon }),
-  use('boat', { scene, x: 178, y: 62, scale: 0.8, tint: 'ciel' }),
+  use('boat', { scene, x: 176, y: 46, scale: 0.7, tint: 'ciel' }),
+  use('boat', { scene, x: 22, y: 44, scale: 0.55, tint: 'citron' }),
   // Les collines du fond : du relief avant même les lieux
-  path('M30 76q22-30 46-2t44-6 40 10q-34 10-66 10t-64-12Z', 'sc-hill'),
-  path('M44 72q16-20 34-2t30-4q-22 8-34 8t-30-2Z', 'sc-hill-lt'),
+  path('M24 80q26-26 50 0t46-8 46 10q-38 10-72 10t-70-12Z', 'sc-hill'),
+  path('M40 77q18-19 38-2t30-5q-24 8-38 8t-30-1Z', 'sc-hill-lt'),
   islandBody(body),
+  grassMarks(100, 100, 72, 40),
   trail(layout.slots),
   n('g', { class: 'sc-scatter' }, scatter(scene, ISLAND_SCATTER)),
   // La guirlande de fanions, tendue entre les deux palmiers du bord
-  use('bunting', { scene, x: 100, y: 150, scale: 1.1 }),
+  // La guirlande traverse l'arrière de l'île : elle passe derrière les lieux, comme une corde tendue.
+  use('bunting', { scene, x: 100, y: 70, scale: 1.5 }),
   places.map((place) => placeNode(place, layout, scene)),
-  mascotNode(island.id, { x: 100, y: 128, size: 30 }),
+  mascotNode(island.id, { x: 30, y: 128, size: 24 }),
   n('g', { class: 'sc-foreground' }, scatter(scene, ISLAND_FOREGROUND)));
   return toNode(tree);
 }

@@ -10,7 +10,7 @@
 // téléphone (`preserveAspectRatio="xMidYMid slice"`). D'où une ZONE SÛRE, visible dans les deux
 // cadrages, où doit tenir tout ce qui porte de l'information.
 export const SCENE = { width: 200, height: 180 };
-export const SAFE = { x: 20, y: 24, width: 160, height: 132 };
+export const SAFE = { x: 20, y: 22, width: 160, height: 138 };
 
 /** Hauteur maximale d'un décor de lieu (à l'échelle 1) : la composition en dépend. */
 export const PLACE_HEIGHT = 30;
@@ -32,7 +32,7 @@ const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 // grille de 3 rangées, un peu plus serrée (décors et plaques réduits d'autant). Les deux grilles
 // sont vérifiées par tests/map.test.js.
 
-const COLUMNS = [48, 100, 152];
+const COLUMNS = [52, 100, 148];
 
 /** Jitter du décor : il n'est jamais exactement au-dessus de sa plaque, sinon la scène s'aligne. */
 const JITTER = [2, -3, 0, -2, 3, 1, -1, 2, -2];
@@ -44,15 +44,20 @@ const JITTER = [2, -3, 0, -2, 3, 1, -1, 2, -2];
 const GRIDS = [
   {
     max: 6,
-    rows: [72, 136],
+    rows: [90, 146],
+    // Décalage vertical par colonne : sans lui, les plaques forment deux barres bien alignées
+    // et la scène redevient un tableau. Les colonnes ne se recouvrent jamais en x, donc décaler
+    // en y ne peut pas créer de collision.
+    stagger: [-6, 4, -2],
     order: [[0, 0], [2, 0], [1, 0], [0, 1], [2, 1], [1, 1]],
-    plaque: { width: 50, height: 25 }, decor: 1, lift: 17,
+    plaque: { width: 46, height: 25 }, decor: 1, lift: 15,
   },
   {
     max: 9,
-    rows: [60, 100, 140],
+    rows: [74, 112, 150],
+    stagger: [-4, 3, -1],
     order: [[0, 0], [2, 0], [1, 0], [0, 1], [2, 1], [1, 1], [0, 2], [2, 2], [1, 2]],
-    plaque: { width: 48, height: 19 }, decor: 0.58, lift: 12,
+    plaque: { width: 44, height: 19 }, decor: 0.56, lift: 10,
   },
 ];
 
@@ -66,7 +71,8 @@ export function placeLayout(count) {
   const height = PLACE_HEIGHT * grid.decor;
   const slots = grid.order.slice(0, Math.max(count, 0)).map(([col, row], i) => {
     const x = COLUMNS[col];
-    const y = grid.rows[row];
+    // Seule la rangée du fond est décalée : devant, le décor viendrait buter sur la plaque d'arrière.
+    const y = grid.rows[row] + (row === 0 ? grid.stagger[col] : 0);
     return {
       x,
       y,
