@@ -52,15 +52,24 @@ test('toute question a une consigne en français, une explication et une notion'
   }
 });
 
-test('questions à écouter : voix anglaise, texte de secours, rien d\'écrit qui donne la réponse', () => {
+test('toute question montre un texte à l\'écran (#92 : jouable sans le son)', () => {
+  for (const [, q] of all()) {
+    assert.ok(q.display.show && q.display.show.text, `question sans texte affiché : ${q.key}`);
+  }
+});
+
+test('questions à écouter : voix anglaise, et le texte écrit est exactement ce qui est dit', () => {
   let listened = 0;
   for (const [, q] of all()) {
-    if (!q.listenOnly) { assert.ok(q.display.show, `question lue sans texte affiché : ${q.key}`); continue; }
+    if (!q.speak) continue;   // formes lues seules (mot-chiffre, chiffre-mot, mot-couleur) : pas de haut-parleur du haut
     listened += 1;
     assert.equal(q.lang, 'en-GB', q.key);
-    assert.ok(q.speak && /^[a-zA-Z .]+$/.test(q.speak), q.key);
-    assert.ok(!q.display.show, `une question à écouter ne montre pas la réponse : ${q.key}`);
+    assert.ok(/^[a-zA-Z .]+$/.test(q.speak), q.key);
     assert.ok(q.listenLabel, q.key);
+    // Le mot ou la phrase écrits sont identiques à ce qui est dit : pas un indice différent qui
+    // trahirait la réponse autrement (voir aussi #92 : avant, rien n'était écrit du tout).
+    assert.equal(q.display.show.text, q.speak, q.key);
+    assert.equal(q.display.show.lang, 'en-GB', q.key);
   }
   assert.ok(listened > 1000);
 });

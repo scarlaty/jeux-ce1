@@ -221,6 +221,11 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
   `session.answer(valeur) → { correct, answer, explain }`, `session.next() → question | null` ;
   à la fin `session.result = { t, game, level, score, total, stars, durationMs, missed, bestStreak,
   unlocksNext, progress, extras }`. `starsFor(score, total)` : 3 si ≥ 90 %, 2 si ≥ 70 %, 1 si ≥ 50 %.
+  `buildQuestions` (tiré au hasard dans une partie) rejette une question déjà posée sur sa `key`
+  **et** sur `renderFingerprint(question)` (consigne + `display.show` + choix/éléments/cibles à
+  l'écran, sans `speak`/`lang`/`cursive` qui ne se voient pas) : deux questions ne doivent jamais
+  s'afficher pareil dans la même partie, même avec des clés et des réponses différentes (issue #92).
+  `checkGenerator` (`tests/helpers/game-checks.js`) vérifie cette règle pour chaque jeu du registre.
 - **Récompenses et autres modules** : s'abonner à `gameEvents` (engine.js) sans modifier le moteur :
   `'start'`, `'question'`, `'answer'` (`{ session, question, given, correct, streak, index }`),
   `'end'` (`{ session, result, extras }`). Pousser `{ icon?, text }` dans `extras` pendant `'end'`
@@ -275,10 +280,14 @@ test('500 tirages par niveau', () => checkGenerator(game, { draws: 500, minDisti
   avec des mots (`speakableText` : « 15 − 8 = ? » → « 15 moins 8 égale combien ? »). Couper le son coupe les effets ; la voix ne parle que sur un
   appui volontaire sur « écouter » et reste donc disponible. Sans synthèse vocale, pas de bouton « écouter ».
   `hasVoice(lang)` dit si une voix existe pour la langue. **Questions d'anglais à l'écoute** : `lang: 'en-GB'`, `speak` (le texte
-  anglais), `listenOnly: true` et `listenLabel` (nom du bouton) ; sans voix anglaise (ou sans synthèse), `play.js` écrit
-  « Pas de voix anglaise sur cet appareil. Lis : … » avec le texte de `speak`, et la question reste jouable. Après une erreur,
-  un bouton « Réécouter en anglais » s'ajoute (la voix française lirait mal le mot). Un mot à lire (et non à deviner) se met
-  dans `display.show = { text, lang: 'en-GB', speak }`. Un choix dessiné peut porter `label` : la correction l'écrit près du dessin.
+  anglais) et `listenLabel` (nom du bouton du haut). Le mot ou la phrase entendus doivent aussi être écrits dans
+  `display.show = { text, lang: 'en-GB' }` : une question qui ne se distingue d'une autre que par `speak` (jamais visible à
+  l'écran) peut produire deux écrans identiques dans la même partie (issue #92) et devient insoluble sans appuyer sur « écouter ».
+  `listenOnly: true` (repli `play.js` : « Pas de voix anglaise sur cet appareil. Lis : … ») reste disponible pour une question
+  dont la seule réponse possible est déjà donnée autrement, mais n'est plus utilisé par « Colors and numbers » depuis #92.
+  Après une erreur, un bouton « Réécouter en anglais » s'ajoute (la voix française lirait mal le mot). Un mot à lire (et non à
+  deviner, avec son propre bouton « écouter ») se met dans `display.show = { text, lang: 'en-GB', speak }`. Un choix dessiné
+  peut porter `label` : la correction l'écrit près du dessin.
   Dessin `colored` (`{ kind: 'colored', shape: 'swatch' | 'apple' | 'balloon' | 'star' | 'flower', color, count? }`, 11 couleurs,
   tokens `--swatch-*` identiques en clair et sombre) ; banque `js/data/anglais.js` (couleurs, nombres 1-20 et dizaines, accords français).
 

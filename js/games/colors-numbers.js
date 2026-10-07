@@ -1,25 +1,25 @@
-// Colors and numbers (CE1, programmes 2024, langues vivantes, niveau A1) : comprendre à l'oral les
-// couleurs et les nombres en anglais. L'ÉCOUTE est centrale : l'enfant de 7 ans lit peu l'anglais.
+// Colors and numbers (CE1, programmes 2024, langues vivantes, niveau A1) : comprendre les couleurs
+// et les nombres en anglais, à l'oreille ET à l'œil — le mot ou la phrase entendus sont toujours
+// aussi écrits à l'écran (display.show), pour rester jouable sans voix anglaise et sans le son (#92).
 //
 // Formes de questions (voir la banque js/data/anglais.js) :
-//   color    : on entend une couleur, on touche la bonne pastille ;
-//   number   : on entend un nombre, on touche le bon chiffre ;
-//   count    : on entend « three apples » (niveau 2 : « three red apples »), on touche la bonne image ;
-//   colorWord: on lit un mot (avec bouton « écouter »), on touche la bonne pastille ;
+//   color    : on entend/lit une couleur, on touche la bonne pastille ;
+//   number   : on entend/lit un nombre, on touche le bon chiffre ;
+//   count    : on entend/lit « three apples » (niveau 2 : « three red apples »), on touche la bonne image ;
+//   colorWord: le mot est écrit en grand (avec bouton « écouter »), on touche la bonne pastille ;
 //   wordNumber / numberWord : on associe un nombre écrit en anglais et son chiffre, dans les deux sens ;
 //   sentence : « I have two blue balloons », entendue ou lue, et l'image qui correspond.
 //
-// Les questions à l'écoute portent `lang: 'en-GB'` et `listenOnly` : sans voix anglaise sur
-// l'appareil, l'écran écrit le texte à lire (voir noVoiceNote dans screens/play.js).
-// Les pièges sont voulus mais jamais ambigus : treize / trente, quatorze / quarante… se
-// distinguent à l'oreille (« -teen » / « -ty ») ET par des chiffres bien lisibles.
+// Les questions à l'écoute portent `lang: 'en-GB'` (voix et texte affiché) ; le bouton « écouter »
+// du haut lit `speak`. Les pièges sont voulus mais jamais ambigus : treize / trente, quatorze /
+// quarante… se distinguent à l'oreille (« -teen » / « -ty ») ET par des chiffres bien lisibles.
 import {
   COLORS, THINGS, getColor, colorsOf, colorFr, thingsFr, thingsEn, numberEn,
   confusableNumber, capital,
 } from '../data/anglais.js';
 
 const ID = 'colors-numbers';
-const LISTEN = { lang: 'en-GB', listenOnly: true, listenLabel: 'Écouter en anglais' };
+const LISTEN = { lang: 'en-GB', listenLabel: 'Écouter en anglais' };
 
 /** Couleurs du niveau 1 : les plus vives ; les neuf autres arrivent au niveau 2. */
 const FIRST_COLORS = ['red', 'blue', 'yellow', 'green', 'orange', 'pink'];
@@ -71,13 +71,14 @@ function numberExplain(n, others) {
 function numberQuestion(level, rng) {
   const n = pickNumber(level, rng);
   const others = otherNumbers(n, NUMBERS[level], rng);
+  const word = numberEn(n);
   return {
     key: `${ID}:nombre:${n}`,
     type: 'choice',
     prompt: 'Écoute, puis touche le bon nombre.',
-    speak: numberEn(n),
+    speak: word,
     ...LISTEN,
-    display: { choices: rng.shuffle([n, ...others]), large: true },
+    display: { show: { text: word, lang: 'en-GB' }, choices: rng.shuffle([n, ...others]), large: true },
     answer: n,
     explain: numberExplain(n, others),
     skill: numberSkill(n),
@@ -139,7 +140,7 @@ function colorQuestion(level, rng) {
     prompt: 'Écoute, puis touche la bonne couleur.',
     speak: right,
     ...LISTEN,
-    display: { choices: rng.shuffle([right, ...others]).map(swatch) },
+    display: { show: { text: right, lang: 'en-GB' }, choices: rng.shuffle([right, ...others]).map(swatch) },
     answer: right,
     explain: colorExplain(right),
     skill: 'couleurs en anglais',
@@ -187,15 +188,16 @@ function countQuestion(rng) {
   const color = rng.pick(colorsOf(thing.id).filter((id) => FIRST_COLORS.includes(id)));
   const n = rng.int(1, MAX_COUNT[1]);
   const counts = [n, ...rng.sample(range(1, MAX_COUNT[1]).filter((c) => c !== n), 3)];
+  const heard = `${numberEn(n)} ${n > 1 ? thing.enPlural : thing.en}`;
   return {
     key: `${ID}:compte:${thing.id}:${n}`,
     type: 'choice',
     prompt: 'Écoute, puis touche l\'image qui correspond.',
-    speak: `${numberEn(n)} ${n > 1 ? thing.enPlural : thing.en}`,
+    speak: heard,
     ...LISTEN,
-    display: { choices: rng.shuffle(counts).map((c) => pileChoice(thing.id, color, c)) },
+    display: { show: { text: heard, lang: 'en-GB' }, choices: rng.shuffle(counts).map((c) => pileChoice(thing.id, color, c)) },
     answer: `${n}-${color}`,
-    explain: `${capital(numberEn(n))} ${n > 1 ? thing.enPlural : thing.en} : ${n} ${n > 1 ? thing.frPlural : thing.fr}.`,
+    explain: `${capital(heard)} : ${n} ${n > 1 ? thing.frPlural : thing.fr}.`,
     skill: 'écoute et compte',
   };
 }
@@ -222,20 +224,21 @@ function colorCountScene(level, rng) {
 
 function countColorQuestion(level, rng) {
   const { thing, color, n, choices, spec } = colorCountScene(level, rng);
+  const heard = thingsEn(spec);
   return {
     key: `${ID}:compte-couleur:${thing.id}:${color}:${n}`,
     type: 'choice',
     prompt: 'Écoute, puis touche l\'image qui correspond.',
-    speak: thingsEn(spec),
+    speak: heard,
     ...LISTEN,
-    display: { choices },
+    display: { show: { text: heard, lang: 'en-GB' }, choices },
     answer: `${n}-${color}`,
-    explain: `« ${capital(thingsEn(spec))} », c'est ${thingsFr(spec)}.`,
+    explain: `« ${capital(heard)} », c'est ${thingsFr(spec)}.`,
     skill: 'écoute et compte',
   };
 }
 
-/** « I have two blue balloons. », entendue (niveau 3) ou lue avec bouton « écouter ». */
+/** « I have two blue balloons. », entendue (niveau 3) ou lue avec bouton « écouter » — toujours écrite. */
 function sentenceQuestion(level, rng, { written }) {
   const { thing, color, n, choices, spec } = colorCountScene(level, rng);
   const sentence = `I have ${thingsEn(spec)}.`;
@@ -244,10 +247,7 @@ function sentenceQuestion(level, rng, { written }) {
     type: 'choice',
     prompt: written ? 'Lis la phrase, puis touche l\'image qui correspond.' : 'Écoute la phrase, puis touche l\'image qui correspond.',
     ...(written ? {} : { speak: sentence, ...LISTEN }),
-    display: {
-      ...(written ? { show: { text: sentence, lang: 'en-GB', speak: sentence } } : {}),
-      choices,
-    },
+    display: { show: { text: sentence, lang: 'en-GB', ...(written ? { speak: sentence } : {}) }, choices },
     answer: `${n}-${color}`,
     explain: `« ${sentence.slice(0, -1)} » veut dire « j'ai ${thingsFr(spec)} ».`,
     skill: 'phrases « I have… »',
