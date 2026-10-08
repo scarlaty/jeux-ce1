@@ -34,3 +34,9 @@ test('le titre de fin (.stamp--static) ne crée pas de défilement horizontal pe
   assert.ok(Number(from[1]) <= 1.25, `le titre part de ×${from[1]}`);
   assert.match(ruleBody('.end__title'), /font-size:\s*min\(.*\d+vw\)/);
 });
+
+test('la colonne des réponses (.answer) ne grandit pas avec son contenu (08/10)', () => {
+  // Une grille de 7 mots (« Le verbe et son sujet ») faisait 379 px dans une zone de 359 px :
+  // la colonne « auto » de .answer prenait la largeur minimale de ses choix.
+  assert.match(ruleBody('.answer'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+});

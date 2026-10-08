@@ -651,7 +651,7 @@
 }
 .no-voice strong { font-family: var(--font-title); font-size: 1.3em; }
 
-.answer { display: grid; justify-items: center; }
+.answer { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; }   /* minmax : la colonne ne s'élargit jamais à son contenu (même défaut que #87) */
 
 /* Sur grand écran, l'illustration se place à gauche des réponses courtes (QCM, pavé)
    pour que tout tienne sans défiler ; les claviers et les boîtes gardent toute la largeur. */
