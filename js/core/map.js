@@ -105,6 +105,7 @@ export const PLACE_KINDS = {
   'lecture-eclair': { kind: 'lighthouse', where: 'le phare' },
   devinettes: { kind: 'hut', where: 'la cabane au point d\'interrogation' },
   phrase: { kind: 'tent', where: 'la tente des phrases' },
+  homophones: { kind: 'well', where: 'le puits des mots jumeaux' },
 };
 
 /** Décors de réserve, pour les jeux qui n'ont pas encore le leur. */
@@ -133,6 +134,7 @@ export const SHORT_TITLES = {
   'lecture-eclair': 'Lecture éclair',
   devinettes: 'Devinettes',
   phrase: 'La phrase',
+  homophones: 'Homophones',
   'calcul-mental': 'Calcul mental',
   cdu: 'Centaines et dizaines',
   'ecrire-nombres': 'Écrire les nombres',
