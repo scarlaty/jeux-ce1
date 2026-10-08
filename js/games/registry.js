@@ -70,6 +70,13 @@ export const GAMES = [
     load: () => import('./phrase.js'),
   },
   {
+    id: 'homophones',
+    title: 'Les homophones',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./homophones.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
