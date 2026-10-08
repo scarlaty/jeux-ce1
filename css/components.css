@@ -237,13 +237,15 @@
   border-color: var(--stamp-ok);
   pointer-events: none;
   white-space: nowrap;
+  /* Jamais plus large que l'écran, même pendant l'apparition (« BIEN JOUÉ ! » débordait de 40 px à 360 px). */
+  font-size: min(var(--text-xl), 7vw);
   box-shadow: 0 10px 30px -10px var(--shadow);
   animation: stamp-in 380ms var(--ease-pop) both;
   transform: translate(-50%, -50%) rotate(-8deg);
 }
 
 @keyframes stamp-in {
-  from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(1.8); }
+  from { opacity: 0; transform: translate(-50%, -50%) rotate(-8deg) scale(1.25); }
   to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
 }
 
@@ -432,6 +434,8 @@
 
 .stage {
   position: relative;
+  overflow-x: clip;   /* un tampon qui s'envole ne doit jamais créer de défilement horizontal */
+  overflow-clip-margin: 12px;   /* … sans rogner les anneaux de focus ni les ombres des réponses */
   display: grid;
   /* Une seule colonne qui ne dépasse jamais la page : sans `minmax(0, 1fr)`, la colonne « auto »
      prenait la largeur minimale de ses réponses (deux choix de 185 px, calculs compris) et
