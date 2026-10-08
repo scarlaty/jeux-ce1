@@ -76,41 +76,49 @@ export const STATEMENTS_1 = {
 
 // --- Niveau 2 : que se passe-t-il ? ---------------------------------------------------------------
 
-export const SCENE_CHOICES = ['La glace fond.', 'L\'eau gèle.', 'Rien ne change.'];
+export const SCENE_CHOICES = ['La glace fond.', 'L\'eau gèle.', 'L\'état ne change pas.'];
 
 /**
  * Situations « que se passe-t-il ? ». Le changement dépend de l'état de départ ET de la température :
- * glace au chaud → fond ; eau liquide très froide → gèle ; glace très froide, ou eau fermée qui n'est pas assez
- * froide pour geler → rien ne change. `objects` et `places` se combinent librement. `weight` : fréquence.
- * Aucune situation d'eau OUVERTE au chaud (elle s'évapore) : l'évaporation a ses propres questions.
+ * glace au chaud → fond ; eau liquide très froide → gèle ; glace très froide, ou eau qu'il ne fait pas assez froid
+ * pour geler → l'état ne change pas (l'eau d'un radiateur chauffe, mais reste liquide). `weight` : fréquence.
+ * « fermé » n'est PAS un indice : il y a de l'eau fermée qui gèle, et de l'eau ouverte qui reste liquide
+ * (pendant quelques minutes seulement, sinon elle s'évapore). Pas d'eau ouverte au chaud longtemps.
  */
 export const OUTCOMES = [
   {
-    id: 'fond', out: 'La glace fond.', weight: 1.6,
+    id: 'fond', out: 'La glace fond.', weight: 2,
     objects: ['un glaçon', 'un cube de glace', 'un morceau de glace'],
-    places: ['sur une assiette, en plein soleil', 'sur un radiateur chaud', 'sur une assiette, dans une cuisine très chaude', 'sur une assiette, au-dessus du four allumé', 'dans la main', 'au creux de la main', 'près d\'une cheminée où brûle un feu'],
-    explain: 'Il fait chaud, donc la glace fond : elle devient de l\'eau liquide.',
+    places: ['sur une assiette, en plein soleil', 'sur un radiateur chaud', 'sur une assiette, dans une cuisine très chaude', 'sur une assiette, au-dessus du four allumé', 'dans la main', 'près d\'une cheminée où brûle un feu'],
+    explain: 'La glace est au chaud, donc elle fond : elle devient de l\'eau liquide. On dit aussi : c\'est la fusion.',
     skill: 'la glace fond',
   },
   {
-    id: 'gele', out: 'L\'eau gèle.', weight: 1.6,
-    objects: ['un bac rempli d\'eau', 'un verre d\'eau', 'un bol d\'eau'],
+    id: 'gele', out: 'L\'eau gèle.', weight: 2,
+    objects: ['un bac rempli d\'eau', 'un verre d\'eau', 'une carafe d\'eau fermée', 'une bouteille d\'eau fermée', 'un pot d\'eau fermé'],
     places: ['au congélateur, pour la nuit', 'dehors, pendant une nuit de grand froid', 'sur le balcon, par une nuit d\'hiver glaciale', 'dans le jardin, par une nuit d\'hiver glaciale', 'sur le rebord de la fenêtre, par une nuit d\'hiver glaciale'],
-    explain: 'Il fait très froid, donc l\'eau gèle : elle devient de la glace.',
+    explain: 'Il fait très froid, donc l\'eau gèle : elle devient de la glace. On dit aussi : c\'est la solidification.',
     skill: 'l\'eau gèle',
   },
   {
-    id: 'reste-glace', out: 'Rien ne change.', weight: 1.4,
+    id: 'reste-glace', out: 'L\'état ne change pas.', weight: 0.8,
     objects: ['un glaçon', 'un bac de glaçons', 'un morceau de glace'],
     places: ['au congélateur, pour la nuit', 'au fond du congélateur, pour la nuit', 'dehors, pendant une nuit de grand froid', 'sur le balcon, par une nuit d\'hiver glaciale', 'dans le jardin, par une nuit d\'hiver glaciale'],
     explain: 'Il fait si froid que la glace ne fond pas : elle reste de la glace.',
     skill: 'la glace fond',
   },
   {
-    id: 'reste-liquide', out: 'Rien ne change.', weight: 1.4,
+    id: 'reste-liquide', out: 'L\'état ne change pas.', weight: 0.7,
     objects: ['une bouteille d\'eau fermée', 'une carafe d\'eau fermée', 'un pot d\'eau fermé'],
     places: ['sur un radiateur chaud, pour la nuit', 'au soleil, sur le rebord de la fenêtre, pour la journée', 'dans une cuisine très chaude, pour la nuit', 'dans le placard de la chambre, pour la nuit'],
-    explain: 'L\'eau ne gèle que s\'il fait très froid. Ici elle est fermée et il ne fait pas assez froid : elle reste de l\'eau liquide.',
+    explain: 'L\'eau chauffe un peu, mais elle reste liquide : l\'eau ne gèle que s\'il fait très froid.',
+    skill: 'l\'eau gèle',
+  },
+  {
+    id: 'reste-ouvert', out: 'L\'état ne change pas.', weight: 1,
+    objects: ['un verre d\'eau', 'un bol d\'eau', 'un bac rempli d\'eau'],
+    places: ['dans le réfrigérateur, pendant quelques minutes', 'sur la table, en plein soleil, pendant quelques minutes'],
+    explain: 'Il ne fait pas assez froid pour que l\'eau gèle : elle reste de l\'eau liquide.',
     skill: 'l\'eau gèle',
   },
 ];

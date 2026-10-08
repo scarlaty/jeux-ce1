@@ -81,17 +81,21 @@ test('situations : le modèle physique redonne la réponse de chaque objet × li
   const cold = /congélateur|grand froid|glaciale/;
   const model = (obj, place) => {
     const ice = /glaçon|glace/.test(obj);
-    if (ice) return cold.test(place) ? 'Rien ne change.' : 'La glace fond.';
+    if (ice) return cold.test(place) ? 'L\'état ne change pas.' : 'La glace fond.';
     if (cold.test(place)) return 'L\'eau gèle.';
-    assert.match(obj, /fermé/, `eau ouverte au chaud (elle s'évaporerait) : ${obj} ${place}`);
-    return 'Rien ne change.';
+    assert.ok(/fermé/.test(obj) || /quelques minutes/.test(place), `eau ouverte longtemps (elle s'évaporerait) : ${obj} ${place}`);
+    return 'L\'état ne change pas.';
   };
   let n = 0;
   for (const o of OUTCOMES) {
-    assert.ok(o.objects.length >= 3 && o.places.length >= 3, o.id);
+    assert.ok(o.objects.length >= 3 && o.places.length >= 2, o.id);
     for (const obj of o.objects) for (const place of o.places) { assert.equal(model(obj, place), o.out, `${obj} ${place}`); n++; }
   }
-  assert.ok(n >= 36, `${n} situations`);
+  assert.ok(n >= 60, `${n} situations`);
+  // jamais « Rien ne change » : une bouteille sur un radiateur chauffe, c'est seulement son ÉTAT qui ne change pas
+  assert.ok(SCENE_CHOICES.every((c) => !/^Rien ne change/.test(c)));
+  for (const o of OUTCOMES.filter((x) => x.out === 'L\'état ne change pas.')) assert.match(o.explain, /reste|ne fond pas/, o.id);
+  assert.ok(!/ferm/.test(OUTCOMES.find((o) => o.id === 'reste-liquide').explain), 'fermer n\'empêche pas de geler');
   for (const o of OUTCOMES) assert.ok(SCENE_CHOICES.includes(o.out), o.id);
   // les trois réponses ne sont jamais « s'évapore » ici : l'évaporation a ses propres questions
   assert.ok(SCENE_CHOICES.every((c) => !/évapor/.test(c)));
@@ -105,7 +109,7 @@ test('situations tirées : réponse conforme au modèle, couverture 100 %', () =
   let covered = 0;
   for (const q of scenes) {
     const ice = /glaçon|glace/.test(q.prompt.split('laisse')[1]);
-    const want = ice ? (cold.test(q.prompt) ? 'Rien ne change.' : 'La glace fond.') : (cold.test(q.prompt) ? 'L\'eau gèle.' : 'Rien ne change.');
+    const want = ice ? (cold.test(q.prompt) ? 'L\'état ne change pas.' : 'La glace fond.') : (cold.test(q.prompt) ? 'L\'eau gèle.' : 'L\'état ne change pas.');
     assert.equal(q.answer, want, q.prompt);
     covered++;
   }
@@ -255,7 +259,7 @@ test('la réponse la plus fréquente de chaque famille ne dépasse pas 50 %', ()
 test('situations : le seul mot « chaud / froid » ne suffit pas (≤ 50 %), et il couvre l\'essentiel des situations', () => {
   const HOT = /chaud|soleil|radiateur/;
   const COLD = /congélateur|grand froid/;
-  const lexicon = (v) => (COLD.test(v.prompt) ? 'L\'eau gèle.' : HOT.test(v.prompt) ? 'La glace fond.' : 'Rien ne change.');
+  const lexicon = (v) => (COLD.test(v.prompt) ? 'L\'eau gèle.' : HOT.test(v.prompt) ? 'La glace fond.' : 'L\'état ne change pas.');
   const qs = family(2, 'scene');
   const views = qs.map(visibleOfQuestion);
   const applicable = views.filter((v) => COLD.test(v.prompt) || HOT.test(v.prompt)).length;
@@ -266,7 +270,7 @@ test('situations : le seul mot « chaud / froid » ne suffit pas (≤ 50 %), et 
 
 test('situations : « rien ne change » n\'est pas un mot-clé (présent parmi les choix, juste ≤ 50 %)', () => {
   const qs = family(2, 'scene');
-  const share = checkNoSurfaceShortcut(qs, () => 'Rien ne change.', { max: 0.5, label: 'niveau 2, toujours « rien »' });
+  const share = checkNoSurfaceShortcut(qs, () => 'L\'état ne change pas.', { max: 0.5, label: 'niveau 2, toujours « état inchangé »' });
   assert.ok(share > 0.2);
 });
 
@@ -326,4 +330,38 @@ test('échantillon d\'explications (pour relecture)', () => {
   const seen = new Set();
   for (const [, q] of all()) seen.add(q.explain);
   assert.ok(seen.size >= 40, `${seen.size} explications distinctes`);
+});
+
+// Les marqueurs de surface ne désignent jamais une seule classe de réponse (point 2 du juge).
+test('situations : « fermé », « glace », « chaud », « froid » apparaissent dans au moins 2 classes de réponse', () => {
+  const cold = /congélateur|grand froid|glaciale/;
+  const markers = {
+    fermé: (o, p) => /fermé/.test(o),
+    glace: (o, p) => /glaçon|glace/.test(o),
+    chaud: (o, p) => /chaud|soleil|radiateur|four|cheminée|main/.test(p),
+    froid: (o, p) => cold.test(p) || /réfrigérateur/.test(p),
+  };
+  for (const [name, test] of Object.entries(markers)) {
+    const classes = new Set();
+    for (const o of OUTCOMES) for (const obj of o.objects) for (const place of o.places) if (test(obj, place)) classes.add(o.out);
+    assert.ok(classes.size >= 2, `marqueur « ${name} » : ${[...classes].join(' | ')}`);
+  }
+  // et la bonne classe d'un marqueur n'est jamais portée à 100 % : « fermé » donne « gèle » et « état inchangé »
+  const closed = family(2, 'scene').filter((q) => /fermé/.test(q.prompt));
+  assert.ok(new Set(closed.map((q) => q.answer)).size >= 2);
+});
+
+test('situations : trois classes équilibrées, et un solveur à 3 règles (fermé / glace / sinon) ≤ 70 %', () => {
+  const qs = family(2, 'scene');
+  const cls = {};
+  for (const q of qs) cls[q.answer] = (cls[q.answer] || 0) + 1;
+  for (const [a, n] of Object.entries(cls)) assert.ok(n / qs.length >= 0.25 && n / qs.length <= 0.42, `${a} : ${(100 * n / qs.length).toFixed(1)} %`);
+  const COLD = /congélateur|grand froid|glaciale/;
+  const rules = (v) => {
+    if (/fermé/.test(v.prompt)) return 'L\'état ne change pas.';
+    if (/glaçon|glace/.test(v.prompt)) return COLD.test(v.prompt) ? 'L\'état ne change pas.' : 'La glace fond.';
+    return 'L\'eau gèle.';
+  };
+  const share = checkNoSurfaceShortcut(qs, rules, { max: 0.7, label: 'niveau 2, solveur 3 règles' });
+  assert.ok(share > 0.3, `le solveur doit mesurer quelque chose (${share})`);
 });
