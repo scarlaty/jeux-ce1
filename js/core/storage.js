@@ -10,6 +10,7 @@
 import { defaultRewards, normalizeRewards } from './rewards.js';
 import { defaultCompanion, normalizeCompanion, companionFloor } from './companion.js';
 import { defaultChest } from './chest.js';
+import { isTrial } from './trial.js';
 
 export const PREFIX = 'jeux-ce1:';
 export const SCHEMA_VERSION = 3;
@@ -199,8 +200,12 @@ const profileKey = (id) => `profile:${id}`;
  * Accès aux documents de l'appli. Les lectures migrent à la volée et réécrivent le document migré.
  * Si une migration échoue, l'original est sauvegardé sous « backup:<clé> » et on repart d'un défaut,
  * plutôt que de bloquer l'appli.
+ *
+ * Garde du mode essai (#111) : tant que `readOnly()` est vrai (mode essai, core/trial.js), AUCUN profil
+ * n'est écrit ni supprimé — filet de sécurité central, quel que soit l'abonné qui s'y essaie.
+ * Les réglages de l'appareil (méta : thème, son) restent modifiables.
  */
-export function createStore(storage = createStorage(), { migrations = {}, version = SCHEMA_VERSION } = {}) {
+export function createStore(storage = createStorage(), { migrations = {}, version = SCHEMA_VERSION, readOnly = isTrial } = {}) {
   const metaSteps = migrations.meta || metaMigrations;
   const profileSteps = migrations.profile || profileMigrations;
 
@@ -209,7 +214,7 @@ export function createStore(storage = createStorage(), { migrations = {}, versio
     if (raw === null) return makeDefault();
     try {
       const doc = migrate(raw, steps, version);
-      if (doc !== raw) storage.write(key, doc);
+      if (doc !== raw && !readOnly()) storage.write(key, doc);
       return doc;
     } catch {
       storage.write(`backup:${key}`, raw);
@@ -235,15 +240,17 @@ export function createStore(storage = createStorage(), { migrations = {}, versio
 
     /** Profil migré, ou null s'il n'existe pas. */
     getProfile: (id) => load(profileKey(id), profileSteps, () => null),
-    setProfile: (profile) =>
-      storage.write(profileKey(profile.id), { ...profile, schemaVersion: profile.schemaVersion ?? version }),
+    setProfile: (profile) => {
+      if (readOnly()) return false;
+      return storage.write(profileKey(profile.id), { ...profile, schemaVersion: profile.schemaVersion ?? version });
+    },
     updateProfile(id, fn) {
       const current = store.getProfile(id) || defaultProfile({ id });
       const next = fn(current);
       store.setProfile(next);
       return next;
     },
-    removeProfile: (id) => storage.remove(profileKey(id)),
+    removeProfile: (id) => { if (!readOnly()) storage.remove(profileKey(id)); },
   };
   return store;
 }

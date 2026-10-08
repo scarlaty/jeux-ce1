@@ -1,6 +1,8 @@
 // Historique des parties et progression par jeu. Fonctions pures sur un profil,
 // plus `recordResult` qui fait la lecture/écriture via le store.
 
+import { isTrial } from './trial.js';
+
 export const HISTORY_CAP = 5000;
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -79,6 +81,7 @@ export function applyResult(profile, result) {
 
 /** Enregistre une partie terminée dans le profil (historique + progression). */
 export function recordResult(store, profileId, result) {
+  if (isTrial()) return { progress: null, newBest: false, newlyUnlocked: null };   // mode essai : rien n'est écrit
   let summary = null;
   store.updateProfile(profileId, (profile) => {
     summary = applyResult(appendHistory(profile, makeEntry(result)), result);

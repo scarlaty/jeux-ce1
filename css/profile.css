@@ -443,3 +443,48 @@
   .confirm__actions .btn,
   .parents__actions .btn { flex: 1 1 100%; max-width: none; }
 }
+
+/* ---------- Mode essai (#111) : sobre, sans kawaii, contrastes AA en clair et en sombre ---------- */
+
+/* La barre du haut et le bandeau restent collés ensemble. */
+.topbar { position: sticky; top: 0; z-index: 20; }
+.topbar > .appbar { position: static; }
+
+.trial-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--gutter);
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom: 2px solid var(--rule-strong);
+}
+.trial-bar[hidden] { display: none; }
+.trial-bar__text { flex: 1 1 200px; min-width: 0; font-size: var(--text-s); font-weight: 700; }
+.trial-bar__exit {
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--paper);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+.trial-bar__exit:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.trial-card { display: grid; gap: var(--space-3); }
+.trial-card__title { font-size: var(--text-m); }
+.trial-card__text { color: var(--ink-soft); }
+.trial-card .btn { justify-self: start; }
+.end__trial { font-weight: 700; color: var(--ink-soft); }
+@media (max-width: 520px) {
+  .trial-card .btn { justify-self: stretch; }
+}

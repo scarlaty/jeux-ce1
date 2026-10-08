@@ -12,6 +12,7 @@ import {
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { archipelagoScene } from '../core/ui/map-scene.js';
 import { archipelago } from '../core/map.js';
+import { isTrial, openOrTrial } from '../core/trial.js';
 import { GAMES, ISLANDS } from '../games/registry.js';
 import { getGameProgress } from '../core/history.js';
 import {
@@ -57,7 +58,7 @@ function companionCard(companion) {
 
 /** Carte du défi du jour (#20). */
 function dailyCard(rewards, hasGames) {
-  const done = isDailyDone(rewards);
+  const done = !isTrial() && isDailyDone(rewards);
   return h('a', { class: `daily-card${done ? ' is-done' : ''}`, href: '#/defi' },
     h('span', { class: 'emoji daily-card__icon', role: 'img', 'aria-label': 'Coffre au trésor', text: done ? '🏆' : '🗝️' }),
     h('span', { class: 'daily-card__body' },
@@ -85,7 +86,7 @@ function gameCard(game, profile) {
 function readIsland(island, { profile, rewards, stars }) {
   const games = GAMES.filter((g) => !g.demo && g.island === island.id);
   return {
-    unlocked: islandUnlocked(island.id, stars),
+    unlocked: openOrTrial(islandUnlocked(island.id, stars)),   // mode essai : tout est ouvert, le profil n'est pas touché
     starsLeft: islandStarsLeft(island.id, stars),
     earned: games.reduce((sum, g) => sum + gameStars(getGameProgress(profile, g.id)), 0),
     possible: games.length * STARS_PER_GAME,
@@ -149,7 +150,7 @@ export default {
           h('span', { class: 'home__deco home__deco--right', 'aria-hidden': 'true' }, drawDeco({ shape: 'heart', face: 'joyful' }))),
         h('p', { class: 'home__subtitle cursive', text: 'Choisis une île et joue !' })),
       rewardBar(rewards),
-      companionCard(withAccessory(readCompanion(profile), profile)),
+      !isTrial() && companionCard(withAccessory(readCompanion(profile), profile)),
       dailyCard(rewards, realGames.length > 0),
       h('section', { class: 'map-page', 'aria-labelledby': 'archipel' },
         h('h2', { class: 'visually-hidden', id: 'archipel', text: 'L\'archipel' }),

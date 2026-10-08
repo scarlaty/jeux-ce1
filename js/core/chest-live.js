@@ -6,6 +6,7 @@
 // Le contenu est rangé tout de suite : même si l'enfant quitte l'écran sans toucher le coffre,
 // rien n'est perdu (il le retrouve dans l'album ou dans « Mon compagnon »).
 import { gameEvents } from './engine.js';
+import { isTrial } from './trial.js';
 import { createRng } from './random.js';
 import { rewardSummary } from './rewards-live.js';
 import { readRewards } from './rewards.js';
@@ -17,7 +18,7 @@ let installed = false;
 let makeRng = () => createRng();
 
 function onEnd({ session, result }) {
-  if (!context) return;
+  if (!context || isTrial()) return;   // mode essai : pas de coffre
   const gained = rewardSummary(session);
   if (!gained?.chest) return;
   let draw = null;
