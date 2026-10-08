@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import game, { cestQui, negation, explainVerbe, explainSujet, explainInf, piegesNote } from '../../js/games/verbe-sujet.js';
+import game, {
+  cestQui, negation, explainVerbe, explainSujet, explainInf, piegesNote, sujetChoices, infinitifsPresents,
+} from '../../js/games/verbe-sujet.js';
 import {
-  VERBES, AUTRES, INFINITIFS, N1, N2, N3, BANKS, pluriel, inline,
+  VERBES, VOCABULAIRE_CE1, INFINITIFS, N1, N2, N3, BANKS, pluriel, inline,
 } from '../../js/data/verbes.js';
 import {
   checkGameShape, checkGenerator, checkCueCoverage, visibleOfQuestion, checkEpicene, textsOfQuestion,
@@ -66,7 +68,7 @@ Object.assign(GROUND, {
   cueillent: ['cueillir', 'p'], suit: ['suivre', 's'], habitent: ['habiter', 'p'], regardent: ['regarder', 'p'],
   cherche: ['chercher', 's'], sommes: ['être', 'p'], avons: ['avoir', 'p'], allons: ['aller', 'p'],
   voyons: ['voir', 'p'], disons: ['dire', 'p'], faisons: ['faire', 'p'], seront: ['être', 'p'], auront: ['avoir', 'p'],
-  irons: ['aller', 'p'], attendent: ['attendre', 'p'],
+  irons: ['aller', 'p'], passe: ['passer', 's'], attendent: ['attendre', 'p'],
 });
 const INF_ITEMS = Object.values(BANKS).flatMap((b) => b.inf);
 
@@ -98,12 +100,27 @@ test('banque : conjugaison régulière des verbes en -er recoupée par la règle
   assert.equal(VERBES.manger.nous, 'mangeons');
 });
 
-test('banque : tous les infinitifs sont écrits deux fois et finissent en -er, -ir, -re ou -oir', () => {
-  const all = new Set([...Object.keys(VERBES), ...AUTRES]);
-  for (const v of Object.values(VERBES)) for (const p of v.proches) assert.ok(all.has(p), `proche inconnu : ${p}`);
-  for (const item of ALL) for (const p of item.pieges) assert.ok(all.has(p), `piège inconnu : ${p}`);
+/** Verbes rares ou hors du vocabulaire d'un enfant de 7 ans, écartés par le juge pédagogie (#37). */
+const HORS_VOCABULAIRE = ['tendre', 'mentir', 'battre', 'décrire', 'manquer', 'ramer', 'veiller', 'désigner', 'adopter',
+  'admirer', 'retarder', 'arrêter', 'saisir', 'agrandir', 'relever', 'accuser', 'arroser', 'découper', 'déchirer',
+  'prouver', 'tailler', 'avaler', 'souffler', 'lancer', 'continuer', 'refuser', 'trembler', 'marquer', 'éviter',
+  'devenir', 'chasser', 'louer', 'jeter', 'penser', 'sentir', 'tenir', 'rêver'];
+
+test('banque : tout infinitif proposé est du vocabulaire CE1, écrit sans doublon et finit en -er, -ir, -re ou -oir', () => {
+  const vocab = new Set(VOCABULAIRE_CE1);
+  assert.equal(vocab.size, VOCABULAIRE_CE1.length, 'doublon dans le vocabulaire');
+  for (const bad of HORS_VOCABULAIRE) assert.ok(!vocab.has(bad), `« ${bad} » est hors vocabulaire CE1`);
+  for (const k of Object.keys(VERBES)) assert.ok(vocab.has(k), `verbe hors vocabulaire : ${k}`);
+  for (const v of Object.values(VERBES)) for (const p of v.proches) assert.ok(vocab.has(p), `proche hors vocabulaire : ${p}`);
+  for (const item of ALL) for (const p of item.pieges) assert.ok(vocab.has(p), `piège hors vocabulaire : ${p}`);
   for (const inf of INFINITIFS) assert.match(inf, /(er|ir|re|oir)$/, inf);
-  assert.equal(new Set(AUTRES).size, AUTRES.length, 'doublon dans AUTRES');
+  for (const level of [1, 2, 3]) {
+    for (const q of ofKind(questions(level, 600), 'inf')) {
+      for (const c of q.display.choices) {
+        assert.ok(vocab.has(c.value) || [VERBES[q.answer].part, VERBES[q.answer].vous, VERBES[q.answer].imp].includes(c.value), `${q.key} : « ${c.value} »`);
+      }
+    }
+  }
   for (const [inf, v] of Object.entries(VERBES)) {
     assert.equal(new Set(v.proches).size, v.proches.length, inf);
     assert.ok(!v.proches.includes(inf), `${inf} est son propre proche`);
@@ -191,7 +208,10 @@ test('questions : une seule bonne réponse, les autres choix sont faux (table in
       } else {
         assert.equal(kind, 'sujet');
         assert.equal(q.answer, item.sujet);
-        assert.deepEqual(values, item.chunks.map((c) => c.text));
+        assert.deepEqual(values, sujetChoices(item));
+        assert.ok(values.length >= 3, `moins de 3 choix : ${q.key}`);
+        assert.ok(!values.includes(item.verbe), `le verbe est un choix : ${q.key}`);
+        assert.ok(!values.some((v) => /^(où|que|quand|comment|pourquoi|qui|combien)$/i.test(v)), q.key);
         assert.ok(q.prompt.includes(`« ${item.verbe} »`), q.key);
       }
     }
@@ -293,7 +313,12 @@ test('toucher le verbe : aucun raccourci de position ni de terminaison', () => {
 // --- toucher le sujet -------------------------------------------------------------------------------
 const SUJET_SOLVERS = {
   'sujet : premier groupe': (v) => v.choices[0],
-  'sujet : groupe collé avant le verbe': (v) => v.choices[v.choices.indexOf(namedVerb(v)) - 1],
+  'sujet : groupe collé avant le verbe': (v) => {
+    // Le verbe n'est plus un choix : on le cherche dans la phrase montrée, puis on prend le choix qui la précède.
+    const at = (` ${v.text.replace(/,/g, ' ')} `).indexOf(` ${namedVerb(v)} `) - 1;
+    const before = v.text.slice(0, Math.max(at, 0)).replace(/[,\s]+$/, '');
+    return [...v.choices].filter((c) => before.endsWith(c)).sort((a, b) => b.length - a.length)[0] ?? null;
+  },
   'sujet : premier groupe sans préposition': (v) => v.choices.find((c) => c !== namedVerb(v) && !PREP.has(c.split(' ')[0].toLowerCase())),
   'sujet : groupe le plus court': (v) => [...v.choices].filter((c) => c !== namedVerb(v)).sort((a, b) => a.length - b.length)[0],
   'sujet : groupe à majuscule (prénom) ou pronom': (v) => v.choices.find((c) => /^(\p{Lu}|nous\b)/u.test(c) && c !== namedVerb(v) && !/^(Dans|Le |La |Les |Un |Une |À |Après|Ce )/.test(c)),
@@ -304,7 +329,7 @@ test('toucher le sujet : aucun raccourci de position, de forme ni de longueur', 
     const qs = ofKind(questions(level, 6000), 'sujet');
     const max = LIMITS.sujet[level];
     for (const [name, solver] of Object.entries(SUJET_SOLVERS)) {
-      expectSolver(`niveau ${level} ${name}`, qs, solver, { minCoverage: 0.2, maxSuccess: max[name] });
+      expectSolver(`niveau ${level} ${name}`, qs, solver, { minCoverage: /collé/.test(name) ? 0.9 : 0.2, maxSuccess: max[name] });
     }
   }
 });
@@ -391,18 +416,18 @@ const LIMITS = {
   },
   sujet: {
     2: {
-      'sujet : premier groupe': 0.56, 'sujet : groupe collé avant le verbe': 0.69,
+      'sujet : premier groupe': 0.56, 'sujet : groupe collé avant le verbe': 0.75,
       'sujet : premier groupe sans préposition': 0.63, 'sujet : groupe le plus court': 0.54,
-      'sujet : groupe à majuscule (prénom) ou pronom': 0.69,
+      'sujet : groupe à majuscule (prénom) ou pronom': 0.75,
     },
     3: {
-      'sujet : premier groupe': 0.41, 'sujet : groupe collé avant le verbe': 0.52,
-      'sujet : premier groupe sans préposition': 0.56, 'sujet : groupe le plus court': 0.2,
-      'sujet : groupe à majuscule (prénom) ou pronom': 0.58,
+      'sujet : premier groupe': 0.55, 'sujet : groupe collé avant le verbe': 0.7,
+      'sujet : premier groupe sans préposition': 0.65, 'sujet : groupe le plus court': 0.25,
+      'sujet : groupe à majuscule (prénom) ou pronom': 0.7,
     },
   },
   // Niveau 1 : « garder la racine et ajouter -er » EST la compétence visée, donc 100 % assumé ; il baisse ensuite.
-  inf: { 1: inf(0.3, 0.71, 1, 1, 1), 2: inf(0.18, 0.6, 0.7, 0.7, 0.7), 3: inf(0.3, 0.37, 0.37, 0.65, 0.37) },
+  inf: { 1: inf(0.32, 0.71, 1, 1, 1), 2: inf(0.18, 0.6, 0.7, 0.7, 0.7), 3: inf(0.3, 0.37, 0.37, 0.65, 0.37) },
 };
 
 // ===== Explications ========================================================================================
@@ -412,7 +437,12 @@ test('explications : appliquent l\'astuce à LA phrase de l\'enfant', () => {
     if (!i.verbe.includes(' ')) {
       const v = explainVerbe(i);
       assert.ok(v.includes('« ne » et « pas »') && v.includes(`« ${i.verbe} »`), v);
-      assert.match(negation(i), /^\p{Lu}.* (ne|n') ?\S+ pas$/u, negation(i));
+      assert.match(negation(i), /^\p{Lu}.* (ne|n') ?\S+ pas( \S+)*$/u, negation(i));
+      assert.ok(v.includes('verbe conjugué'), v);
+      // Un infinitif présent dans la phrase est dit « déjà à l'infinitif » et reste après « pas ».
+      for (const p of infinitifsPresents(i)) {
+        assert.ok(v.includes(`« ${p} » est déjà à l'infinitif`) && v.includes(`pas ${p}`), v);
+      }
     }
     const s = explainSujet(i);
     assert.ok(s.includes('« C\'est … qui') && s.includes(cestQui(i)) && s.includes(`« ${i.sujet} »`), s);
@@ -421,7 +451,10 @@ test('explications : appliquent l\'astuce à LA phrase de l\'enfant', () => {
   for (const i of INF_ITEMS) {
     for (const level of [1, 3]) {
       const e = explainInf(i, level);
-      assert.ok(e.includes(`« Il faut ${i.inf} »`) && e.includes(`« ${i.verbe} »`), e);
+      // L'astuce montre le contre-exemple : « il faut regarder », pas « il faut regarde ».
+      assert.ok(e.includes(`« il faut ${i.inf} », pas « il faut ${i.verbe} »`) && e.includes(`« ${i.verbe} »`), e);
+      if (level === 3) assert.ok(e.includes('est le même verbe que'), e);
+      assert.doesNotMatch(e, /c'est « \S+ »\. Il faut|, c'est/, e);
       assert.ok(e.length < 420, `${e.length} signes : ${e}`);
       assert.doesNotMatch(e, /\bfaux\b|\bnul\b|\bmauvais/i);
     }

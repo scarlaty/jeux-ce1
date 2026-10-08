@@ -29,22 +29,30 @@ export function cestQui(item) {
   return `${item.pluriel && first !== 'nous' ? 'Ce sont' : 'C\'est'} ${who} qui ${item.verbe}`;
 }
 
-/** « Léo ne chante pas », « Léa n'aime pas » : sert à montrer que « ne … pas » entoure le verbe. */
+/** Infinitifs déjà présents dans la phrase (« Léo aime chanter ») : ce ne sont pas des verbes conjugués. */
+export const infinitifsPresents = (item) => item.pieges.filter((p) => item.words.includes(p) && p !== item.nom);
+
+/**
+ * « Léo ne chante pas », « Léo n'aime pas chanter » : sert à montrer que « ne … pas » entoure le verbe conjugué
+ * (et que l'infinitif de la phrase reste après « pas »).
+ */
 export function negation(item) {
   const ne = /^[aeiouyàâéèêëîïôûœ]/i.test(item.verbe) ? `n'${item.verbe}` : `ne ${item.verbe}`;
-  return `${capital(inline(item.sujet))} ${ne} pas`;
+  return [`${capital(inline(item.sujet))} ${ne} pas`, ...infinitifsPresents(item)].join(' ');
 }
 
 /** Notes sur les pièges d'une phrase du niveau 3. */
 export function piegesNote(item) {
-  return item.pieges.map((p) => (item.words.includes(p) && p !== item.nom
-    ? `« ${p} » est déjà à l'infinitif : il ne change pas.`
+  const present = infinitifsPresents(item);
+  return item.pieges.map((p) => (present.includes(p)
+    ? `« ${p} » est déjà à l'infinitif : il ne change pas, ce n'est pas le verbe conjugué.`
     : `« ${item.nom} » est un nom, pas un verbe.`)).join(' ');
 }
 
 export function explainVerbe(item) {
-  return `Mets la phrase à la négation : ${quote(`${negation(item)}.`)} Le verbe est entouré par « ne » et « pas » : `
-    + `c'est ${quote(item.verbe)}.`;
+  const notes = piegesNote(item);
+  return `Mets la phrase à la négation : ${quote(`${negation(item)}.`)} « ne » et « pas » entourent le verbe conjugué : `
+    + `c'est ${quote(item.verbe)}.${notes ? ` ${notes}` : ''}`;
 }
 
 export function explainSujet(item) {
@@ -53,12 +61,18 @@ export function explainSujet(item) {
 }
 
 export function explainInf(item, level) {
-  const il = `Dis « Il faut… » : ${quote(`Il faut ${item.inf}`)}. L'infinitif de ${quote(item.verbe)} est donc ${quote(item.inf)}.`;
+  const il = `On dit « il faut ${item.inf} », pas « il faut ${item.verbe} » : l'infinitif de ${quote(item.verbe)} est ${quote(item.inf)}.`;
   if (level < 3) return il;
   const nous = item.nous || VERBES[item.inf].nous;
   const notes = piegesNote(item);
-  return `Le verbe conjugué change avec le sujet : ${quote(`nous ${nous}`)}, c'est ${quote(item.verbe)}. ${il}`
+  return `Le verbe conjugué est celui qui change avec le sujet : ${quote(`nous ${nous}`)} est le même verbe que ${quote(item.verbe)}. ${il}`
     + (notes ? ` ${notes}` : '');
+}
+
+/** Les choix d'une question de sujet : jamais le verbe, jamais un mot interrogatif ; dans l'ordre de la phrase. */
+export const INTERROGATIFS = ['où', 'que', "qu'", 'quand', 'comment', 'pourquoi', 'qui', 'combien'];
+export function sujetChoices(item) {
+  return item.chunks.filter((c) => c.role !== 'V' && !INTERROGATIFS.includes(c.text.toLowerCase())).map((c) => c.text);
 }
 
 // --- Les trois sortes de questions ---------------------------------------------------------------------
@@ -66,12 +80,12 @@ export function explainInf(item, level) {
 const choice = (texts, rng, ordered) => (ordered ? texts : rng.shuffle(texts)).map((t) => ({ value: t, text: t }));
 
 function verbeQuestion(item, level, rng) {
-  const help = level === 1 ? ' Pense à « ne … pas » autour du verbe.' : '';
+  const help = level === 1 ? ' C\'est le mot qui change avec le sujet. Pense à « ne … pas ».' : '';
   return {
     key: `verbe-sujet:${level}|${item.inf}|${slug(item)}|verbe`,
     type: 'choice',
-    prompt: `Touche le verbe de la phrase.${help}`,
-    speak: `Touche le verbe de la phrase. Écoute : ${noFinal(item.text)}`,
+    prompt: `Touche le verbe conjugué de la phrase.${help}`,
+    speak: `Touche le verbe conjugué de la phrase. Écoute : ${noFinal(item.text)}`,
     display: { choices: choice(item.words, rng, true) },
     answer: item.verbe,
     explain: explainVerbe(item),
@@ -88,7 +102,7 @@ function sujetQuestion(item, level, rng) {
     speak: `Quel groupe de mots est le sujet de ${item.verbe} ? Écoute la phrase : ${noFinal(item.text)}`,
     // La phrase entière est montrée (les groupes, seuls, ne se lisent pas comme une phrase) ; les choix restent
     // dans l'ordre de la phrase.
-    display: { show: { text: item.text, cursive: true, wrap: true }, choices: choice(item.chunks.map((c) => c.text), rng, true) },
+    display: { show: { text: item.text, cursive: true, wrap: true }, choices: choice(sujetChoices(item), rng, true) },
     answer: item.sujet,
     explain: explainSujet(item),
     skill: 'trouver le sujet du verbe',
@@ -143,6 +157,8 @@ function draw(level, rng, seen) {
     const kind = rng.pick(kinds);
     const item = rng.pick(BANKS[level][kind]);
     if (used(seen, item.inf)) continue;
+    // Une question de sujet propose au moins trois groupes plausibles (sans le verbe).
+    if (kind === 'sujet' && sujetChoices(item).length < 3) continue;
     return MAKE[kind](item, level, rng);
   }
   throw new Error(`verbe-sujet : aucune question possible au niveau ${level}`);
