@@ -144,7 +144,7 @@ function drying(rng) {
   const right = rng.pick(DRYING_RIGHT);
   const wrong = rng.sample(DRYING_WRONG, 2);
   return {
-    key: `etats-eau:seche:${d.id}:${right}:${sortedKey(wrong)}`,
+    key: `etats-eau:seche:${d.id}`,
     type: 'choice',
     prompt,
     speak: prompt,
