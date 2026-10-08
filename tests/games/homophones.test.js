@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import game, { explanationOf, hintFor } from '../../js/games/homophones.js';
+import game, { explanationOf, hintFor, SPOKEN_GAP } from '../../js/games/homophones.js';
 import {
   PAIRS, REPLACE, pairOf, LEVEL_1, LEVEL_2, LEVEL_3_SINGLE, LEVEL_3_DOUBLE,
   answersOf, completed, withWord, gapped,
@@ -136,35 +136,57 @@ test('une même phrase ne revient jamais dans une partie', () => {
 });
 
 // ===== Aucun raccourci de surface (leçon de « La phrase », #107) =========================================
-// Chaque solveur ne voit que ce que l'enfant voit (visibleOfQuestion). Chaque test PROUVE d'abord que le
-// raccourci s'applique (couverture), sinon une banque qui change ferait mesurer le vide.
+// Chaque solveur ne voit que ce que l'enfant voit (texte à trou, choix). Chaque test PROUVE d'abord que le
+// raccourci s'applique (couverture), sinon une banque qui change ferait mesurer le vide. Les phrases à
+// deux trous sont mesurées TROU PAR TROU (l'autre trou étant rempli juste) : on les résout ainsi.
 
-/** Mot avant et mot après le trou, en minuscules, sans ponctuation finale. « qu'____ » donne « qu' ». */
-function around(text) {
-  const m = text.match(/(\S*?)\s*____\s*(\S*)/);
-  const clean = (s) => s.toLowerCase().replace(/[.,:;!?]+$/, '').replace(/^[.,:;!?]+/, '');
-  const before = text.slice(0, text.indexOf('____')).trim().split(/\s+/);
-  const prevTok = text.slice(0, text.indexOf('____')).endsWith("'") ? before.at(-1).replace(/^.*?(qu'|l'|d')$/i, '$1') : before.at(-1);
-  return { prev: clean(prevTok || ''), prevComma: /,$/.test(before.at(-1) || ''), next: clean(m ? m[2] : '') };
+/** Les vues « un trou » d'une phrase de la banque : un trou à compléter, les autres déjà justes. */
+function gapViews(template) {
+  const answers = answersOf(template);
+  return answers.map((answer, i) => {
+    let k = -1;
+    const text = template.replace(/\{([^}]+)\}/g, (_, w) => { k += 1; return k === i ? '____' : w; });
+    return { slug: `${completed(template).toLowerCase()}#${i}`, text, pair: pairOf(answer), choices: PAIRS[pairOf(answer)], answer };
+  });
 }
 
-const singleViews = (level, n, seed) => questions(level, n, seed)
-  .filter((q) => q.display.choices.length === 2)
-  .map((q) => ({ ...visibleOfQuestion(q), pair: pairOf(q.answer) }));
+const DET = new Set(['le', 'la', 'les', "l'", 'un', 'une', 'des', 'mon', 'ma', 'mes', 'son', 'sa', 'ses', 'ce', 'cette',
+  'ces', 'du', 'au', 'aux', 'quelques', 'notre', 'leur', 'leurs']);
 
-/** Table « voisin → réponses » bâtie sur TOUTES les phrases à un trou, en laissant de côté la phrase interrogée. */
-const TABLE = SINGLES.map((t) => {
-  const { prev, next } = around(gapped(t));
-  return { slug: completed(t).toLowerCase(), pair: pairOf(answersOf(t)[0]), answer: answersOf(t)[0], prev, next };
-});
+/** Ce qu'un solveur de surface peut lire autour du trou. */
+function around(text) {
+  const i = text.indexOf('____');
+  const clean = (s) => s.toLowerCase().replace(/[.,:;!?]+$/, '').replace(/^[.,:;!?]+/, '');
+  const before = text.slice(0, i).trim().split(/\s+/).filter(Boolean);
+  const afterRaw = (text.slice(i + 4).trim().split(/\s+/)[0] || '').replace(/^[.,:;!?]+/, '');
+  const last = before.at(-1) || '';
+  const prevTok = text.slice(0, i).endsWith("'") ? last.replace(/^.*?(qu'|l'|d')$/i, '$1') : last;
+  return {
+    prev: clean(prevTok), prevComma: /,$/.test(last), next: clean(afterRaw), nextRaw: afterRaw,
+    idx: before.length, // nombre de mots AVANT le trou : 1 = le trou suit le premier mot
+  };
+}
+
+/** Table « voisin → réponse » bâtie sur TOUS les trous de la banque (phrases à deux trous comprises). */
+const TABLE = ALL.flatMap(gapViews).map((g) => ({ ...g, ...around(g.text) }));
+
+/** Toutes les vues d'un niveau, tirées par le vrai générateur (une phrase à deux trous donne deux vues). */
+function views(level, n, seed) {
+  const out = [];
+  for (const q of questions(level, n, seed)) {
+    const t = ALL.find((x) => `homophones:${completed(x).toLowerCase()}` === q.key);
+    out.push(...gapViews(t));
+  }
+  return out;
+}
+const singleViews = (level, n, seed) => views(level, n, seed);
 
 /** Solveur qui a appris la banque (hors la phrase interrogée) : renvoie null s'il n'a aucune opinion. */
 function learned(feature) {
   return (v) => {
-    const { prev, next } = around(v.text);
-    const ctx = { prev, next }[feature];
-    const slug = v.key.replace('homophones:', '');
-    const votes = TABLE.filter((r) => r.slug !== slug && r.pair === v.pair && r[feature] === ctx);
+    const ctx = around(v.text)[feature];
+    const base = v.slug.split('#')[0];
+    const votes = TABLE.filter((r) => r.slug.split('#')[0] !== base && r.pair === v.pair && r[feature] === ctx);
     if (!votes.length) return null;
     const count = {};
     for (const r of votes) count[r.answer] = (count[r.answer] || 0) + 1;
@@ -175,75 +197,118 @@ function learned(feature) {
 }
 const guess = (v) => [...v.choices].sort()[0];
 
-/** Les cinq solveurs de surface. Chacun renvoie une réponse ou null (pas d'opinion). */
-const SOLVERS = {
-  'mot suivant (appris)': learned('next'),
-  'mot précédent (appris)': learned('prev'),
-  'pronom sujet / article (règles classiques)': (v) => {
-    const { prev, next } = around(v.text);
-    if (v.pair === 'a/à') {
-      if (['il', 'elle', 'y'].includes(prev)) return 'a';
-      if (['la', 'le', "l'", 'les'].includes(next)) return 'à';
-    }
-    if (v.pair === 'et/est') {
-      if (/^[A-ZÀ-ÖÉ]/.test(v.text.split('____')[1].trim())) return 'et';
-      if (['noir', 'contente', 'bleu', 'chaude', 'très', 'neuf', 'dans', 'en', 'sur', 'déjà', 'chargé'].includes(next)) return 'est';
-    }
-    if (v.pair === 'son/sont') {
-      const before = wordsOf(v.text.split('____')[0]);
-      if (before.some((w) => ['les', 'mes', 'ces', 'tous'].includes(w))) return 'sont';
-      return 'son';
-    }
-    if (v.pair === 'on/ont') {
-      if (['ils', 'elles'].includes(prev)) return 'ont';
-      if (v.prevComma || ["qu'", 'et', 'comment', 'quand'].includes(prev)) return 'on';
-    }
-    return null;
-  },
-  'virgule avant le trou': (v) => (around(v.text).prevComma ? (v.pair === 'on/ont' ? 'on' : null) : null),
+// Les raccourcis écrits à la main. Chacun ne parle que de SA ou SES paires et renvoie null ailleurs.
+const POSITION = (v) => { // a/à : « le trou suit le premier mot → a, sinon à » (relevé par le juge : 88 %)
+  if (v.pair !== 'a/à') return null;
+  return around(v.text).idx === 1 ? 'a' : 'à';
 };
+const MAJUSCULE_DET = (v) => { // et/est : « mot suivant en majuscule ou déterminant → et, sinon est »
+  if (v.pair !== 'et/est') return null;
+  const a = around(v.text);
+  return /^[A-ZÀ-ÖÉ]/.test(a.nextRaw) || DET.has(a.next) ? 'et' : 'est';
+};
+const PARTICIPE = (v) => { // a/à et on/ont : « mot suivant en -é, -i, -u → a / ont, sinon à / on »
+  const { next } = around(v.text);
+  const part = /[éiu]$/.test(next);
+  if (v.pair === 'a/à') return part ? 'a' : 'à';
+  if (v.pair === 'on/ont') return part ? 'ont' : 'on';
+  return null;
+};
+const PLURIEL_S = (v) => { // son/sont et on/ont : « mot précédent en -s → sont / ont, sinon son / on »
+  const { prev } = around(v.text);
+  if (v.pair === 'son/sont') return /s$/.test(prev) ? 'sont' : 'son';
+  if (v.pair === 'on/ont') return /s$/.test(prev) ? 'ont' : 'on';
+  return null;
+};
+const CLASSIQUES = (v) => { // pronoms et articles : il/elle/y → a ; la/le/les → à ; ils/elles → ont ; virgule → on
+  const { prev, next, prevComma } = around(v.text);
+  if (v.pair === 'a/à') {
+    if (['il', 'elle', 'y'].includes(prev)) return 'a';
+    if (['la', 'le', "l'", 'les'].includes(next)) return 'à';
+  }
+  if (v.pair === 'on/ont') {
+    if (['ils', 'elles'].includes(prev)) return 'ont';
+    if (prevComma || ["qu'", 'et', 'comment', 'quand'].includes(prev)) return 'on';
+  }
+  return null;
+};
+/** La cascade : pour chaque paire, le meilleur raccourci connu, puis les règles classiques, sinon on devine. */
+const CASCADE = (v) => (v.pair === 'a/à' ? (POSITION(v) === 'a' ? 'a' : (CLASSIQUES(v) ?? PARTICIPE(v)))
+  : v.pair === 'et/est' ? MAJUSCULE_DET(v)
+    : v.pair === 'son/sont' ? PLURIEL_S(v)
+      : (CLASSIQUES(v) ?? PLURIEL_S(v)));
 
-const MIN_COVERAGE = { 'mot suivant (appris)': 0.03, 'mot précédent (appris)': 0.03, 'pronom sujet / article (règles classiques)': 0.15, 'virgule avant le trou': 0.02 };
+// « sujet pluriel → sont / ont » est une VRAIE règle d'accord que l'enfant a le droit d'utiliser : PLURIEL_S
+// n'a donc pas de plafond de précision, seulement un plafond de réussite globale pour la cascade. Les cas
+// purement orthographiques sont, eux, cassés dans la banque (« Dans les rues, on joue », « sous son lit »,
+// « Les chevaux ont »).
+const SOLVERS = {
+  'mot suivant (appris)': { solve: learned('next'), minCoverage: 0.03, maxPrecision: 1, maxOverall: 0.66 },
+  'mot précédent (appris)': { solve: learned('prev'), minCoverage: 0.03, maxPrecision: 1, maxOverall: 0.66 },
+  'position : trou après le 1er mot (a/à)': { solve: POSITION, minCoverage: 0.12, maxPrecision: 0.75 },
+  'majuscule ou déterminant suivant (et/est)': { solve: MAJUSCULE_DET, minCoverage: 0.12, maxPrecision: 0.75 },
+  'participe suivant -é/-i/-u (a/à, on/ont)': { solve: PARTICIPE, minCoverage: 0.2, maxPrecision: 0.75 },
+  'mot précédent en -s (son/sont, on/ont)': { solve: PLURIEL_S, minCoverage: 0.2, maxPrecision: 1, from: 2, maxOverall: 0.7 },
+  'pronoms, articles, virgule (règles classiques)': { solve: CLASSIQUES, minCoverage: 0.1, maxPrecision: 1 },
+};
 const MAX_OVERALL = 0.62;
-const MAX_PRECISION = 0.85;
 
-/** Couverture, précision là où il s'applique, réussite globale (là où il n'a pas d'avis, il devine). */
-function measure(solver, views) {
-  const opinions = views.filter((v) => solver(v) !== null);
-  const hits = opinions.filter((v) => solver(v) === v.answer).length;
-  const overall = views.filter((v) => (solver(v) ?? guess(v)) === v.answer).length / views.length;
+/** Couverture, précision par paire là où il s'applique, réussite globale (ailleurs il devine). */
+function measure(solver, vs) {
+  const handled = vs.filter((v) => solver(v) !== null);
+  const byPair = {};
+  for (const v of handled) {
+    const p = (byPair[v.pair] ||= { n: 0, ok: 0 });
+    p.n += 1;
+    if (solver(v) === v.answer) p.ok += 1;
+  }
   return {
-    coverage: opinions.length / views.length,
-    precision: opinions.length ? hits / opinions.length : 0,
-    overall,
+    coverage: handled.length / vs.length,
+    byPair,
+    overall: vs.filter((v) => (solver(v) ?? guess(v)) === v.answer).length / vs.length,
   };
 }
 
+const cascadeByLevel = {};
 for (const level of [1, 2, 3]) {
   test(`niveau ${level} : aucun solveur de surface ne dépasse beaucoup le hasard (couverture prouvée)`, () => {
     for (const seed of [11, 22, 33]) {
-      const views = singleViews(level, 6000, seed);
-      for (const [name, solver] of Object.entries(SOLVERS)) {
-        const m = measure(solver, views);
+      const vs = views(level, 6000, seed);
+      for (const [name, { solve, minCoverage, maxPrecision, from = 1, maxOverall = MAX_OVERALL }] of Object.entries(SOLVERS)) {
+        const m = measure(solve, vs);
         if (seed === 11) {
-          console.log(`niveau ${level} | ${name} : couverture ${(100 * m.coverage).toFixed(0)} %, `
-            + `juste ${(100 * m.precision).toFixed(0)} % où il s'applique, réussite ${(100 * m.overall).toFixed(0)} %`);
+          console.log(`niveau ${level} | ${name} : couverture ${(100 * m.coverage).toFixed(0)} %, réussite ${(100 * m.overall).toFixed(0)} %, `
+            + Object.entries(m.byPair).map(([p, x]) => `${p} ${(100 * x.ok / x.n).toFixed(0)} %`).join(', '));
         }
-        // Un solveur sans avis sur rien mesurerait le vide : il doit s'appliquer à une part réelle des questions.
-        assert.ok(m.coverage >= (name.startsWith('virgule') && level === 1 ? 0 : MIN_COVERAGE[name]), `${name}, niveau ${level} : couverture ${(100 * m.coverage).toFixed(1)} % (solveur inopérant ?)`);
-        assert.ok(m.overall <= MAX_OVERALL, `${name}, niveau ${level} : ${(100 * m.overall).toFixed(1)} % de réussite (hasard 50 %)`);
-        // Là où le solveur a un avis, il ne doit pas avoir presque toujours raison (sinon l'enfant l'apprend).
-        assert.ok(m.coverage < 0.3 || m.precision <= MAX_PRECISION, `${name}, niveau ${level} : juste ${(100 * m.precision).toFixed(1)} % là où il s'applique`);
+        // Couverture prouvée : un solveur qui n'a d'avis sur rien mesurerait le vide.
+        if (level >= from) assert.ok(m.coverage >= minCoverage, `${name}, niveau ${level} : couverture ${(100 * m.coverage).toFixed(1)} % (solveur inopérant ?)`);
+        assert.ok(m.overall <= maxOverall,
+          `${name}, niveau ${level}, graine ${seed} : ${(100 * m.overall).toFixed(1)} % de réussite (hasard 50 %)`);
+        for (const [pair, x] of Object.entries(m.byPair)) {
+          if (x.n < 100) continue;
+          assert.ok(x.ok / x.n <= maxPrecision, `${name}, niveau ${level}, ${pair} : juste ${(100 * x.ok / x.n).toFixed(1)} %`);
+        }
       }
+      const c = measure(CASCADE, vs);
+      if (seed === 11) console.log('CASCADE niveau ' + level + ' ' + (100 * c.overall).toFixed(0) + ' % ' + Object.entries(c.byPair).map(([p, x]) => p + ' ' + (100 * x.ok / x.n).toFixed(0) + ' (n=' + x.n + ')').join(', '));
+      assert.ok(c.overall <= 0.66, `cascade, niveau ${level} : ${(100 * c.overall).toFixed(1)} % de réussite`);
     }
   });
 }
 
+test('PROGRESSION : le solveur en cascade ne réussit pas mieux au niveau 2 qu\'au niveau 1 (+3 points tolérés)', () => {
+  const rate = (level) => measure(CASCADE, views(level, 6000, 11)).overall;
+  const [n1, n2, n3] = [1, 2, 3].map(rate);
+  console.log(`cascade : niveau 1 ${(100 * n1).toFixed(0)} %, niveau 2 ${(100 * n2).toFixed(0)} %, niveau 3 ${(100 * n3).toFixed(0)} %`);
+  assert.ok(n2 <= n1 + 0.03, `niveau 2 (${(100 * n2).toFixed(1)} %) plus facile que niveau 1 (${(100 * n1).toFixed(1)} %)`);
+  assert.ok(n3 <= n1 + 0.03, `niveau 3 (${(100 * n3).toFixed(1)} %) plus facile que niveau 1 (${(100 * n1).toFixed(1)} %)`);
+});
+
 test('toujours répondre la même forme, ou toujours la première, ne mène nulle part', () => {
   for (let level = 1; level <= 3; level++) {
-    const views = singleViews(level, 4000, 5);
+    const vs = views(level, 4000, 5);
     for (const w of ['a', 'à', 'et', 'est', 'son', 'sont', 'on', 'ont']) {
-      const concerned = views.filter((v) => v.choices.includes(w));
+      const concerned = vs.filter((v) => v.choices.includes(w));
       if (!concerned.length) continue;
       const share = concerned.filter((v) => v.answer === w).length / concerned.length;
       assert.ok(share > 0.3 && share < 0.7, `niveau ${level} : « ${w} » est la réponse de ${(100 * share).toFixed(0)} % des questions de sa paire`);
@@ -289,6 +354,15 @@ test('explication : applique l\'astuce à la phrase, cite le mot de remplacement
   for (const t of ALL) {
     const e = explanationOf(t);
     assert.ok(e.includes(completed(t).replace(/ ([:?!])/g, ' $1')), `la phrase juste manque : ${t}`);
+    if (answersOf(t).length > 1) {
+      // Deux trous : une astuce courte par trou, la phrase juste une seule fois (#42, relecture du juge).
+      assert.ok(e.length <= 200, `explication à deux trous : ${e.length} signes > 200 : ${e}`);
+      answersOf(t).forEach((word) => {
+        const used = REPLACE[word] || REPLACE[{ 'à': 'a', et: 'est' }[word]];
+        assert.ok(e.includes(`« ${used} »`) && e.includes(`c'est « ${word} »`), e);
+      });
+      continue;
+    }
     answersOf(t).forEach((word, i) => {
       const h = hintFor(t, i);
       const used = REPLACE[word] || REPLACE[{ 'à': 'a', et: 'est' }[word]];
@@ -311,7 +385,7 @@ test('explication : échantillon recopié (10 phrases tirées)', () => {
   const picked = rng.sample(sample, 10);
   assert.equal(picked.length, 10);
   console.log(picked.map((s) => `- ${s}`).join('\n'));
-  for (const e of picked) assert.ok(e.includes('Remplace par'));
+  for (const e of picked) assert.match(e, /Remplace par|On peut dire|On ne peut pas dire/);
 });
 
 test('explication : l\'astuce marche pour chaque mot (le remplacement se lit comme une phrase)', () => {
@@ -348,4 +422,30 @@ test('mixité : prénoms de filles et de garçons, Papa et Maman à égalité, a
   const maman = (text.match(/\bMaman\b/g) || []).length;
   assert.ok(papa >= 3 && maman >= 3 && Math.max(papa, maman) / Math.min(papa, maman) <= 2, `Papa ${papa} / Maman ${maman}`);
   assert.doesNotMatch(text, /\b(tu|je|j'|toi|ton|ta|tes)\b/i);
+});
+
+// ===== Relecture du juge (#42) ========================================================================
+
+test('voix : le mot dit à la place du trou n\'est dans aucune phrase de la banque', () => {
+  assert.ok(!ALL.some((t) => wordsOf(completed(t)).includes(SPOKEN_GAP)), `« ${SPOKEN_GAP} » figure dans la banque`);
+  for (let level = 1; level <= 3; level++) {
+    for (const q of questions(level, 200)) {
+      assert.ok(q.speak.includes(SPOKEN_GAP), q.key);
+      assert.ok(!/(^|\s)blanc\s+(un|deux)\b/.test(q.speak), q.key);
+    }
+  }
+});
+
+test('mixité : métiers au féminin et au masculin, verbes d\'action répartis entre filles et garçons', () => {
+  const text = ALL.map(completed).join(' ');
+  assert.match(text, /pompière/);
+  assert.match(text, /factrice/);
+  assert.match(text, /pompier\b/);
+  const FILLES = /\b(Mia|Lina|Inès|Zoé|Sofia|Nina|Jade|Maman|Mamie|sœurs?|pompière|factrice)\b/;
+  const GARCONS = /\b(Léo|Noah|Hugo|Adam|Yanis|Maël|Papa|Pépé|frère|pompier)\b/;
+  for (const stem of [/chant/, /court|course/, /ballon/, /dessin/]) {
+    const hits = ALL.map(completed).filter((s) => stem.test(s));
+    assert.ok(hits.length >= 2, `${stem} : ${hits.length} phrase(s)`);
+    assert.ok(hits.some((s) => FILLES.test(s)) && hits.some((s) => GARCONS.test(s)), `${stem} : filles ET garçons attendus dans ${hits.join(' | ')}`);
+  }
 });

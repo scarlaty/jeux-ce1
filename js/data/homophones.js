@@ -26,55 +26,57 @@ export const NO_REPLACE = { 'à': 'a', et: 'est' };
 export const pairOf = (word) => Object.keys(PAIRS).find((p) => PAIRS[p].includes(word));
 
 // ---- Niveau 1 : a/à et et/est, phrases très courtes ------------------------------------------------------
+// Équilibres voulus (les solveurs de surface du test les mesurent) : le trou de a/à est autant juste après
+// le premier mot que plus loin, des « est » devant un déterminant et des « et » devant un verbe.
 export const LEVEL_1 = [
   // a
-  'Léo {a} un vélo rouge.',
+  'Lina {a} un ballon rouge.',
   'Mia {a} faim.',
-  'Le chat {a} peur du chien.',
   'Noah {a} la clé de la maison.',
   'Papa {a} la voiture rouge.',
+  'Le chat {a} peur du chien.',
   'Il y {a} un chat sur le toit.',
-  'Hugo {a} le ballon.',
-  'Adam {a} les yeux verts.',
+  'Le petit chat de Mia {a} soif.',
+  'Le frère de Hugo {a} le ballon.',
   // à
+  'Merci {à} Papa pour le gâteau.',
+  'Bravo {à} Hugo pour son dessin.',
+  'Rendez-vous {à} midi.',
+  'Bonjour {à} tout le monde.',
   'Mia joue {à} la balle.',
-  'Léo pense {à} sa grand-mère.',
-  'Nous allons {à} l\'école.',
+  'Léo pense {à} un cadeau pour Papa.',
   'Noah donne un gâteau {à} Lina.',
-  'Léo attend Mia {à} la sortie.',
-  'Hugo écrit {à} un copain.',
   'Inès joue {à} cache-cache.',
-  'Le car part {à} midi.',
   // est
-  'Le chat {est} noir.',
-  'Mia {est} contente.',
-  'Papa {est} dans le jardin.',
-  'Le ciel {est} bleu.',
-  'Léo {est} en classe.',
-  'La soupe {est} chaude.',
   'Noah {est} un bon nageur.',
   'Sofia {est} la sœur de Noah.',
+  'Zoé {est} la gardienne de but.',
+  'Papa {est} très bon cuisinier.',
+  'Le chat {est} noir.',
+  'Le ciel {est} bleu.',
+  'Léo {est} en classe.',
+  'Hugo {est} dans le jardin.',
   // et
   'Léo {et} Mia jouent.',
   'Le chat {et} le chien dorment.',
   'Maman {et} Papa chantent.',
   'Zoé mange une pomme {et} une poire.',
   'Hugo ouvre la porte {et} sort.',
-  'Sofia chante {et} danse.',
-  'Yanis court {et} saute.',
+  'Yanis chante {et} danse.',
+  'Jade court {et} saute.',
   'Le chat noir {et} blanc dort.',
 ];
 
 // ---- Niveau 2 : + son/sont et on/ont ----------------------------------------------------------------------
 export const LEVEL_2 = [
   // son
-  'Léo range {son} sac dans le placard.',
-  'Mia lit {son} livre préféré.',
+  'Léo range ses jouets dans {son} placard.',
   'Les jours de pluie, Mia prend {son} parapluie.',
   'Noah joue avec {son} frère.',
-  'Mes parents invitent Noah et {son} frère.',
+  'Mes parents invitent Inès et {son} frère.',
   'Hugo met la clé dans {son} sac.',
   'Le bébé tient {son} doudou.',
+  'Zoé cherche ses clés sous {son} lit.',
   // sont
   'Les enfants {sont} dans la cour.',
   'Mes chats {sont} très doux.',
@@ -84,55 +86,59 @@ export const LEVEL_2 = [
   'Mes deux chiens {sont} des champions.',
   'Mia et Noah {sont} dans la même classe.',
   // on
-  'Demain, {on} va au zoo.',
-  'Ici, {on} parle doucement.',
+  'Demain matin {on} va au zoo.',
+  'Pendant les vacances {on} part à la mer.',
   'Papa pense qu\'{on} sera à l\'heure.',
+  'Dans les rues, {on} joue au ballon.',
   'Léo veut savoir où {on} range les billes.',
-  'Dans la cour, {on} joue aux billes.',
   'Léo se demande comment {on} fait des crêpes.',
   'Mia chante et {on} l\'écoute.',
   // ont
   'Les enfants {ont} un nouveau jeu.',
-  'Mes amis {ont} gagné la partie.',
-  'Elles {ont} froid aux mains.',
+  'Mes amis, Léo et Mia, {ont} gagné la partie.',
+  'Les chevaux {ont} soif.',
   'Les chats {ont} faim.',
   'Léo et Mia {ont} fini leur dessin.',
-  'Les voisins {ont} adopté un chien noir.',
+  'Noah et Lina {ont} peur du noir.',
   'Papa et Maman {ont} acheté du pain.',
   // a / à
-  'Le voisin {a} sonné deux fois.',
-  'Sofia {a} cassé son crayon.',
+  'La pompière {a} sauvé le chat du voisin.',
   'Hugo {a} gagné la course.',
+  'Sofia {a} un nouveau crayon.',
+  'Le chien de Zoé {a} un os.',
+  'Léo téléphone {à} Pépé.',
+  'Merci {à} Mamie pour le pull.',
+  'Maman donne un bisou {à} un bébé.',
   'Les enfants vont {à} la plage.',
-  'Maman téléphone {à} Mamie.',
-  'Noah habite {à} Paris.',
   // est / et
   'La salade {est} dans le frigo.',
   'Mon vélo {est} neuf.',
   'Le chien de Zoé {est} très gentil.',
+  'Adam {est} un grand lecteur.',
   'Mia mange une crêpe {et} boit du lait.',
   'Papa {et} Lina font un gâteau.',
-  'Noah prend un livre {et} s\'assoit.',
+  'Noah prend un livre {et} un crayon.',
+  'Léo ouvre la fenêtre {et} regarde dehors.',
 ];
 
 // ---- Niveau 3 : les quatre paires, phrases longues --------------------------------------------------------
 export const LEVEL_3_SINGLE = [
   // a
-  'Après la classe, Sofia {a} rangé tous ses crayons dans la trousse.',
+  'Après la classe, Sofia {a} tous ses crayons dans la trousse.',
   'Le garçon qui habite près de l\'école {a} trois perroquets verts.',
-  'Ce matin, ma sœur {a} dessiné un dragon avec des feutres.',
+  'Ce matin, Adam {a} dessiné un dragon avec des feutres.',
   // à
-  'Hier soir, nous avons parlé {à} la voisine du premier étage.',
-  'Le facteur apporte un colis {à} Maman avant midi.',
-  'Ma tante habite {à} Nantes, près de la mer.',
+  'Merci {à} tous les enfants qui ont aidé la voisine du premier étage.',
+  'La factrice apporte un colis {à} Maman avant midi.',
+  'Ma tante écrit {à} Pépé tous les dimanches.',
   // est
-  'Dans le jardin de mes grands-parents, le cerisier {est} chargé de fruits.',
-  'Le gâteau que Papa a préparé {est} déjà sur la table.',
-  'Mon voisin {est} pompier, il travaille de nuit.',
+  'Dans le jardin de mes grands-parents, le cerisier {est} le plus vieil arbre du quartier.',
+  'Le gâteau que Papa a préparé {est} la surprise de Lina.',
+  'Mon voisin {est} un pompier courageux, il travaille de nuit.',
   // et
-  'Pour la fête, Mia a apporté des ballons {et} des guirlandes.',
+  'Pour la fête, Mia a apporté des ballons {et} décoré la salle.',
   'Noah ouvre la fenêtre {et} regarde la neige tomber.',
-  'Dans le panier, il y a des pommes, des poires {et} quelques prunes.',
+  'Dans le panier, il y a des pommes, des poires {et} cinq prunes.',
   // son
   'Lina regarde le gâteau puis tend {son} assiette à Papa.',
   'Les élèves applaudissent Zoé quand elle montre {son} dessin.',
@@ -147,16 +153,16 @@ export const LEVEL_3_SINGLE = [
   'Les voisins disent qu\'{on} entend la musique de loin.',
   // ont
   'Hier, après la pluie, tous les enfants du quartier {ont} sauté dans les flaques.',
-  'Les deux sœurs de Noah {ont} rangé leur chambre avant le dîner.',
+  'Les deux sœurs de Noah {ont} une chambre très bien rangée.',
   'Mes cousins, qui habitent loin, {ont} enfin reçu notre lettre.',
 ];
 
 /** Deux trous dans la même phrase : l'enfant choisit la paire de mots qui convient. */
 export const LEVEL_3_DOUBLE = [
   'Mia {a} mal {à} la tête.',
-  'Léo {a} un chien {et} un chat noir.',
+  'Le frère de Léo {a} un chien {et} un chat noir.',
   'Le chat {est} sous la chaise {et} dort.',
-  'Hugo {a} perdu {son} bonnet.',
+  'Le petit Hugo {a} perdu {son} bonnet.',
   'Nina {et} Adam {ont} gagné.',
   'Les élèves {sont} contents {et} chantent.',
   'Yanis pense {à} {son} frère.',

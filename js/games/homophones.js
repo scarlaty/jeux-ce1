@@ -31,8 +31,24 @@ export function hintFor(template, index) {
   return `Remplace par « ${REPLACE[other]} » : ${quote(test)}, ça ne se dit pas. C'est donc « ${word} »${why}.`;
 }
 
+/** Mot dit à la place du trou : il ne figure dans aucune phrase de la banque (testé). */
+export const SPOKEN_GAP = 'bip';
+
+/** Astuce courte pour une phrase à deux trous : la phrase juste est rappelée une seule fois (≤ 200 signes). */
+function shortHint(template, index) {
+  const word = answersOf(template)[index];
+  const n = `[${index + 1}]`;
+  if (REPLACE[word]) return `${n} On peut dire « ${REPLACE[word]} » : c'est « ${word} »${NOTE[word] || ''}.`;
+  const why = word === 'et' ? ', qui relie deux mots' : NOTE[word];
+  return `${n} On ne peut pas dire « ${REPLACE[NO_REPLACE[word]]} » : c'est « ${word} »${why}.`;
+}
+
 export function explanationOf(template) {
-  const hints = answersOf(template).map((_, i) => hintFor(template, i));
+  const answers = answersOf(template);
+  if (answers.length > 1) {
+    return `${answers.map((_, i) => shortHint(template, i)).join(' ')} La phrase juste : ${quote(completed(template))}`;
+  }
+  const hints = answers.map((_, i) => hintFor(template, i));
   return `${hints.join(' ')} La phrase juste : ${quote(completed(template))}`;
 }
 
@@ -43,7 +59,7 @@ const single = (template, rng) => {
     key: `homophones:${slug(template)}`,
     type: 'choice',
     prompt: 'Quel mot va dans la phrase ?',
-    speak: `Quel mot va dans la phrase ? Écoute : ${gapped(template).replace('____', 'blanc')}`,
+    speak: `Quel mot va dans la phrase ? Écoute : ${gapped(template).replace('____', SPOKEN_GAP)}`,
     display: {
       show: { text: shownText(gapped(template)), cursive: true, wrap: true },
       choices: rng.shuffle(PAIRS[pair]).map((w) => ({ value: w, text: w })),
@@ -63,7 +79,7 @@ const double = (template, rng) => {
     key: `homophones:${slug(template)}`,
     type: 'choice',
     prompt: 'Quels mots vont dans la phrase ? Il y a deux trous.',
-    speak: `Quels mots vont dans la phrase ? Il y a deux trous. Écoute : ${gapped(template).replace('[1]', 'blanc un').replace('[2]', 'blanc deux')}`,
+    speak: `Quels mots vont dans la phrase ? Il y a deux trous. Écoute : ${gapped(template).replace('[1]', `${SPOKEN_GAP} un`).replace('[2]', `${SPOKEN_GAP} deux`)}`,
     display: {
       show: { text: shownText(gapped(template)), cursive: true, wrap: true },
       choices: rng.shuffle(combos).map(([a, b]) => ({ value: `${a}|${b}`, text: `[1] ${a}   [2] ${b}` })),
