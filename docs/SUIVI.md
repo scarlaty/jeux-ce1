@@ -119,7 +119,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v35`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v36`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
@@ -159,4 +159,4 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
    accessibilité (#85).
 
 
-Bug signalé le 08/10 (non traité, en attente de l'accord de l'utilisateur) : sur téléphone, le tampon `.stamp--ok` (`white-space: nowrap`) déborde de 35 px quand le message est long → défilement horizontal pendant la correction, dans tous les jeux.
+Bug corrigé le 08/10 (v36) : le tampon « Bien joué ! » apparaissait agrandi ×1,8 et débordait (400 px sur un écran de 360 px) ; taille plafonnée à 7vw, animation ×1,25, `.stage` en `overflow-x: clip` (testé).
