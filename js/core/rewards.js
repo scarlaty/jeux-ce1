@@ -391,6 +391,39 @@ export function buildDailyPlan(entries, seed, { count = DAILY_QUESTIONS } = {}) 
   return plan;
 }
 
+/**
+ * Le « jeu » du défi du jour : il suit le plan déjà tiré, et marque chaque question de son origine.
+ *
+ * Pourquoi l'origine : cinq questions viennent de cinq jeux, et sur 120 jours simulés **76 % des
+ * questions changent de matière** par rapport à la précédente. Dans un jeu, l'enfant sait ce qu'elle
+ * joue — elle l'a choisi sur l'île, le titre est en haut de l'écran. Dans le défi, rien ne le disait :
+ * elle lisait « cow » après une question de maths, sans savoir que c'était de l'anglais (#110).
+ *
+ * `source` n'entre pas dans `renderFingerprint` (qui ne lit que la consigne et l'affichage) : le
+ * dédoublonnage de #92 est intact.
+ *
+ * Ici et pas dans l'écran, pour que ce soit testable : `js/screens/daily.js` touche au DOM.
+ */
+export function buildDailyGame(plan, byId, { key, island, title = 'Défi du jour' } = {}) {
+  return {
+    id: 'defi',
+    title,
+    island: 'defi',
+    rewardIsland: island,     // l'île dont la gommette est à gagner aujourd'hui
+    daily: { key },
+    levels: [{ label: title }],
+    makeQuestion(level, rng, seen) {
+      const slot = plan[Math.min(seen.size, plan.length - 1)];
+      const entry = byId.get(slot.id);
+      const question = entry.game.makeQuestion(slot.level, rng, seen);
+      return {
+        ...question,
+        source: { title: entry.game.title, subject: entry.game.subject, island: entry.game.island },
+      };
+    },
+  };
+}
+
 // --- Étoiles et ouverture des îles -------------------------------------------------------------
 
 /** Étoiles gagnées pour un jeu (meilleur résultat de chaque niveau). */

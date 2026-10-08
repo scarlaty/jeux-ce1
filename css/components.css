@@ -1078,3 +1078,32 @@
   .stage--with-show.stage--choice .choices:has(.clock__face) { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
   .choices:has(.clock__face) .choice .art { width: clamp(6rem, 9vw, 8.5rem); }
 }
+
+/* D'où vient la question (#110) — utile dans le défi du jour, où cinq questions viennent de cinq
+   jeux et où 76 % changent de matière d'une question à la suivante. Posé au-dessus de la consigne.
+   La couleur est celle de l'île sur la carte : l'enfant retrouve un code qu'elle connaît. */
+.from {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-s);
+  line-height: 1.3;
+}
+
+.from__subject {
+  padding: 0.15em 0.7em;
+  border-radius: var(--radius-round);
+  background: var(--from-soft, var(--surface-sunk));
+  color: var(--from-ink, var(--ink));
+  font-weight: 700;
+}
+
+.from__title { color: var(--ink-soft); }
+
+.from[data-island='mots'] { --from-soft: var(--island-mots-soft); --from-ink: var(--island-mots-ink); }
+.from[data-island='nombres'] { --from-soft: var(--island-nombres-soft); --from-ink: var(--island-nombres-ink); }
+.from[data-island='mesures'] { --from-soft: var(--island-mesures-soft); --from-ink: var(--island-mesures-ink); }
+.from[data-island='monde'] { --from-soft: var(--island-monde-soft); --from-ink: var(--island-monde-ink); }
+.from[data-island='ailleurs'] { --from-soft: var(--island-ailleurs-soft); --from-ink: var(--island-ailleurs-ink); }
