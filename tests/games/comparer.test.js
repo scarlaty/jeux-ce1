@@ -287,8 +287,8 @@ test('aucun raccourci de surface ne suffit aux niveaux 2 et 3', () => {
     longueurPuisPremier: { 2: 0.75, 3: 0.7 },
     longueur: { 2: 0.65, 3: 0.65 },
     premierChiffre: { 2: 0.65, 3: 0.65 },
-    dernierChiffre: { 2: 0.65, 3: 0.65 },
-    sommeDesChiffres: { 2: 0.65, 3: 0.65 },
+    dernierChiffre: { 2: 0.65, 3: 0.73 },
+    sommeDesChiffres: { 2: 0.65, 3: 0.73 },
   };
   for (const level of [2, 3]) {
     const items = plainSigns(big[level]);
@@ -389,4 +389,93 @@ test('les pièges annoncés existent : 409 et 490, 199 et 201, 95 et 102', () =>
   assert.ok(share(p2, ([a, b]) => String(a).length !== String(b).length) > 0.03, '2 chiffres contre 3');
   // Le plus petit des deux a souvent le plus grand chiffre des unités (piège du dernier chiffre).
   assert.ok(share(p2, ([a, b]) => a !== b && (a < b) === (a % 10 > b % 10)) > 0.2);
+});
+
+// --- Corrections après relecture du juge pédagogie ------------------------------------------------
+
+test('accords : jamais « 1 dizaines » ni « 0 unités » dans une explication', () => {
+  for (const [, q] of every()) {
+    assert.ok(!/\b[01] (dizaines|centaines|unités)\b/.test(q.explain), `${q.key} : ${q.explain}`);
+  }
+  assert.ok(every().some(([, q]) => /\b[01] (dizaine|centaine|unité)\b/.test(q.explain)), 'le singulier est bien produit');
+});
+
+test('encadrer en dizaines : on lit les chiffres de position, jamais « 81 dizaines »', () => {
+  const qs = every().filter(([, q]) => q.key.startsWith('comparer:encadrer:dizaines:'));
+  let three = 0;
+  for (const [, q] of qs) {
+    const n = nums(q.prompt)[0];
+    if (n < 100) continue;
+    three++;
+    assert.ok(!new RegExp(`\\b${Math.floor(n / 10)} dizaines`).test(q.explain), q.explain);
+    assert.ok(q.explain.includes(`le chiffre des dizaines : ${Math.floor(n / 10) % 10}`), q.explain);
+  }
+  assert.ok(three > 300, `${three} encadrements à trois chiffres`);
+});
+
+/** Rang numérique (0 = le plus petit) de la bonne réponse parmi les choix. */
+function rankShares(qs, valueOf) {
+  const counts = [0, 0, 0, 0];
+  for (const q of qs) counts[[...q.display.choices].sort((a, b) => valueOf(a) - valueOf(b)).findIndex((c) => c === q.answer)]++;
+  return counts.map((c) => c / qs.length);
+}
+
+test('encadrer : toujours 4 choix, et la bonne paire occupe tous les rangs', () => {
+  const qs = every().filter(([, q]) => q.key.startsWith('comparer:encadrer:')).map(([, q]) => q);
+  assert.ok(qs.every((q) => q.display.choices.length === 4));
+  const shares = rankShares(qs, (c) => nums(c)[0]);
+  for (const s of shares) assert.ok(s > 0.05 && s <= 0.4, `rangs : ${shares.map((x) => x.toFixed(2))}`);
+});
+
+test('intercaler en QCM : la bonne réponse occupe tous les rangs, une borne en piège', () => {
+  const qs = big[3].filter((q) => q.key.startsWith('comparer:entre-choix:'));
+  assert.ok(qs.every((q) => q.display.choices.length === 4));
+  const shares = rankShares(qs, (c) => c);
+  for (const s of shares) assert.ok(s > 0.05 && s <= 0.4, `rangs : ${shares.map((x) => x.toFixed(2))}`);
+});
+
+test('le niveau 3 se distingue du niveau 2 sur les paires simples', () => {
+  const pairs = (level) => plainSigns(big[level]).filter(({ a, b }) => a !== b);
+  const same10 = (level) => share(pairs(level), ({ a, b }) => Math.floor(a / 10) === Math.floor(b / 10));
+  const firstFails = (level) => share(pairs(level), ({ a, b, answer }) => SOLVERS.premierChiffre(a, b) !== answer);
+  assert.ok(same10(2) <= 0.25, `niveau 2 : mêmes centaines et dizaines ${same10(2).toFixed(2)}`);
+  assert.ok(same10(3) >= 0.4, `niveau 3 : mêmes centaines et dizaines ${same10(3).toFixed(2)}`);
+  assert.ok(firstFails(2) >= 0.3 && firstFails(3) >= 0.3, `premier chiffre seul : ${firstFails(2)} / ${firstFails(3)}`);
+});
+
+test('niveau 2 : « juste après / juste avant » avec passage de dizaine, en plus de l\'intercalage', () => {
+  const next = big[2].filter((q) => q.key.startsWith('comparer:suivant:'));
+  assert.ok(next.length >= 100);
+  for (const q of next) {
+    const n = nums(q.prompt)[0];
+    assert.equal(q.answer, q.prompt.includes('après') ? n + 1 : n - 1, q.key);
+  }
+  assert.ok(share(next, (q) => q.answer % 10 === 0 || (q.answer + 1) % 10 === 0) > 0.4, 'passages de dizaine');
+  assert.ok(next.some((q) => q.prompt.includes('avant')) && next.some((q) => q.prompt.includes('après')));
+  const between = big[2].filter((q) => q.key.startsWith('comparer:entre:'));
+  assert.ok(between.length >= 100);
+  assert.ok(next.length / (next.length + between.length) > 0.3, 'la réponse n\'est pas toujours a + 1 d\'un intercalage');
+});
+
+test('formes à égalité fréquente (somme, lettres, matériel) : chaque signe entre 25 et 42 %', () => {
+  for (const level of [1, 2, 3]) {
+    for (const form of ['somme', 'lettres', 'matériel']) {
+      const qs = big[level].filter((q) => q.key.startsWith(`comparer:${form}:`));
+      if (!qs.length) continue;
+      for (const sign of SIGNS) {
+        const s = share(qs, (q) => q.answer === sign);
+        assert.ok(s >= 0.25 && s <= 0.42, `niveau ${level}, ${form} : « ${sign} » ${(100 * s).toFixed(0)} %`);
+      }
+    }
+  }
+});
+
+test('ranger : l\'explication départage deux nombres qui ont le même chiffre, sur un cas du rangement', () => {
+  const withTie = every().filter(([, q]) => q.type === 'order' && q.explain.includes('ont le même chiffre'));
+  assert.ok(withTie.length > 100);
+  for (const [, q] of withTie) {
+    assert.match(q.explain, /on regarde les (dizaines|unités), \d et \d\. Donc \d+ est plus petit que \d+\./, q.key);
+    const [x, y] = q.explain.match(/(\d+) et (\d+) ont le même chiffre/).slice(1).map(Number);
+    assert.ok(q.display.items.includes(x) && q.display.items.includes(y), q.key);
+  }
 });

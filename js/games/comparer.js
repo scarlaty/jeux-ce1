@@ -49,6 +49,21 @@ function weighted(rng, table) {
   return table[table.length - 1][0];
 }
 
+/** « 1 dizaine », « 5 unités », « 0 unité » : singulier pour 0 et 1. */
+const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
+
+/**
+ * 3 leurres répartis des deux côtés de la bonne réponse : son rang numérique (0 à 3) est tiré au hasard
+ * parmi les rangs possibles, pour que « choisir celle du milieu » ne marche pas. Chaque réserve est
+ * rangée du plus proche au plus loin ; le plus proche (une borne, une voisine) est toujours pris.
+ */
+function spreadDecoys(rng, belowPool, abovePool) {
+  const ranks = [0, 1, 2, 3].filter((r) => belowPool.length >= r && abovePool.length >= 3 - r);
+  const r = rng.pick(ranks);
+  const take = (pool, k) => (k === 0 ? [] : [pool[0], ...rng.sample(pool.slice(1), k - 1)]);
+  return [...take(belowPool, r), ...take(abovePool, 3 - r)];
+}
+
 /** « 4, 4 et 9 ». */
 function joinAnd(parts) {
   if (parts.length < 2) return parts.join('');
@@ -140,8 +155,8 @@ function pairFar(rng) {
 
 const PAIRS = {
   1: [[pairTens, 0.4], [pairUnits, 0.4], [pairSwap2, 0.12], [pairHundred, 0.08]],
-  2: [[pairSameH, 0.3], [pairSameHT, 0.25], [pairPerm, 0.2], [pairCross, 0.15], [pairFar, 0.1]],
-  3: [[pairSameH, 0.32], [pairSameHT, 0.3], [pairPerm, 0.23], [pairCross, 0.1], [pairFar, 0.05]],
+  2: [[pairSameH, 0.3], [pairSameHT, 0.2], [pairPerm, 0.22], [pairCross, 0.15], [pairFar, 0.13]],
+  3: [[pairSameHT, 0.42], [pairSameH, 0.25], [pairPerm, 0.18], [pairCross, 0.1], [pairFar, 0.05]],
 };
 
 /** Une paire de nombres à comparer, dans un ordre aléatoire. Rarement deux nombres écrits pareil. */
@@ -213,8 +228,14 @@ function explainOrder(sorted, ascending) {
   const tie = new Set(ds).size < ds.length;
   const same = p > start ? `Les ${joinAnd(PLACES.slice(start, p))} sont pareilles. ` : '';
   const way = ascending ? 'du plus petit au plus grand' : 'du plus grand au plus petit';
-  return `${same}On regarde les ${PLACES[p]} : dans l'ordre ${way}, ce sont ${ds.join(', ')}.`
-    + `${tie ? ' Quand deux chiffres sont pareils, on regarde la place suivante.' : ''}`;
+  const head = `${same}On regarde les ${PLACES[p]} : dans l'ordre ${way}, ce sont ${ds.join(', ')}.`;
+  if (!tie) return head;
+  // Un cas de départage pris dans la liste : deux voisins qui ont le même chiffre à cette place.
+  const i = ds.findIndex((x, k) => k > 0 && x === ds[k - 1]);
+  const [x, y] = [inOrder[i - 1], inOrder[i]];
+  const [dx, dy] = [d3(x)[p + 1], d3(y)[p + 1]];
+  return `${head} ${x} et ${y} ont le même chiffre des ${PLACES[p]} (${ds[i]}) : on regarde les ${PLACES[p + 1]}, `
+    + `${dx} et ${dy}. Donc ${Math.min(x, y)} est plus petit que ${Math.max(x, y)}.`;
 }
 
 const ASTUCE = 'Astuce : le signe s\'ouvre toujours vers le plus grand nombre.';
@@ -251,16 +272,18 @@ function signSum(rng, level) {
     n = make();
     parts = partsOf(n);
   } while (parts.length < 2 || (level > 1 && n % 10 === 0 && n % 100 === 0));
-  let other = n;
-  if (rng.chance(0.5)) {
-    const options = [swapped(rng, n) ?? 0, n + 10, n - 10, n + 1, n - 1, n + 100, n - 100]
-      .filter((m) => m !== n && m >= (level === 1 ? 10 : 100) && m <= (level === 1 ? 99 : 999));
-    // En niveau 1 « swapped » ne s'applique pas (2 chiffres) : on échange à la main.
-    if (level === 1) options.push(10 * (n % 10) + Math.floor(n / 10));
-    other = rng.pick(options.filter((m) => m !== n && m >= 10));
-  }
-  const sum = parts.join(' + ');
   const sumLeft = rng.chance(0.5);
+  // Le signe visé est tiré d'abord (= une fois sur trois, < et > à égalité), puis on choisit l'autre côté.
+  let want = rng.chance(0.32) ? '=' : rng.pick(['<', '>']);
+  const low = level === 1 ? 10 : 100;
+  const high = level === 1 ? 99 : 999;
+  const options = [swapped(rng, n) ?? 0, level === 1 ? 10 * (n % 10) + Math.floor(n / 10) : 0, n + 10, n - 10, n + 1, n - 1, n + 100, n - 100]
+    .filter((m) => m !== n && m >= low && m <= high);
+  const greater = (m) => (sumLeft ? m > n : m < n);   // « m fait répondre < »
+  let pool = want === '=' ? [n] : options.filter((m) => (want === '<' ? greater(m) : !greater(m)));
+  if (!pool.length) { want = '='; pool = [n]; }
+  const other = rng.pick(pool);
+  const sum = parts.join(' + ');
   const text = sumLeft ? `${sum} ? ${other}` : `${other} ? ${sum}`;
   const answer = sumLeft ? signOf(n, other) : signOf(other, n);
   const lead = `${sum} = ${n}.`;
@@ -282,7 +305,7 @@ function signSum(rng, level) {
 /** Un nombre en lettres contre un nombre en chiffres (niveau 3). Égalité une fois sur quatre. */
 function signWords(rng) {
   const [n, far] = rng.shuffle(weighted(rng, PAIRS[3])(rng));
-  const written = rng.chance(0.25) ? n : far;
+  const written = rng.chance(0.3) ? n : far;
   const words = enLettres(n);
   return {
     key: `comparer:lettres:${n}:${written}`,
@@ -302,7 +325,7 @@ function signWords(rng) {
 /** Du matériel de numération contre un nombre écrit (niveau 3). Égalité une fois sur quatre. */
 function signMaterial(rng) {
   const [a, b] = rng.shuffle(weighted(rng, [[pairSameH, 0.35], [pairSameHT, 0.25], [pairPerm, 0.3], [pairCross, 0.1]])(rng));
-  const material = rng.chance(0.25) ? b : a;
+  const material = rng.chance(0.3) ? b : a;
   const written = b;
   const [h, t, u] = d3(material);
   const answer = signOf(material, written);
@@ -412,6 +435,27 @@ function order(rng, level) {
 
 // --- Intercaler, encadrer ------------------------------------------------------------------------
 
+/** « Quel nombre vient juste après 199 ? » : le passage d'une dizaine ou d'une centaine (niveau 2). */
+function nextTo(rng) {
+  const after = rng.chance(0.5);
+  const n = after
+    ? (rng.chance(0.6) ? 10 * rng.int(11, 99) - 1 : rng.int(100, 998))
+    : (rng.chance(0.6) ? 10 * rng.int(11, 99) : rng.int(101, 999));
+  const answer = after ? n + 1 : n - 1;
+  return {
+    key: `comparer:suivant:${after ? 'après' : 'avant'}:${n}`,
+    type: 'keypad',
+    prompt: `Quel nombre vient juste ${after ? 'après' : 'avant'} ${n} ?`,
+    speak: `Quel nombre vient juste ${after ? 'après' : 'avant'} ${n} ?`,
+    display: { maxLength: 3 },
+    answer,
+    explain: `On compte : ${after ? `${n}, ${answer}` : `${answer}, ${n}`}. `
+      + `Juste ${after ? 'après' : 'avant'} ${n}, c'est ${answer}.`
+      + `${(after ? answer : n) % 10 === 0 ? " On passe d'une dizaine à l'autre." : ''}`,
+    skill: SKILL.between,
+  };
+}
+
 /** « 47 < ? < 49 » : un seul nombre convient. */
 function betweenKeypad(rng, level) {
   let a;
@@ -439,10 +483,11 @@ function betweenChoice(rng) {
   const lo = rng.int(10, 999 - width);
   const b = lo + width;
   const answer = rng.int(lo + 1, b - 1);
-  // Toujours une borne parmi les pièges : « entre » ne compte ni 340 ni 360.
-  const bound = rng.pick([lo, b]);
-  const near = [lo - 1, b + 1, lo - 10, b + 10].filter((x) => x >= 10 && x <= 999);
-  const picks = [bound, ...rng.sample(near, 2)];
+  // Leurres des deux côtés, une borne toujours parmi eux : « entre » ne compte ni 340 ni 360.
+  const ok = (x) => x >= 10 && x <= 999;
+  const below = [lo, lo - 1, lo - 10, lo - 2, lo - 11].filter(ok);
+  const above = [b, b + 1, b + 10, b + 2, b + 11].filter(ok);
+  const picks = spreadDecoys(rng, below, above);
   return {
     key: `comparer:entre-choix:${lo}:${b}:${answer}`,
     type: 'choice',
@@ -458,11 +503,6 @@ function betweenChoice(rng) {
 
 const pairText = (s, step) => `${s} et ${s + step}`;
 
-/** Les débuts d'encadrement voisins de `start`, sans jamais encadrer le nombre lui-même. */
-function framesAround(start, step, max) {
-  return [start - 2 * step, start - step, start + step, start + 2 * step].filter((s) => s >= 0 && s + step <= max);
-}
-
 /** « Entre quelles dizaines (ou centaines) se trouve 468 ? » */
 function frame(rng, level) {
   const units = level === 1 ? 'dizaines' : rng.chance(0.5) ? 'dizaines' : 'centaines';
@@ -474,11 +514,18 @@ function frame(rng, level) {
   } while (n % step === 0 || n > 999);
   const start = step * Math.floor(n / step);
   const max = level === 1 ? 100 : 1000;
-  const wrong = rng.sample(framesAround(start, step, max), Math.min(3, framesAround(start, step, max).length));
+  const startsBelow = range(0, start / step - 1).map((k) => start - (k + 1) * step).filter((x) => x >= 0);
+  const startsAbove = [];
+  for (let x = start + step; x + step <= max; x += step) startsAbove.push(x);
+  const wrong = spreadDecoys(rng, startsBelow, startsAbove);
   const right = pairText(start, step);
+  const [h, t, u] = d3(n);
   const about = units === 'dizaines'
-    ? `${n}, c'est ${Math.floor(n / 10)} dizaines et ${n % 10} ${n % 10 > 1 ? 'unités' : 'unité'} : il est après ${start} et avant ${start + step}.`
-    : `${n} commence par ${Math.floor(n / 100)} centaines : il est après ${start} et avant ${start + step}.`;
+    ? (n < 100
+      ? `${n}, c'est ${plural(t, 'dizaine')} et ${plural(u, 'unité')} : il est après ${start} et avant ${start + step}.`
+      : `${n}, c'est ${plural(h, 'centaine')}, ${plural(t, 'dizaine')} et ${plural(u, 'unité')}. On regarde le chiffre des dizaines : ${t}. `
+        + `Donc ${n} est après ${start} et avant ${start + step}.`)
+    : `${n} commence par ${plural(h, 'centaine')} : il est après ${start} et avant ${start + step}.`;
   return {
     key: `comparer:encadrer:${units}:${n}`,
     type: 'choice',
@@ -548,7 +595,7 @@ const DECKS = {
     ],
     [
       (rng) => order(rng, 2),
-      (rng) => betweenKeypad(rng, 2),
+      (rng) => (rng.chance(0.5) ? betweenKeypad(rng, 2) : nextTo(rng)),
       (rng) => frame(rng, 2),
       (rng) => signSum(rng, 2),
     ],
