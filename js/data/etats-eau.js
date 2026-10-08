@@ -179,9 +179,9 @@ export const CHANGE_CHOICES = [
   { value: 'evapore', text: 'L\'eau s\'évapore.' },
 ];
 export const CHANGE_EXPLAIN = {
-  fond: 'La glace devient de l\'eau liquide : elle fond. Il faut qu\'il fasse chaud.',
-  gele: 'L\'eau liquide devient de la glace : elle gèle. Il faut qu\'il fasse très froid.',
-  evapore: 'L\'eau liquide devient un gaz, la vapeur d\'eau, que l\'on ne voit pas : elle s\'évapore.',
+  fond: 'La glace devient de l\'eau liquide : elle fond. Il faut qu\'il fasse chaud. On dit aussi : la fusion.',
+  gele: 'L\'eau liquide devient de la glace : elle gèle. Il faut qu\'il fasse très froid. On dit aussi : la solidification.',
+  evapore: 'L\'eau liquide devient un gaz, la vapeur d\'eau, que l\'on ne voit pas : elle s\'évapore. On dit aussi : l\'évaporation.',
 };
 
 // --- Niveau 3 : expériences, déductions, vocabulaire ----------------------------------------------
@@ -207,14 +207,14 @@ export const EXPERIMENTS = [
     id: 'pese-fusion',
     prompt: '{who} pose sur une balance un verre fermé qui contient un glaçon. Puis le glaçon fond dans le verre, toujours fermé. Que lit {who} sur la balance ?',
     right: 'Le même nombre qu\'avant', wrong: ['Un nombre plus petit', 'Un nombre un peu plus grand'],
-    explain: 'Quand la glace fond, il y a la même quantité d\'eau : elle est seulement liquide. La balance ne change pas.',
+    explain: 'Quand la glace fond, l\'eau pèse pareil : il y a autant d\'eau, elle est seulement liquide. La balance ne change pas.',
     skill: 'l\'eau se conserve',
   },
   {
     id: 'pese-gel',
     prompt: '{who} pose sur une balance une boîte fermée à moitié remplie d\'eau, puis la met au congélateur. L\'eau gèle. {who} remet la boîte, toujours fermée, sur la balance. Que lit-on ?',
     right: 'Le même nombre qu\'avant', wrong: ['Un nombre plus petit', 'Un nombre plus grand'],
-    explain: 'Quand l\'eau gèle, il y a la même quantité d\'eau : elle est seulement solide. La balance ne change pas.',
+    explain: 'Quand l\'eau gèle, la glace pèse pareil : il y a autant d\'eau, elle est seulement solide. La balance ne change pas.',
     skill: 'l\'eau se conserve',
   },
   {
@@ -312,9 +312,9 @@ export const VOCAB_CHOICES = [
   { value: 'evaporation', text: 'L\'évaporation' },
 ];
 export const VOCAB_EXPLAIN = {
-  fusion: 'Solide → liquide : c\'est la fusion. La glace devient de l\'eau liquide, quand il fait chaud.',
-  solidification: 'Liquide → solide : c\'est la solidification. L\'eau devient de la glace, quand il fait très froid.',
-  evaporation: 'Liquide → gaz : c\'est l\'évaporation. L\'eau devient de la vapeur d\'eau, invisible.',
+  fusion: 'De solide à liquide : c\'est la fusion. La glace devient de l\'eau liquide, quand il fait chaud.',
+  solidification: 'De liquide à solide : c\'est la solidification. L\'eau devient de la glace, quand il fait très froid.',
+  evaporation: 'De liquide à gaz : c\'est l\'évaporation. L\'eau devient de la vapeur d\'eau, invisible.',
 };
 
 /** Rangement à trois boîtes (niveau 3). */
@@ -323,7 +323,7 @@ export const SORT_ITEMS = THINGS.filter((t) => !['bonhomme', 'bain'].includes(t.
 /** Phrases de niveau 3. */
 export const STATEMENTS_3 = {
   true: [
-    { text: 'Quand un glaçon fond, il y a la même quantité d\'eau qu\'avant.', skill: 'l\'eau se conserve' },
+    { text: 'Quand un glaçon fond, l\'eau obtenue pèse pareil que le glaçon.', skill: 'l\'eau se conserve' },
     { text: 'L\'eau gèle quand il fait très froid.', skill: 'l\'eau gèle' },
     { text: 'La glace fond quand il fait chaud.', skill: 'la glace fond' },
     { text: 'Le linge sèche parce que son eau part dans l\'air.', skill: 'l\'eau s\'évapore' },
@@ -335,7 +335,7 @@ export const STATEMENTS_3 = {
     { text: 'L\'évaporation est le passage du liquide au gaz.', skill: 'l\'eau s\'évapore' },
   ],
   false: [
-    { text: 'Quand un glaçon fond, il y a moins d\'eau qu\'avant.', fix: 'Quand un glaçon fond, il y a la même quantité d\'eau, mais elle est liquide.', skill: 'l\'eau se conserve' },
+    { text: 'Quand un glaçon fond, l\'eau obtenue pèse moins que le glaçon.', fix: 'Quand un glaçon fond, l\'eau pèse pareil : elle est seulement liquide.', skill: 'l\'eau se conserve' },
     { text: 'L\'eau gèle quand il fait chaud.', fix: 'L\'eau gèle quand il fait très froid.', skill: 'l\'eau gèle' },
     { text: 'La glace fond quand il fait très froid.', fix: 'La glace fond quand il fait chaud.', skill: 'la glace fond' },
     { text: 'Le linge sèche parce que son eau devient de la glace.', fix: 'L\'eau du linge part dans l\'air, en vapeur d\'eau.', skill: 'l\'eau s\'évapore' },

@@ -402,3 +402,12 @@ test('évaporation : un mot « air / gaz / vapeur » ne désigne pas la bonne r�
   // les faux choix liés à la situation (« rentrée dans le … ») sont bien tirés
   assert.ok(qs.some((q) => q.display.choices.some((c) => /rentrée dans/.test(c.text))));
 });
+
+test('mots lus par la voix et par l\'enfant : aucune flèche, et fusion / solidification / évaporation sont introduits au niveau 2', () => {
+  for (const [, q] of all()) for (const t of textsOfQuestion(q)) assert.ok(!/[→←↔]/.test(t), t);
+  for (const v of Object.values(bank.VOCAB_EXPLAIN)) assert.ok(!/[→←↔]/.test(v), v);
+  const lvl2 = byLevel[2].map((q) => q.explain).join(' ');
+  for (const w of ['la fusion', 'la solidification', 'l\'évaporation']) assert.ok(lvl2.includes(w), w);
+  // conservation : « pèse pareil » (pas « même quantité »)
+  assert.ok(!/même quantité/.test(JSON.stringify([bank.EXPERIMENTS, bank.STATEMENTS_3])));
+});

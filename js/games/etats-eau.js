@@ -152,7 +152,7 @@ function drying(rng) {
     speak: prompt,
     display: { choices: rng.shuffle(textChoices([right, ...wrong])) },
     answer: right,
-    explain: 'L\'eau s\'est évaporée : elle est devenue de la vapeur d\'eau, un gaz que l\'on ne voit pas. Elle n\'a pas disparu.',
+    explain: 'L\'eau s\'est évaporée : elle est devenue de la vapeur d\'eau, un gaz que l\'on ne voit pas. Elle n\'a pas disparu. On dit : c\'est l\'évaporation.',
     skill: SKILL.evap,
   };
 }
