@@ -7,7 +7,7 @@
 // Exactitude : la vapeur d'eau est invisible, aucun gaz n'est montré par un émoji (voir js/data/etats-eau.js).
 import {
   NAMES, STATES, THINGS, PICTURES, STATEMENTS_1, STATEMENTS_3, SCENE_CHOICES, OUTCOMES, DRYING, DRYING_RIGHT,
-  DRYING_WRONG, CHANGES, CHANGE_CHOICES, CHANGE_EXPLAIN, EXPERIMENTS, VOCAB, VOCAB_CHOICES, VOCAB_EXPLAIN,
+  DRYING_WRONG_WORD, DRYING_WRONG_PLAIN, CHANGES, CHANGE_CHOICES, CHANGE_EXPLAIN, EXPERIMENTS, VOCAB, VOCAB_CHOICES, VOCAB_EXPLAIN,
   SORT_ITEMS,
 } from '../data/etats-eau.js';
 
@@ -142,7 +142,9 @@ function drying(rng) {
   const d = rng.pick(DRYING);
   const prompt = `${fill(d.text, { who: who(rng) })} Où est passée l'eau ?`;
   const right = rng.pick(DRYING_RIGHT);
-  const wrong = rng.sample(DRYING_WRONG, 2);
+  const first = rng.pick(DRYING_WRONG_WORD);
+  const rest = [...DRYING_WRONG_WORD.filter((w) => w !== first), ...DRYING_WRONG_PLAIN, d.soak];
+  const wrong = [first, rng.pick(rest)];
   return {
     key: `etats-eau:seche:${d.id}`,
     type: 'choice',

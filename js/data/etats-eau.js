@@ -33,7 +33,10 @@ export const THINGS = [
   { id: 'bain', text: 'l\'eau du bain', state: 'liquide' },
   { id: 'vapeur', text: 'la vapeur d\'eau', state: 'gaz' },
   { id: 'vapeur-air', text: 'l\'eau invisible qui flotte dans l\'air', state: 'gaz' },
-  { id: 'vapeur-linge', text: 'l\'eau du linge qui sèche, partie dans l\'air', state: 'gaz' },
+  { id: 'vapeur-linge', text: 'l\'eau qui a quitté le linge en séchant', state: 'gaz' },
+  { id: 'vapeur-flaque', text: 'l\'eau qui a quitté la flaque en séchant', state: 'gaz' },
+  { id: 'grelon-air', text: 'un grêlon qui tombe dans l\'air', state: 'solide' },
+  { id: 'goutte-air', text: 'une goutte de pluie dans l\'air', state: 'liquide' },
 ];
 
 /** Dessins pour « Touche ce qui est solide / liquide » (jamais de gaz : aucun émoji ne le montre). */
@@ -125,14 +128,14 @@ export const OUTCOMES = [
 
 /** « Où est passée l'eau ? » (évaporation). Chaque situation est suivie d'un séchage complet. */
 export const DRYING = [
-  { id: 'linge', text: '{who} étend du linge mouillé sur un fil, au soleil. Deux heures plus tard, il est sec.' },
-  { id: 'flaque', text: 'Après la pluie, {who} voit une flaque dans la cour. Le soleil brille. Le soir, la flaque a disparu.' },
-  { id: 'tableau', text: '{who} passe une éponge mouillée sur le tableau. Quelques minutes plus tard, le tableau est sec.' },
-  { id: 'serviette', text: '{who} pose une serviette mouillée sur un radiateur chaud. Le lendemain, elle est sèche.' },
-  { id: 'trottoir', text: 'Il a plu sur le trottoir. Le soleil brille. Un peu plus tard, le trottoir est sec.' },
-  { id: 'maillot', text: '{who} étend son maillot de bain mouillé au soleil. Au bout d\'un moment, il est sec.' },
-  { id: 'sol', text: '{who} lave le sol du couloir avec un balai mouillé. Le sol devient sec.' },
-  { id: 'vitre', text: 'La vitre de la cuisine est mouillée par une averse. Le soleil brille. Peu après, la vitre est sèche.' },
+  { id: 'linge', text: '{who} étend du linge mouillé sur un fil, au soleil. Deux heures plus tard, il est sec.', soak: 'Elle est rentrée dans le fil.' },
+  { id: 'flaque', text: 'Après la pluie, {who} voit une flaque dans la cour goudronnée. Le soleil brille. Le soir, la flaque a disparu.', soak: 'Elle est rentrée dans le sol.' },
+  { id: 'tableau', text: '{who} passe une éponge mouillée sur le tableau. Quelques minutes plus tard, le tableau est sec.', soak: 'Elle est rentrée dans le tableau.' },
+  { id: 'serviette', text: '{who} pose une serviette mouillée sur un radiateur chaud. Le lendemain, elle est sèche.', soak: 'Elle est rentrée dans le radiateur.' },
+  { id: 'trottoir', text: 'Il a plu sur le trottoir. Le soleil brille. Un peu plus tard, le trottoir est sec.', soak: 'Elle est rentrée dans le trottoir.' },
+  { id: 'maillot', text: '{who} étend son maillot de bain mouillé au soleil. Au bout d\'un moment, il est sec.', soak: 'Elle est rentrée dans le maillot.' },
+  { id: 'sol', text: '{who} lave le sol carrelé du couloir avec un balai mouillé. Le sol devient sec.', soak: 'Elle est rentrée dans le carrelage.' },
+  { id: 'vitre', text: 'La vitre de la cuisine est mouillée par une averse. Le soleil brille. Peu après, la vitre est sèche.', soak: 'Elle est rentrée dans la vitre.' },
 ];
 export const DRYING_RIGHT = [
   'Elle est dans l\'air, invisible.',
@@ -142,14 +145,18 @@ export const DRYING_RIGHT = [
   'Elle est partie dans l\'air sous forme de vapeur d\'eau.',
   'Elle est dans l\'air, en gaz.',
 ];
-export const DRYING_WRONG = [
+/** Fausses réponses qui reprennent les mots « air » et « gaz » : le mot ne désigne pas la bonne réponse. */
+export const DRYING_WRONG_WORD = [
+  'Elle est devenue de la glace dans l\'air.',
+  'Elle est devenue un gaz qui n\'existe plus.',
+  'Elle est devenue de la neige dans l\'air.',
+];
+export const DRYING_WRONG_PLAIN = [
   'Elle est devenue de la glace.',
   'Elle a disparu pour toujours.',
   'Elle n\'existe plus.',
-  'Elle est devenue de la neige.',
-  'Elle a disparu : elle n\'existe plus nulle part.',
-  'Elle s\'est changée en glace, puis a disparu.',
 ];
+export const DRYING_WRONG = [...DRYING_WRONG_WORD, ...DRYING_WRONG_PLAIN];
 
 /** Nommer le changement (niveau 2 : fond / gèle / s'évapore). `what` = le texte montré. */
 export const CHANGES = [
@@ -190,7 +197,7 @@ export const EXPERIMENTS = [
   },
   {
     id: 'flaque-soleil',
-    prompt: 'Après la pluie, {who} voit une flaque dans la cour. Le lendemain, elle a disparu. Que s\'est-il passé ?',
+    prompt: 'Après la pluie, {who} voit une flaque dans la cour. Le soleil brille. Le lendemain, elle a disparu. Que s\'est-il passé ?',
     right: 'L\'eau est partie dans l\'air en vapeur d\'eau.',
     wrong: ['L\'eau est devenue de la glace.', 'L\'eau n\'existe plus.'],
     explain: 'L\'eau de la flaque s\'est évaporée : elle est devenue de la vapeur d\'eau, un gaz invisible. L\'eau ne disparaît pas.',
@@ -205,7 +212,7 @@ export const EXPERIMENTS = [
   },
   {
     id: 'pese-gel',
-    prompt: '{who} pose sur une balance une boîte fermée remplie d\'eau, puis la met au congélateur. L\'eau gèle. {who} remet la boîte, toujours fermée, sur la balance. Que lit-on ?',
+    prompt: '{who} pose sur une balance une boîte fermée à moitié remplie d\'eau, puis la met au congélateur. L\'eau gèle. {who} remet la boîte, toujours fermée, sur la balance. Que lit-on ?',
     right: 'Le même nombre qu\'avant', wrong: ['Un nombre plus petit', 'Un nombre plus grand'],
     explain: 'Quand l\'eau gèle, il y a la même quantité d\'eau : elle est seulement solide. La balance ne change pas.',
     skill: 'l\'eau se conserve',
@@ -214,7 +221,7 @@ export const EXPERIMENTS = [
     id: 'vite-fondre',
     prompt: '{who} veut faire fondre un glaçon le plus vite possible. Que fait-on ?',
     right: 'On le met sur un radiateur chaud.', wrong: ['On le met au congélateur.', 'On le laisse dehors, une nuit de grand froid.'],
-    explain: 'La glace fond quand il fait chaud. Au froid, elle reste de la glace.',
+    explain: 'La glace fond quand il fait chaud. Au grand froid, elle reste de la glace.',
     skill: 'la glace fond',
   },
   {
@@ -311,7 +318,7 @@ export const VOCAB_EXPLAIN = {
 };
 
 /** Rangement à trois boîtes (niveau 3). */
-export const SORT_ITEMS = THINGS.filter((t) => !['bonhomme', 'vapeur-linge', 'bain'].includes(t.id));
+export const SORT_ITEMS = THINGS.filter((t) => !['bonhomme', 'bain'].includes(t.id));
 
 /** Phrases de niveau 3. */
 export const STATEMENTS_3 = {

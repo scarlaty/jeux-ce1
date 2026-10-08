@@ -57,14 +57,32 @@ test('aucun gaz n\'est dessiné par un émoji ; les émojis restent lisibles san
   for (const [s, list] of Object.entries(PICTURES)) for (const p of list) assert.equal(stateOf.get(p.emoji), s, p.value);
 });
 
-test('l\'état annoncé de chaque chose est exact (relecture par mot-clé de la banque)', () => {
-  const solid = /glaçon|neige|grêlon/;
-  const liquid = /goutte|pluie|mer|robinet|flaque|bain/;
-  const gas = /vapeur|invisible|dans l.air/;
-  for (const t of THINGS) {
-    const found = [solid.test(t.text) && 'solide', liquid.test(t.text) && 'liquide', gas.test(t.text) && 'gaz'].filter(Boolean);
-    assert.deepEqual(found, [t.state], t.id);
-  }
+test('l\'état annoncé de chaque chose est exact (table écrite à la main)', () => {
+  const expected = {
+    glacon: 'solide', neige: 'solide', bonhomme: 'solide', grelon: 'solide', 'grelon-air': 'solide',
+    goutte: 'liquide', pluie: 'liquide', mer: 'liquide', robinet: 'liquide', flaque: 'liquide', bain: 'liquide', 'goutte-air': 'liquide',
+    vapeur: 'gaz', 'vapeur-air': 'gaz', 'vapeur-linge': 'gaz', 'vapeur-flaque': 'gaz',
+  };
+  assert.deepEqual(THINGS.map((t) => t.id).sort(), Object.keys(expected).sort());
+  for (const t of THINGS) assert.equal(t.state, expected[t.id], t.id);
+});
+
+test('« état d\'une chose » : le gaz ne se reconnaît pas au mot (vapeur / invisible / air), solveur lexical ≤ 60 %', () => {
+  const WORD = /vapeur|invisible|air/i;
+  const gas = THINGS.filter((t) => t.state === 'gaz');
+  const others = THINGS.filter((t) => t.state !== 'gaz');
+  assert.ok(gas.some((t) => !WORD.test(t.text)), 'un gaz décrit sans ces mots');
+  assert.ok(others.some((t) => WORD.test(t.text)), 'un solide ou un liquide dont le texte contient « air »');
+  const qs = family(1, 'etat');
+  assert.ok(qs.length >= 500);
+  const solver = (v) => (WORD.test(v.text) ? 'gaz' : 'liquide');
+  const marked = qs.filter((q) => WORD.test(q.display.show.text)).length;
+  assert.ok(marked / qs.length > 0.2, 'couverture : le mot est présent dans une part notable des questions');
+  const share = checkNoSurfaceShortcut(qs, solver, { max: 0.6, label: 'niveau 1, mot vapeur/invisible/air' });
+  assert.ok(share > 0.3, `le solveur doit mesurer quelque chose (${share})`);
+  // et le mot ne désigne pas une seule classe
+  const withWord = new Set(qs.filter((q) => WORD.test(q.display.show.text)).map((q) => q.answer));
+  assert.ok(withWord.size >= 2, [...withWord].join());
 });
 
 test('toute phrase vraie sur la vapeur d\'eau dit « gaz », « invisible » ou « dans l\'air » ; aucune ne la rend visible', () => {
@@ -123,7 +141,8 @@ test('évaporation : seules des surfaces mouillées qui sèchent, l\'eau est « 
   assert.ok(!/glace|froid/.test(JSON.stringify(DRYING)));
   assert.ok(bank.DRYING_RIGHT.length >= 4 && bank.DRYING_WRONG.length >= 4);
   for (const r of bank.DRYING_RIGHT) assert.match(r, /air|vapeur|évapor/, r);
-  for (const w of bank.DRYING_WRONG) assert.ok(!/air|vapeur|évapor|gaz/.test(w) && !bank.DRYING_RIGHT.includes(w), w);
+  for (const w of bank.DRYING_WRONG) assert.ok(!bank.DRYING_RIGHT.includes(w), w);
+  for (const d of DRYING) assert.match(d.soak, /^Elle est rentrée dans/, d.id);
 });
 
 test('noms du changement : le modèle (départ → arrivée) redonne la réponse ; classes équilibrées', () => {
@@ -185,7 +204,8 @@ test('rangements : chaque boîte sert, au plus deux gaz, la vapeur est toujours 
     assert.equal(boxes.length, level === 1 ? 4 : 5);
     if (level === 3) assert.ok(boxes.filter((b) => b === 'gaz').length <= 2);
     for (const it of q.display.items) {
-      if (/vapeur|invisible/.test(it.text || '')) assert.equal(q.answer[it.id], 'gaz', q.key);
+      const known = THINGS.find((t) => it.text && t.text.endsWith(it.text));
+      if (known) assert.equal(q.answer[it.id], known.state, q.key);
       if (it.emoji) assert.notEqual(q.answer[it.id], 'gaz', q.key);
     }
   }
@@ -364,4 +384,21 @@ test('situations : trois classes équilibrées, et un solveur à 3 règles (ferm
   };
   const share = checkNoSurfaceShortcut(qs, rules, { max: 0.7, label: 'niveau 2, solveur 3 règles' });
   assert.ok(share > 0.3, `le solveur doit mesurer quelque chose (${share})`);
+});
+
+test('évaporation : un mot « air / gaz / vapeur » ne désigne pas la bonne réponse (au moins un faux choix sur trois en porte un)', () => {
+  const WORD = /air|gaz|vapeur|évapor/;
+  const qs = family(2, 'seche');
+  assert.ok(qs.length >= 300, `${qs.length} questions`);
+  const shown = qs.map((q) => q.display.choices.map((c) => c.text));
+  const withWrongWord = qs.filter((q) => q.display.choices.some((c) => c.value !== q.answer && WORD.test(c.text)));
+  assert.ok(withWrongWord.length / qs.length >= 1 / 3, `${withWrongWord.length}/${qs.length}`);
+  // solveur lexical : « le premier choix qui contient air|gaz|vapeur »
+  const lexical = (v) => v.choices.find((c) => WORD.test(c)) || v.choices[0];
+  const hits = qs.filter((q) => { const v = visibleOfQuestion(q); return lexical(v) === q.answer; }).length;
+  const covered = shown.filter((c) => c.some((t) => WORD.test(t))).length;
+  assert.equal(covered, qs.length, 'couverture : le solveur s\'applique à toutes les questions');
+  assert.ok(hits / qs.length <= 0.5, `solveur lexical : ${(100 * hits / qs.length).toFixed(1)} %`);
+  // les faux choix liés à la situation (« rentrée dans le … ») sont bien tirés
+  assert.ok(qs.some((q) => q.display.choices.some((c) => /rentrée dans/.test(c.text))));
 });
