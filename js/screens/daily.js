@@ -14,7 +14,7 @@ import { getGameProgress } from '../core/history.js';
 import { GAMES, ISLANDS, loadGame } from '../games/registry.js';
 import { rewardSummary } from '../core/rewards-live.js';
 import {
-  DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards, buildDailyPlan,
+  DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards, buildDailyPlan, buildDailyGame,
 } from '../core/rewards.js';
 import { isTrial } from '../core/trial.js';
 import {
@@ -31,28 +31,6 @@ const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !',
 function candidateGames() {
   const real = GAMES.filter((g) => !g.demo);
   return real.length ? real : GAMES.slice(0, 1);
-}
-
-/**
- * Construit le « jeu » du défi : ses questions suivent le plan `{ id, level, discovery }` déjà
- * tiré (voir `buildDailyPlan`, pur et testé), toujours dans le même ordre pour une même journée.
- * `seen.size` donne le numéro de la question en cours : c'est le compte de celles déjà acceptées
- * par le moteur (`engine.js`), qui peut retenter plusieurs fois une même question en cas de doublon.
- */
-function buildDailyGame(plan, byId, { key, island }) {
-  return {
-    id: 'defi',
-    title: 'Défi du jour',
-    island: 'defi',
-    rewardIsland: island,     // l'île dont la gommette est à gagner aujourd'hui
-    daily: { key },
-    levels: [{ label: 'Défi du jour' }],
-    makeQuestion(level, rng, seen) {
-      const slot = plan[Math.min(seen.size, plan.length - 1)];
-      const entry = byId.get(slot.id);
-      return entry.game.makeQuestion(slot.level, rng, seen);
-    },
-  };
 }
 
 export default {

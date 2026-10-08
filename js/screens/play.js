@@ -16,6 +16,7 @@ import {
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
+import { subjectName, sourceLang } from '../core/rewards.js';
 import { getGameProgress } from '../core/history.js';
 import { rewardEvents, rewardSummary, liveTotal } from '../core/rewards-live.js';
 import { currentCompanion, companionSummary } from '../core/companion-live.js';
@@ -69,6 +70,25 @@ const isForeign = (q) => Boolean(q.lang && !q.lang.startsWith('fr') && q.speak);
  * Question « à écouter » dans une autre langue (`listenOnly`) sur un appareil sans voix de cette
  * langue : on écrit le texte à lire, pour que la question reste jouable.
  */
+/**
+ * D'où vient la question (#110). Dans un jeu, l'enfant le sait déjà ; dans le défi du jour, cinq
+ * questions viennent de cinq jeux et 76 % changent de matière d'une question à la suivante. Sans ce
+ * repère, « cow » se lit à la française. La matière est écrite en toutes lettres : « Body and
+ * animals » est lui-même en anglais et ne renseigne pas une enfant de 7 ans.
+ * Posé au-dessus de la consigne, là où elle regarde — pas dans l'en-tête, déjà chargé à 360 px.
+ *
+ * `aria-hidden` : la même phrase est déjà annoncée par la région vivante de l'en-tête, qui la précède
+ * immédiatement dans l'ordre de lecture. Sans cela, un lecteur d'écran la dit deux fois de suite
+ * (`visually-hidden` cache à l'œil, pas à l'arbre d'accessibilité).
+ */
+function sourceTag(q) {
+  const src = q.source;
+  if (!src) return null;
+  return h('p', { class: 'from', dataset: { island: src.island }, 'aria-hidden': 'true' },
+    h('span', { class: 'from__subject', text: subjectName(src.subject) }),
+    h('span', { class: 'from__title', lang: sourceLang(src) || undefined, text: src.title }));
+}
+
 function noVoiceNote(q) {
   if (!q.listenOnly || !isForeign(q) || audio.hasVoice(q.lang)) return null;
   return h('p', { class: 'no-voice' },
@@ -256,7 +276,16 @@ export function createGameView(root, { app, game, onEnd }) {
     const question = session.current;
     const index = session.index;
     dots.forEach((d, i) => d.classList.toggle('is-current', i === index));
-    head.querySelector('.play-head__count').textContent = `${index + 1} / ${session.total}`;
+    // Une seule région vivante pour la question : le compteur. Deux régions sœurs mises à jour dans
+    // la même tâche se mettent en file et font deux annonces coup sur coup (#110). Le numéro reste
+    // visible, l'origine est ajoutée à côté mais cachée à l'œil : une région annonce tout son texte.
+    const count = head.querySelector('.play-head__count');
+    count.replaceChildren(
+      `${index + 1} / ${session.total}`,
+      question.source
+        ? h('span', { class: 'visually-hidden' }, `, ${subjectName(question.source.subject)}, `,
+          h('span', { lang: sourceLang(question.source) || undefined, text: question.source.title }), '.')
+        : '');
 
     if (buddyReacted) {
       buddyReacted = false;
@@ -277,6 +306,7 @@ export function createGameView(root, { app, game, onEnd }) {
     const [showMain, replay] = show?.flash ? flashControls(showContent, show.flash, answerEl) : [showContent, null];
     stage.className = `stage stage--${question.type}${show ? ' stage--with-show' : ''}`;
     stage.replaceChildren(...[
+      sourceTag(question),
       h('div', { class: 'prompt' },
         listenButton(question.speak || question.prompt, { lang, label: question.listenLabel || undefined }),
         h('p', { class: 'prompt__text', text: question.prompt })),

@@ -1082,3 +1082,34 @@
   .stage--with-show.stage--choice .choices:has(.clock__face) { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: none; }
   .choices:has(.clock__face) .choice .art { width: clamp(6rem, 9vw, 8.5rem); }
 }
+
+/* D'où vient la question (#110) — utile dans le défi du jour, où cinq questions viennent de cinq
+   jeux et où 76 % changent de matière d'une question à la suivante. Posé au-dessus de la consigne.
+
+   Le MOT dit la matière, la COULEUR dit l'île — ce sont deux axes indépendants du registre, et ils
+   divergent pour 2 jeux sur 20 : « Maths » s'affiche en bleu (Les tables, île aux Nombres) et en
+   orange (Lire l'heure, île des Mesures). C'est assumé : le sens est porté par le mot, la couleur
+   n'est qu'un rappel de l'endroit où le jeu vit sur la carte. Les variables viennent de
+   `tokens.css`, qui pose déjà --island-soft / --island-ink sur tout [data-island]. */
+.from {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  margin: 0 0 var(--space-2);
+  /* Suit la consigne : à 16 px fixes, l'étiquette devenait le plus petit texte de l'écran
+     sur tablette, alors qu'elle porte l'information la plus nouvelle (#110). */
+  font-size: clamp(1rem, 0.86rem + 0.6vw, 1.25rem);
+  line-height: 1.3;
+}
+
+.from__subject {
+  padding: 0.15em 0.7em;
+  border-radius: var(--radius-round);
+  background: var(--island-soft, var(--surface-sunk));
+  color: var(--island-ink, var(--ink));
+  font-weight: 700;
+}
+
+.from__title { color: var(--ink-soft); overflow-wrap: anywhere; }
+

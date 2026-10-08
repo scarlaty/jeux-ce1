@@ -391,6 +391,62 @@ export function buildDailyPlan(entries, seed, { count = DAILY_QUESTIONS } = {}) 
   return plan;
 }
 
+/**
+ * Noms des matières tels qu'ils s'écrivent à l'enfant (#110). Ici et pas dans l'écran : un jeu dont la
+ * matière serait absente de cette table afficherait sa clé technique (« emc »), et aucun test ne
+ * pourrait le voir depuis un module qui touche au DOM.
+ */
+export const SUBJECT_NAMES = {
+  'français': 'Français', maths: 'Maths', monde: 'Le monde', anglais: 'Anglais', emc: 'Vivre ensemble',
+};
+
+/** Le nom à afficher, ou la clé brute en dernier recours (mieux que du vide). */
+export function subjectName(subject) {
+  return SUBJECT_NAMES[subject] || subject;
+}
+
+/**
+ * La langue du TITRE du jeu. « Body and animals » et « Colors and numbers » sont en anglais : sans
+ * cela, la synthèse vocale et les lecteurs d'écran les prononcent à la française, dans une page
+ * `lang="fr"`. `null` pour tout le reste (#110).
+ */
+export function sourceLang(source) {
+  return source && source.subject === 'anglais' ? 'en-GB' : null;
+}
+
+/**
+ * Le « jeu » du défi du jour : il suit le plan déjà tiré, et marque chaque question de son origine.
+ *
+ * Pourquoi l'origine : cinq questions viennent de cinq jeux, et sur 120 jours simulés **76 % des
+ * questions changent de matière** par rapport à la précédente. Dans un jeu, l'enfant sait ce qu'elle
+ * joue — elle l'a choisi sur l'île, le titre est en haut de l'écran. Dans le défi, rien ne le disait :
+ * elle lisait « cow » après une question de maths, sans savoir que c'était de l'anglais (#110).
+ *
+ * `source` n'entre pas dans `renderFingerprint` (qui ne lit que la consigne et l'affichage) : le
+ * dédoublonnage de #92 est intact.
+ *
+ * Ici et pas dans l'écran, pour que ce soit testable : `js/screens/daily.js` touche au DOM.
+ */
+export function buildDailyGame(plan, byId, { key, island, title = 'Défi du jour' } = {}) {
+  return {
+    id: 'defi',
+    title,
+    island: 'defi',
+    rewardIsland: island,     // l'île dont la gommette est à gagner aujourd'hui
+    daily: { key },
+    levels: [{ label: title }],
+    makeQuestion(level, rng, seen) {
+      const slot = plan[Math.min(seen.size, plan.length - 1)];
+      const entry = byId.get(slot.id);
+      const question = entry.game.makeQuestion(slot.level, rng, seen);
+      return {
+        ...question,
+        source: { title: entry.game.title, subject: entry.game.subject, island: entry.game.island },
+      };
+    },
+  };
+}
+
 // --- Étoiles et ouverture des îles -------------------------------------------------------------
 
 /** Étoiles gagnées pour un jeu (meilleur résultat de chaque niveau). */
