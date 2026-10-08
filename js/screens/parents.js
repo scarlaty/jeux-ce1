@@ -415,7 +415,7 @@ function backupPanel(profile, app, redraw) {
 
   const exportPart = [
     sectionTitle('Exporter'),
-    h('p', { class: 'parents__text', text: 'La sauvegarde contient tous les profils de cette tablette : prénoms, avatars, progression et historique. Les réglages de l'appareil (thème, son) n'en font pas partie. Rien n'est envoyé sur Internet.' }),
+    h('p', { class: 'parents__text', text: 'La sauvegarde contient tous les profils de cette tablette : prénoms, avatars, progression et historique. Les réglages de l\'appareil (thème, son) n\'en font pas partie. Rien n\'est envoyé sur Internet.' }),
     h('div', { class: 'parents__actions' },
       h('button', { type: 'button', class: 'btn btn--primary', onclick: download }, h('span', { text: 'Télécharger le fichier' })),
       h('button', { type: 'button', class: 'btn btn--secondary', onclick: copyCode }, h('span', { text: 'Copier le code' }))),
@@ -427,7 +427,7 @@ function backupPanel(profile, app, redraw) {
     ? [h('p', { class: 'parents__text', text: 'Importer une sauvegarde et effacer la progression sont indisponibles pendant le mode essai.' })]
     : [
       sectionTitle('Importer'),
-      h('p', { class: 'parents__text', text: 'Choisissez un fichier de sauvegarde, ou collez le code ci-dessous. La sauvegarde est vérifiée et résumée avant d'écrire quoi que ce soit.' }),
+      h('p', { class: 'parents__text', text: 'Choisissez un fichier de sauvegarde, ou collez le code ci-dessous. La sauvegarde est vérifiée et résumée avant d\'écrire quoi que ce soit.' }),
       h('div', { class: 'field-row' },
         h('label', { class: 'field-row__label', for: 'fichier', text: 'Fichier' }),
         file),

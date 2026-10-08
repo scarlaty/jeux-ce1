@@ -2,7 +2,8 @@
 // Aucun navigateur : on rejoue une vraie partie avec TOUS les abonnés installés comme dans js/app.js.
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { createEmitter, createSession } from '../js/core/engine.js';
 import { createMemoryBackend, createStorage, createStore, defaultProfile } from '../js/core/storage.js';
 import { recordResult } from '../js/core/history.js';
@@ -183,4 +184,12 @@ test('le mode n\'est jamais lu ni écrit dans un stockage persistant', () => {
   assert.deepEqual(calls, []);
   const source = readFileSync(new URL('../js/core/trial.js', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '');
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|document\.cookie/);
+});
+
+test('les écrans et app.js (non importables sous node, DOM) restent syntaxiquement valides', () => {
+  const files = ['js/app.js', ...readdirSync(new URL('../js/screens/', import.meta.url)).map((f) => `js/screens/${f}`)];
+  for (const f of files) {
+    const out = spawnSync(process.execPath, ['--check', new URL(`../${f}`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { encoding: 'utf8' });
+    assert.equal(out.status, 0, `${f} : ${out.stderr}`);
+  }
 });
