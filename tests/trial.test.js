@@ -12,6 +12,7 @@ import { installChest, chestSummary, resetChestForTests } from '../js/core/chest
 import { installCompanion, companionSummary, resetCompanionForTests } from '../js/core/companion-live.js';
 import { islandUnlocked, dailyKey } from '../js/core/rewards.js';
 import { createRng } from '../js/core/random.js';
+import { themes, contrast } from './helpers/tokens.js';
 import { isTrial, enterTrial, exitTrial, onTrialChange, openOrTrial } from '../js/core/trial.js';
 
 /** Jeu minimal scriptable : la bonne réponse est toujours « oui ». */
@@ -192,4 +193,47 @@ test('les écrans et app.js (non importables sous node, DOM) restent syntaxiquem
     const out = spawnSync(process.execPath, ['--check', new URL(`../${f}`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { encoding: 'utf8' });
     assert.equal(out.status, 0, `${f} : ${out.stderr}`);
   }
+});
+
+const profileCss = readFileSync(new URL('../css/profile.css', import.meta.url), 'utf8');
+const rule = (sel) => {
+  const start = profileCss.indexOf(`
+${sel} {`);
+  assert.ok(start >= 0, `règle ${sel} introuvable`);
+  return profileCss.slice(profileCss.indexOf('{', start) + 1, profileCss.indexOf('}', start));
+};
+
+test('le bandeau du mode essai fait au plus 56 px de haut (ne mange pas l écran)', () => {
+  const body = rule('.trial-bar');
+  assert.match(body, /height:\s*56px/);
+  assert.match(body, /padding:\s*0 /);                 // aucune marge verticale
+  assert.doesNotMatch(body, /border-(top|bottom)/);   // un liseré s'ajouterait à la hauteur
+  assert.match(rule('.trial-bar__exit'), /min-height:\s*56px/);
+});
+
+test('anneau de focus du bouton « Quitter » fait au moins 3:1 contre le fond du bandeau, en clair et en sombre', () => {
+  const ring = rule('.trial-bar__exit:focus-visible').match(/outline:\s*\d+px solid var\((--[\w-]+)\)/);
+  const bg = rule('.trial-bar').match(/background:\s*var\((--[\w-]+)\)/);
+  assert.ok(ring && bg);
+  const t = themes();
+  for (const [name, theme] of [['clair', t.light], ['sombre', t.dark]]) {
+    const ratio = contrast(theme[ring[1]], theme[bg[1]]);
+    assert.ok(ratio >= 3, `${name} : ${ratio.toFixed(2)}:1`);
+  }
+});
+
+test('quitter le mode essai en pleine partie : la partie commencée n écrit jamais rien', () => {
+  const before = clone(store.getProfile('p1'));
+  enterTrial();
+  const session = createSession(fakeGame(), 3, {
+    events, count: 4, record: (result) => recordResult(store, 'p1', result),
+  });
+  session.answer('oui'); session.next();
+  exitTrial();                                   // l'adulte touche « Quitter » au milieu de la partie
+  for (let i = 0; i < 3; i += 1) { session.answer('oui'); session.next(); }
+  assert.equal(session.done, true);
+  assert.deepEqual(store.getProfile('p1'), before);
+  assert.equal(chestSummary(session), null);
+  assert.equal(companionSummary(session), null);
+  assert.equal(rewardSummary(session), null);
 });

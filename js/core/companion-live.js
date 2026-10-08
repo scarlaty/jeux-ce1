@@ -3,7 +3,7 @@
 //
 //   companionSummary(session) → ce qui a changé à la fin de cette partie (ou null)
 import { gameEvents } from './engine.js';
-import { isTrial } from './trial.js';
+import { isTrialSession } from './trial.js';
 import { totalStars } from './rewards.js';
 import { addRun, readCompanion, saveCompanion } from './companion.js';
 import { withAccessory } from './chest.js';
@@ -13,7 +13,7 @@ let last = null;      // { session, change }
 let installed = false;
 
 function onEnd({ session, result, extras }) {
-  if (!context || isTrial()) return;   // mode essai : le compagnon ne compte pas la partie
+  if (!context || isTrialSession(session)) return;   // mode essai : le compagnon ne compte pas la partie
   let change = null;
   try {
     // `record` (app.js) a déjà écrit la partie dans `progress` : le total est celui de la carte des îles.

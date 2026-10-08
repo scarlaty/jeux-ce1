@@ -18,7 +18,7 @@ import {
 } from '../core/rewards.js';
 import { isTrial } from '../core/trial.js';
 import {
-  createGameView, starRow, gradeBanner, extrasList, trialEndNote, celebrate, endCompanion, endChest, companionAction,
+  createGameView, starRow, gradeBanner, extrasList, trialEndNote, describeTrialEnd, celebrate, endCompanion, endChest, companionAction,
 } from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
@@ -157,6 +157,7 @@ export default {
           companionAction(session),
           h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--secondary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));
+      describeTrialEnd(root);
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
     }
 

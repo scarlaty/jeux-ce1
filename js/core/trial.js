@@ -31,6 +31,12 @@ export function openOrTrial(open) {
   return active || Boolean(open);
 }
 
+/** Une partie lancée en mode essai reste une partie d'essai même si l'on quitte le mode avant sa fin
+ *  (`session.trial`, posé par le moteur au départ) : elle n'écrit jamais rien. */
+export function isTrialSession(session) {
+  return active || Boolean(session?.trial);
+}
+
 /** S'abonne aux changements : fn(actif). Renvoie la fonction de désabonnement. */
 export function onTrialChange(fn) {
   listeners.add(fn);

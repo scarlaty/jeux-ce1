@@ -5,7 +5,7 @@
 //   rewardEvents.on('points', ({ session, total, gain, bonus, label }) => …)   // compteur en direct
 //   rewardSummary(session) → ce qui a été gagné à la fin de cette partie (points, gommettes, grade)
 import { gameEvents, createEmitter } from './engine.js';
-import { isTrial } from './trial.js';
+import { isTrial, isTrialSession } from './trial.js';
 import {
   COMPLETION_POINTS, answerPoints, applyGameRewards, readRewards,
 } from './rewards.js';
@@ -49,7 +49,7 @@ function islandOf(game) {
 }
 
 function onEnd({ session, result, extras }) {
-  if (isTrial()) { run = null; return; }   // mode essai : rien n'est écrit, aucun gain affiché
+  if (isTrialSession(session)) { run = null; return; }   // mode essai : rien n'est écrit, aucun gain affiché
   const earned = (run && run.session === session ? run.points : 0) + COMPLETION_POINTS;
   run = null;
   if (!context) return;

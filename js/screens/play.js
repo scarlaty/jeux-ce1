@@ -107,7 +107,13 @@ export function gradeBanner(grade) {
 /** Les lignes poussées dans `result.extras` par les récompenses et les autres modules. */
 /** Mode essai (#111) : seule ligne ajoutée à l'écran de fin, à la place des gains. */
 export function trialEndNote() {
-  return isTrial() ? h('p', { class: 'end__trial', text: TRIAL_END_TEXT }) : null;
+  return isTrial() ? h('p', { class: 'end__trial', id: 'essai-fin', text: TRIAL_END_TEXT }) : null;
+}
+
+/** Les boutons de l'écran de fin annoncent la ligne du mode essai quand ils prennent le focus. */
+export function describeTrialEnd(root) {
+  if (!isTrial()) return;
+  for (const b of root.querySelectorAll('.end__actions .btn')) b.setAttribute('aria-describedby', 'essai-fin');
 }
 
 export function extrasList(extras) {
@@ -445,6 +451,7 @@ export default {
           h('button', { type: 'button', class: 'btn btn--secondary', onclick: showLevels }, h('span', { text: 'Changer de niveau' })),
           h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte' })))));
+      describeTrialEnd(root);
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }
 
