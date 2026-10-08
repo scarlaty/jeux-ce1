@@ -86,7 +86,9 @@ function sujetQuestion(item, level, rng) {
     type: 'choice',
     prompt: `Quel groupe de mots est le sujet de ${quote(item.verbe)} ?${help}`,
     speak: `Quel groupe de mots est le sujet de ${item.verbe} ? Écoute la phrase : ${noFinal(item.text)}`,
-    display: { choices: choice(item.chunks.map((c) => c.text), rng, true) },
+    // La phrase entière est montrée (les groupes, seuls, ne se lisent pas comme une phrase) ; les choix restent
+    // dans l'ordre de la phrase.
+    display: { show: { text: item.text, cursive: true, wrap: true }, choices: choice(item.chunks.map((c) => c.text), rng, true) },
     answer: item.sujet,
     explain: explainSujet(item),
     skill: 'trouver le sujet du verbe',
