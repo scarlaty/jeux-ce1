@@ -147,6 +147,13 @@ export const GAMES = [
     load: () => import('./besoins-vivant.js'),
   },
   {
+    id: 'etats-eau',
+    title: 'Les états de l\'eau',
+    island: 'monde',
+    subject: 'monde',
+    load: () => import('./etats-eau.js'),
+  },
+  {
     id: 'regles-de-vie',
     title: 'Les règles de vie',
     island: 'ailleurs',

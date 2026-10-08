@@ -145,6 +145,7 @@ export const SHORT_TITLES = {
   'colors-numbers': 'Colors and numbers',
   'body-animals': 'Body and animals',
   'besoins-vivant': 'Besoins du vivant',
+  'etats-eau': 'États de l\'eau',
   'regles-de-vie': 'Règles de vie',
 };
 
