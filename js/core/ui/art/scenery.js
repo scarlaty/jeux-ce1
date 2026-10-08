@@ -331,6 +331,19 @@ const SIGN = () => [
   dt('M-7 -13.4h14'),
 ];
 
+const SIGNPOST = () => [
+  ground(7),
+  path('M-1.2 0V-22h2.4V0Z', 'sc-wood-dk'),
+  ln('M-1.2 0V-22h2.4V0Z'),
+  path('M-7 -21.6h10.4l4 3.2l-4 3.2H-7Z', 'sc-wood'),
+  path('M-7 -21.6h3.4v6.4H-7Z', 'sc-wood-lt'),
+  ln('M-7 -21.6h10.4l4 3.2l-4 3.2H-7Z'),
+  path('M7 -12.6H-3.4l-4 3.2l4 3.2H7Z', 'sc-wood'),
+  path('M7 -12.6H3.6v6.4H7Z', 'sc-wood-lt'),
+  ln('M7 -12.6H-3.4l-4 3.2l4 3.2H7Z'),
+  dt('M-4 -18.4h5.6M-1 -9.4h5.6'),
+];
+
 const LOCK = () => [
   path('M-3.4 -4.6a3.4 4 0 0 1 6.8 0', 'sc-arm'),
   path('M-5 -5h10a1.6 1.6 0 0 1 1.6 1.6v5.8a1.6 1.6 0 0 1 -1.6 1.6h-10a1.6 1.6 0 0 1 -1.6 -1.6v-5.8a1.6 1.6 0 0 1 1.6 -1.6Z', 'sc-gold'),
@@ -717,6 +730,7 @@ export const PROPS = {
   hut: { label: 'Cabane', parts: HUT, height: 22 },
   tent: { label: 'Tente', parts: TENT, height: 21 },
   well: { label: 'Puits', parts: WELL, height: 26 },
+  signpost: { label: 'Poteau aux flèches', parts: SIGNPOST, height: 24 },
 };
 
 export const PROP_IDS = Object.keys(PROPS);

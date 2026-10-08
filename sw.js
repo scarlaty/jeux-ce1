@@ -113,6 +113,7 @@ const PRECACHE = [
   'js/data/homophones.js',
   'js/data/phrases.js',
   'js/data/syllabes.js',
+  'js/data/verbes.js',
 
   'js/screens/index.js',
   'js/screens/album.js',
@@ -147,6 +148,7 @@ const PRECACHE = [
   'js/games/homophones.js',
   'js/games/phrase.js',
   'js/games/sons.js',
+  'js/games/verbe-sujet.js',
   'js/games/syllabes.js',
   'js/games/tables.js',
 ];

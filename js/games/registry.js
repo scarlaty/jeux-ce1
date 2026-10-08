@@ -77,6 +77,13 @@ export const GAMES = [
     load: () => import('./homophones.js'),
   },
   {
+    id: 'verbe-sujet',
+    title: 'Le verbe et son sujet',
+    island: 'mots',
+    subject: 'français',
+    load: () => import('./verbe-sujet.js'),
+  },
+  {
     id: 'calcul-mental',
     title: 'Calcul mental',
     island: 'nombres',
