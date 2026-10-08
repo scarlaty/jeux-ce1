@@ -257,7 +257,7 @@
 }
 
 @keyframes stamp-static-in {
-  from { opacity: 0; transform: rotate(-3deg) scale(1.6); }
+  from { opacity: 0; transform: rotate(-3deg) scale(1.25); }
   to { opacity: 1; transform: rotate(-3deg) scale(1); }
 }
 
@@ -722,7 +722,7 @@
   margin: var(--space-4) auto 0;
   text-align: center;
 }
-.end__title { font-size: clamp(1.8rem, 1.4rem + 2vw, 2.6rem); }
+.end__title { font-size: min(clamp(1.8rem, 1.4rem + 2vw, 2.6rem), 8vw); }   /* plafonné comme .stamp--ok : pas de débordement pendant l'animation */
 .end__score { font-size: var(--text-l); }
 .end__score strong { font-family: var(--font-title); font-size: 1.4em; color: var(--island-ink); }
 .end__unlocked {

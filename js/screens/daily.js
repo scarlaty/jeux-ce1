@@ -16,7 +16,10 @@ import { rewardSummary } from '../core/rewards-live.js';
 import {
   DAILY_QUESTIONS, dailyKey, dailySeed, isDailyDone, readRewards, buildDailyPlan, buildDailyGame,
 } from '../core/rewards.js';
-import { createGameView, starRow, gradeBanner, extrasList, celebrate, endCompanion, endChest, companionAction } from './play.js';
+import { isTrial } from '../core/trial.js';
+import {
+  createGameView, starRow, gradeBanner, extrasList, trialEndNote, describeTrialEnd, celebrate, endCompanion, endChest, companionAction,
+} from './play.js';
 
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 
@@ -37,7 +40,7 @@ export default {
     const rewards = readRewards(profile);
     const key = dailyKey();
     const seed = dailySeed();
-    const alreadyDone = isDailyDone(rewards);
+    const alreadyDone = !isTrial() && isDailyDone(rewards);
 
     const root = h('section', { class: 'page play daily', dataset: { island: 'defi' } });
     view.append(root);
@@ -51,7 +54,7 @@ export default {
         game,
         plays: progress.plays,
         // On ne pose que des questions de niveaux déjà ouverts : le défi doit rester faisable.
-        maxLevel: Math.max(1, Math.min(game.levels.length, progress.unlocked)),
+        maxLevel: isTrial() ? game.levels.length : Math.max(1, Math.min(game.levels.length, progress.unlocked)),
       };
     });
 
@@ -101,7 +104,7 @@ export default {
         alreadyDone
           ? h('p', { class: 'daily-intro__done' }, icon('check', { size: 22 }),
             h('span', { text: 'Tu as déjà gagné la récompense du jour. Rejoue quand tu veux !' }))
-          : h('p', { class: 'daily-intro__prize', text: 'Une récompense t\'attend au bout !' }),
+          : h('p', { class: 'daily-intro__prize', text: isTrial() ? 'Mode essai : tous les niveaux sont ouverts, rien ne sera enregistré.' : 'Une récompense t\'attend au bout !' }),
         h('div', { class: 'end__actions' },
           h('button', { type: 'button', class: 'btn btn--primary', onclick: startDaily },
             h('span', { text: alreadyDone ? 'Rejouer le défi' : 'Commencer' }), icon('arrowRight')),
@@ -126,11 +129,13 @@ export default {
         chest?.el,
         gained?.grade && gradeBanner(gained.grade),
         extrasList(result.extras),
-        h('p', { class: 'end__hint', text: 'Un nouveau défi t\'attend demain !' }),
+        trialEndNote(),
+        !isTrial() && h('p', { class: 'end__hint', text: 'Un nouveau défi t\'attend demain !' }),
         h('div', { class: 'end__actions' },
           companionAction(session),
           h('a', { class: `btn ${companionAction(session) ? 'btn--secondary' : 'btn--primary'}`, href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--secondary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));
+      describeTrialEnd(root);
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn')?.focus({ preventScroll: true });
     }
 

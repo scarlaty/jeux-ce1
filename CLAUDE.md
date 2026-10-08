@@ -497,6 +497,26 @@ argent 2, doré 3) que l'enfant touche à l'écran de fin ; il se secoue, brille
 - **Animation** : CSS (secousse, lueur, couvercle qui se lève, contenu qui jaillit). Avec « réduire les animations »,
   le coffre s'ouvre d'un coup et montre son contenu, sans mouvement.
 
+## Mode essai (#111)
+
+Un adulte (espace parents, après `gate.js`) essaie chaque jeu à chaque niveau **sans toucher au profil** : tout est
+ouvert, rien n'est enregistré, un bandeau permanent « Mode essai — rien n'est enregistré » + « Quitter » est collé sous
+la barre du haut (`role="status"`, sobre, pas de kawaii), l'écran de fin affiche score et étoiles et la ligne « Mode essai :
+rien n'a été enregistré. » (ni points, coffre, gommette, compagnon, niveau débloqué).
+- **`core/trial.js`** : `isTrial()`, `enterTrial()`, `exitTrial()`, `onTrialChange(fn)`, `openOrTrial(ouvertNormalement)`. L'état est
+  une variable de module : jamais dans localStorage/sessionStorage, perdu au rechargement. Aucune dépendance (importable partout).
+- **Déblocage = lecture seule** : tout endroit qui décide « île / niveau / défi ouvert » passe par `openOrTrial(...)` (home, island,
+  play, daily). On n'écrit JAMAIS `unlocked` dans le profil : à la sortie, tout redevient fermé comme avant.
+- **Aucune écriture, en deux couches** : (1) **garde central** dans `createStore` (`storage.js`, option `readOnly`, par défaut `isTrial`) :
+  `setProfile`, `updateProfile`, `removeProfile` et la réécriture d'une migration sont sans effet pendant l'essai — un futur abonné
+  oublieux ne peut pas écrire dans le profil ; les réglages de l'appareil (méta : thème, son) restent modifiables ;
+  (2) chaque abonné s'arrête de lui-même (`app.record`, `recordResult`, `rewards-live`, `chest-live`, `companion-live`) pour ne rien
+  AFFICHER non plus (extras, coffre). **Un nouvel abonné à `gameEvents` doit tester `isTrial()` en tête de `'end'`.**
+  Le défi du jour passe par les mêmes abonnés.
+- Écrans qui écrivent : `#/compagnon` renvoie à la carte, `#/profil*` et `#/bienvenue` quittent le mode ; l'import de sauvegarde et la
+  remise à zéro sont masqués dans l'espace parents.
+- Tests : `tests/trial.test.js` (partie complète → profil et méta identiques, îles/niveaux ouverts puis refermés, aucun stockage persistant).
+
 ## Tests et vérification
 
 - `npm test` (= `node --test "tests/**/*.test.js"`) doit passer avant chaque commit (aucune dépendance
