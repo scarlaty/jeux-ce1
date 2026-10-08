@@ -30,6 +30,8 @@ const ALL_IDS = ITEMS.map((i) => i.id);
 const PAIRED_PARTS = ['ear', 'eye', 'hand', 'foot'];
 const PLURALABLE = [...PAIRED_PARTS, 'tooth', ...ANIMAL_IDS];
 /** Parties du corps qu'on touche (« Touch your tooth » serait étrange). */
+const SINGLE_PARTS = ['nose', 'mouth'];
+const IRREGULAR = ['foot', 'tooth', 'mouse'];
 const TOUCHABLE = ['nose', 'mouth', 'ear', 'eye', 'hand', 'foot'];
 
 const POOLS = { 1: FIRST_ANIMALS, 2: ALL_IDS, 3: ALL_IDS };
@@ -68,8 +70,8 @@ function pickRight(level, rng) {
   return getItem(id);
 }
 
-function wordChoices(level, rng, right) {
-  const pool = POOLS[level].filter((id) => sameKind(right.id).includes(id));
+function wordChoices(level, rng, right, only = null) {
+  const pool = POOLS[level].filter((id) => sameKind(right.id).includes(id) && (!only || only.includes(id)));
   return rng.shuffle([right.id, ...compatible(pool.filter((id) => id !== right.id), rng, 3, [right.id])]).map((id) => picture(getItem(id)));
 }
 
@@ -163,9 +165,9 @@ function countChoices(item, n, others, rng) {
   return rng.shuffle([pictures(item, n), pictures(item, 3 - n), pictures(other, n), pictures(other, 3 - n)]);
 }
 
-function pluralScene(rng, ids) {
+function pluralScene(rng, ids, fixedN = null) {
   const item = getItem(rng.pick(ids));
-  const n = rng.pick([1, 2]);
+  const n = fixedN || rng.pick([1, 2]);
   const others = compatible(PLURALABLE.filter((id) => id !== item.id), rng, 1, [item.id]);
   return { item, n, others: others.map(getItem) };
 }
@@ -178,7 +180,11 @@ function pluralExplain(item, n) {
 
 /** « feet » ou « foot », sans nombre : le mot seul dit s'il y en a un ou plusieurs. */
 function pluralQuestion(level, rng) {
-  const { item, n, others } = pluralScene(rng, PLURALABLE.filter((id) => getItem(id).plural !== 'invariant'));
+  // 40 % des questions : un pluriel irrégulier (feet, teeth, mice), seul cas où « un s final = plusieurs » se trompe.
+  const irregular = rng.chance(0.4);
+  const { item, n, others } = irregular
+    ? pluralScene(rng, IRREGULAR, 2)
+    : pluralScene(rng, PLURALABLE.filter((id) => getItem(id).plural !== 'invariant'));
   const heard = wordEn(item, n);
   return {
     key: `${ID}:pluriel:${item.id}:${n}`,
@@ -223,27 +229,30 @@ function touchQuestion(level, rng) {
     prompt: 'Écoute la consigne, puis touche la bonne partie du corps.',
     speak: sentence,
     ...LISTEN,
-    display: { show: { text: sentence, lang: 'en-GB' }, choices: wordChoices(3, rng, right) },
+    display: { show: { text: sentence, lang: 'en-GB' }, choices: wordChoices(3, rng, right, TOUCHABLE) },
     answer: right.id,
     explain: `« ${sentence.slice(0, -1)} » veut dire « touche ${yourFr(right)} ». ${meaning(right)}`,
     skill: 'consigne « Touch your… »',
   };
 }
 
-/** « I've got two ears. » / « I've got a dog. » : une ou deux images, le bon nombre ET le bon objet. */
+/** « I've got two ears. » / « I've got a nose. » / « I've got a dog. » : corps et animaux, un ou deux. */
 function haveQuestion(level, rng) {
-  const item = getItem(rng.pick([...PAIRED_PARTS, ...ANIMAL_IDS]));
-  const n = item.kind === 'part' ? 2 : rng.pick([1, 2]);
-  const pool = item.kind === 'part' ? PAIRED_PARTS : ANIMAL_IDS;
-  const others = compatible(pool.filter((id) => id !== item.id), rng, 1, [item.id]).map(getItem);
+  const item = getItem(rng.pick([...PAIRED_PARTS, ...SINGLE_PARTS, ...ANIMAL_IDS]));
+  const single = SINGLE_PARTS.includes(item.id);
+  const n = item.kind === 'part' ? (single ? 1 : 2) : rng.pick([1, 2]);
   const sentence = n === 1 ? `I've got ${indefiniteEn(item)}.` : `I've got two ${item.enPlural}.`;
+  // Nez, bouche : on ne les montre pas à deux (« two noses » serait étrange) ; quatre parties, une image chacune.
+  const choices = single
+    ? rng.shuffle([item.id, ...rng.sample([...SINGLE_PARTS.filter((id) => id !== item.id), ...PAIRED_PARTS], 3)]).map((id) => pictures(getItem(id), 1))
+    : countChoices(item, n, compatible((item.kind === 'part' ? PAIRED_PARTS : ANIMAL_IDS).filter((id) => id !== item.id), rng, 1, [item.id]).map(getItem), rng);
   return {
     key: `${ID}:j-ai:${item.id}:${n}`,
     type: 'choice',
     prompt: 'Écoute la phrase, puis touche l\'image qui correspond.',
     speak: sentence,
     ...LISTEN,
-    display: { show: { text: sentence, lang: 'en-GB' }, choices: countChoices(item, n, others, rng) },
+    display: { show: { text: sentence, lang: 'en-GB' }, choices },
     answer: `${item.id}-${n}`,
     explain: `« ${sentence.slice(0, -1)} » veut dire « j'ai ${countFr(item, n)} ». `
       + (n === 2 ? `Deux, ça s'entend : « two ${item.enPlural} ».` : `Un seul : « ${indefiniteEn(item)} ».`),
@@ -253,7 +262,7 @@ function haveQuestion(level, rng) {
 
 /** « I've got a cat and a fish. » : deux animaux, jamais deux images qui diffèrent seulement par l'ordre. */
 function twoAnimalsQuestion(level, rng) {
-  const [a, b, c, d, e] = compatible(ANIMAL_IDS, rng, 5).map(getItem);
+  const [a, b, c, d] = compatible(ANIMAL_IDS, rng, 4).map(getItem);
   const sentence = `I've got ${indefiniteEn(a)} and ${indefiniteEn(b)}.`;
   const pair = (x, y) => ({ value: `${x.id}+${y.id}`, emoji: `${x.emoji}${y.emoji}`, label: `${x.fr} et ${y.fr}` });
   return {
@@ -262,7 +271,7 @@ function twoAnimalsQuestion(level, rng) {
     prompt: 'Écoute la phrase, puis touche l\'image qui correspond.',
     speak: sentence,
     ...LISTEN,
-    display: { show: { text: sentence, lang: 'en-GB' }, choices: rng.shuffle([pair(a, b), pair(a, c), pair(d, b), pair(c, e)]) },
+    display: { show: { text: sentence, lang: 'en-GB' }, choices: rng.shuffle([pair(a, b), pair(a, c), pair(b, d), pair(c, d)]) },
     answer: `${a.id}+${b.id}`,
     explain: `« ${sentence.slice(0, -1)} » veut dire « j'ai ${indefiniteFr(a)} et ${indefiniteFr(b)} ». ${capital(a.en)}, c'est ${definiteFr(a)} ; ${b.en}, c'est ${definiteFr(b)}.`,
     skill: 'phrase « I\'ve got… »',
@@ -274,7 +283,7 @@ function twoAnimalsQuestion(level, rng) {
 // Une forme par entrée ; une forme répétée tombe plus souvent.
 const FORMS = {
   1: [listenQuestion, listenQuestion, readQuestion, itsQuestion],
-  2: [listenQuestion, listenQuestion, readQuestion, wordQuestion, wordQuestion, wordQuestion],
+  2: [listenQuestion, listenQuestion, listenQuestion, itsQuestion, readQuestion, wordQuestion, wordQuestion, wordQuestion],
   3: [pluralQuestion, pluralQuestion, numberedQuestion, touchQuestion, haveQuestion, haveQuestion, twoAnimalsQuestion],
 };
 

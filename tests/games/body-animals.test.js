@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import game from '../../js/games/body-animals.js';
 import { checkGameShape, checkGenerator, EMOJIS_ECARTES } from '../helpers/game-checks.js';
 import { toChoice } from '../../js/core/validate.js';
+import { ITEMS } from '../../js/data/corps-animaux.js';
 
 const byLevel = checkGenerator(game, { draws: 500, minDistinct: 30 });
 const all = () => Object.entries(byLevel).flatMap(([level, qs]) => qs.map((q) => [Number(level), q]));
@@ -21,7 +22,7 @@ const WORDS = {
 const PARTS = ['ear', 'eye', 'nose', 'mouth', 'hand', 'foot', 'tooth'];
 const ANIMALS = Object.keys(WORDS).filter((w) => !PARTS.includes(w));
 const FIRST_ANIMALS = ['cat', 'dog', 'bird', 'fish', 'horse', 'cow', 'pig', 'rabbit', 'duck', 'lion', 'elephant', 'monkey'];
-const TRANSPARENT = ['lion', 'elephant', 'giraffe'];
+const TRANSPARENT = ITEMS.filter((i) => i.transparent).map((i) => i.id);   // lu dans la banque (D2)
 const EMOJI_TO_WORD = Object.fromEntries(Object.entries(WORDS).map(([w, [e]]) => [e, w]));
 
 const form = (q) => q.key.split(':')[1];
@@ -164,7 +165,7 @@ test('niveaux : animaux d\'abord, corps ensuite, pluriels et phrases à la fin',
   assert.deepEqual([...words(1)].sort(), [...FIRST_ANIMALS].sort());
   for (const w of [...ANIMALS, ...PARTS]) assert.ok(words(2).has(w), `niveau 2 : ${w}`);
   assert.ok(!byLevel[1].some((q) => form(q) === 'mot-image'));
-  assert.ok(byLevel[2].every((q) => ['ecoute', 'lu', 'mot-image'].includes(form(q))));
+  assert.ok(byLevel[2].every((q) => ['ecoute', 'phrase', 'lu', 'mot-image'].includes(form(q))));
   assert.deepEqual([...new Set(byLevel[3].map(form))].sort(), ['deux-animaux', 'j-ai', 'pluriel', 'pluriel-nombre', 'touche']);
 });
 
@@ -244,4 +245,52 @@ test('dessin body : pied, un ou deux, nom accessible et contrôles', async () =>
   assert.deepEqual(artErrors({ kind: 'body', shape: 'foot', count: 2 }), []);
   assert.ok(artErrors({ kind: 'body', shape: 'hand' }).length > 0);
   assert.ok(artErrors({ kind: 'body', shape: 'foot', count: 3 }).length > 0);
+});
+
+test('pluriel : le solveur « s final = deux, sinon un » se trompe sur au moins 25 % des questions', () => {
+  const qs = byLevel[3].filter((q) => form(q) === 'pluriel');
+  assert.ok(qs.length > 100, `couverture : ${qs.length}`);
+  const wrong = qs.filter((q) => {
+    const guess = /s$/.test(q.speak) ? 2 : 1;
+    return Number(q.key.split(':')[3]) !== guess;
+  });
+  assert.ok(wrong.length / qs.length >= 0.25, `${wrong.length}/${qs.length}`);
+  for (const w of ['feet', 'teeth', 'mice']) assert.ok(qs.some((q) => q.speak === w), w);
+});
+
+test('deux-animaux : chaque animal revient aussi souvent parmi les choix, la fréquence ne révèle rien', () => {
+  const qs = byLevel[3].filter((q) => form(q) === 'deux-animaux');
+  assert.ok(qs.length > 50, `couverture : ${qs.length}`);
+  for (const q of qs) {
+    const cs = choices(q);
+    const freq = {};
+    for (const c of cs) for (const w of pics(c)) freq[w] = (freq[w] || 0) + 1;
+    const scores = cs.map((c) => pics(c).reduce((sum, w) => sum + freq[w], 0));
+    const best = Math.max(...scores);
+    assert.equal(scores.filter((x) => x === best).length, cs.length, `${q.key} : un choix se détache par la fréquence`);
+  }
+});
+
+test('touche : la dent n\'est jamais proposée (jamais la réponse, donc jamais un distracteur)', () => {
+  const qs = byLevel[3].filter((q) => form(q) === 'touche');
+  assert.ok(qs.length > 50);
+  for (const q of qs) assert.ok(!choices(q).some((c) => c.value === 'tooth'), q.key);
+});
+
+test('j-ai : parties du corps et animaux se mélangent, « two » et « a » ne trahissent pas la catégorie', () => {
+  const qs = byLevel[3].filter((q) => form(q) === 'j-ai');
+  const kind = (q) => (PARTS.includes(q.key.split(':')[2]) ? 'part' : 'animal');
+  const twoOf = (k) => qs.filter((q) => kind(q) === k && q.speak.includes('two')).length;
+  const oneOf = (k) => qs.filter((q) => kind(q) === k && !q.speak.includes('two')).length;
+  for (const k of ['part', 'animal']) {
+    assert.ok(twoOf(k) > 20, `${k} avec two : ${twoOf(k)}`);
+    assert.ok(oneOf(k) > 5, `${k} avec a : ${oneOf(k)}`);
+  }
+});
+
+test('niveau 2 : surtout de l\'oral, la lecture image → mot reste sous 40 %', () => {
+  const qs = byLevel[2];
+  const share = qs.filter((q) => form(q) === 'mot-image').length / qs.length;
+  assert.ok(share > 0.2 && share <= 0.4, `${(share * 100).toFixed(1)} %`);
+  assert.ok(qs.filter((q) => q.speak).length / qs.length >= 0.45);
 });
