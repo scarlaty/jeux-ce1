@@ -31,7 +31,7 @@ https://github.com/users/scarlaty/projects/1.
 | E4 vocabulaire | #30 – #34 | à faire (libre) |
 | E5 grammaire et conjugaison | #35 – #41 | #35 **terminé** (juge : à corriger, raccourcis du niveau 3) ; #36 – #41 libres |
 | E6 orthographe | #42 – #46 | #42 **terminé** (v32, homophones, après juge) ; #43 – #46 libres |
-| E7 nombres | #47, #50 | **terminés** ; #48, #49, #51 libres |
+| E7 nombres | #47, #48, #50 | **terminés** (#48 v33, après juge) ; #49, #51 libres |
 | E8 calcul | #52, #54 | **terminés** ; #53, #55 – #57 libres |
 | E9, E10 mesures et géométrie | #58 – #67 | #58, #60 **terminés** ; #59, #61 – #67 libres |
 | E11 – E13 monde, anglais, EMC | #68 – #81 | #76 **terminé** (anglais, repli écrit sans voix anglaise) , #68 **terminé** (besoins du vivant), #80 **terminé** (règles de vie, corrigé après juge) ; reste libre |
@@ -49,7 +49,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #48 Plus grand, plus petit | `feat/48-comparer` |
 
 #105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`. #102, #103 **terminés** (v29) : double anneau de focus, étoile gagnée contrastée, panneau ancré sur le haut réel de l'île, liste élargie. #97, #106 **terminés** (v30) après juge : 0 % à un seul indice, genre ≠ déterminant, liste `never` (on ne nie que ce qui est impossible). Revers : niveau 2 réduit à 12 réponses (baleine 30 %) → #108.
 
@@ -120,7 +119,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v32`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v33`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
