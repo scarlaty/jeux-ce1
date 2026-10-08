@@ -49,7 +49,6 @@ Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propos
 
 | Qui | Issue | Branche |
 |---|---|---|
-| Claude (session scarlaty) | #111 Mode essai pour les adultes | `feat/111-mode-essai` |
 
 #105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`. #102, #103 **terminés** (v29) : double anneau de focus, étoile gagnée contrastée, panneau ancré sur le haut réel de l'île, liste élargie. #97, #106 **terminés** (v30) après juge : 0 % à un seul indice, genre ≠ déterminant, liste `never` (on ne nie que ce qui est impossible). Revers : niveau 2 réduit à 12 réponses (baleine 30 %) → #108.
 
@@ -120,7 +119,7 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 1. **`sw.js` / `PRECACHE`** : `tests/offline.test.js` exige que la liste corresponde **exactement** aux
    fichiers servis. Tout fichier CSS/JS ajouté doit y figurer. **Incrémenter `VERSION`** après toute
-   modification d'un fichier servi (actuellement `v36`), sinon les tablettes installées gardent l'ancienne version.
+   modification d'un fichier servi (actuellement `v37`), sinon les tablettes installées gardent l'ancienne version.
 2. **Champ ajouté au profil** : il doit être repris **explicitement** dans `normalizeProfile`
    (`js/core/backup.js`), sinon il est remis à zéro à l'import d'une sauvegarde. C'est arrivé avec
    `rewards` : les points et les gommettes étaient effacés. Un test d'aller-retour compare désormais
@@ -161,3 +160,4 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 
 Bug corrigé le 08/10 (v36) : le tampon « Bien joué ! » apparaissait agrandi ×1,8 et débordait (400 px sur un écran de 360 px) ; taille plafonnée à 7vw, animation ×1,25, `.stage` en `overflow-x: clip` (testé).
+**Mode essai pour les adultes** (#111, v37) : depuis l'espace parents, tout est ouvert et rien n'est enregistré (garde central dans `storage.js` + mode figé au départ de chaque partie dans `engine.js`). Juges visuel et accessibilité passés ; vérifié dans le navigateur : localStorage identique à l'octet après une partie en essai.
