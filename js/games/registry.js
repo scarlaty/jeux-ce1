@@ -133,6 +133,13 @@ export const GAMES = [
     load: () => import('./colors-numbers.js'),
   },
   {
+    id: 'body-animals',
+    title: 'Body and animals',
+    island: 'ailleurs',
+    subject: 'anglais',
+    load: () => import('./body-animals.js'),
+  },
+  {
     id: 'besoins-vivant',
     title: 'Besoins du vivant',
     island: 'monde',
