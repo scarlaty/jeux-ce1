@@ -10,7 +10,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { GAMES, loadGame } from '../js/games/registry.js';
-import { buildDailyPlan, buildDailyGame, dailySeed, DAILY_QUESTIONS } from '../js/core/rewards.js';
+import {
+  buildDailyPlan, buildDailyGame, dailySeed, DAILY_QUESTIONS, SUBJECT_NAMES, subjectName, sourceLang,
+} from '../js/core/rewards.js';
 import { buildQuestions, renderFingerprint } from '../js/core/engine.js';
 import { createRng } from '../js/core/random.js';
 
@@ -61,4 +63,35 @@ test('l\'origine ne change pas le dédoublonnage à l\'écran', async () => {
   const a = { ...base, source: { title: 'Les tables', subject: 'maths', island: 'nombres' } };
   const b = { ...base, source: { title: 'Calcul mental', subject: 'maths', island: 'nombres' } };
   assert.equal(renderFingerprint(a), renderFingerprint(b), 'l\'origine ne doit pas entrer dans l\'empreinte');
+});
+
+// --- Ce que l'étiquette affiche (juges visuel et accessibilité, #110) -------------------------------
+
+test('toute matière du registre a un nom français', () => {
+  // Sans cela, un jeu d'une matière inédite afficherait sa clé technique à l'enfant (« emc »).
+  for (const g of real) {
+    assert.ok(SUBJECT_NAMES[g.subject], `« ${g.subject} » (${g.title}) n'a pas de nom affichable`);
+    assert.notEqual(subjectName(g.subject), g.subject, `« ${g.subject} » s'afficherait tel quel`);
+  }
+});
+
+test("le titre d'un jeu d'anglais est marqué en anglais", () => {
+  // La page est en `lang="fr"` : sans marquage, « Body and animals » est lu à la française, par la
+  // synthèse vocale comme par les lecteurs d'écran.
+  for (const g of real) {
+    const attendu = g.subject === 'anglais' ? 'en-GB' : null;
+    assert.equal(sourceLang({ subject: g.subject }), attendu, g.title);
+  }
+});
+
+test("l'étiquette tient sur une ligne à 360 px", () => {
+  // Mesuré à l'écran : « Français Les lettres qui changent de son », 40 caractères, tient à 0,4 px
+  // près sur une ligne à 360 px. Au-delà, l'étiquette passe à deux lignes — le repli reste propre
+  // (pastille seule, titre dessous), mais ce test avertit avant que ça n'arrive en silence.
+  const LIMITE = 40;
+  for (const g of real) {
+    const rendu = `${subjectName(g.subject)} ${g.title}`;
+    assert.ok(rendu.length <= LIMITE,
+      `« ${rendu} » fait ${rendu.length} caractères (limite ${LIMITE} pour tenir sur une ligne à 360 px)`);
+  }
 });

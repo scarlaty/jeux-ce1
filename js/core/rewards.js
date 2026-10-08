@@ -392,6 +392,29 @@ export function buildDailyPlan(entries, seed, { count = DAILY_QUESTIONS } = {}) 
 }
 
 /**
+ * Noms des matières tels qu'ils s'écrivent à l'enfant (#110). Ici et pas dans l'écran : un jeu dont la
+ * matière serait absente de cette table afficherait sa clé technique (« emc »), et aucun test ne
+ * pourrait le voir depuis un module qui touche au DOM.
+ */
+export const SUBJECT_NAMES = {
+  'français': 'Français', maths: 'Maths', monde: 'Le monde', anglais: 'Anglais', emc: 'Vivre ensemble',
+};
+
+/** Le nom à afficher, ou la clé brute en dernier recours (mieux que du vide). */
+export function subjectName(subject) {
+  return SUBJECT_NAMES[subject] || subject;
+}
+
+/**
+ * La langue du TITRE du jeu. « Body and animals » et « Colors and numbers » sont en anglais : sans
+ * cela, la synthèse vocale et les lecteurs d'écran les prononcent à la française, dans une page
+ * `lang="fr"`. `null` pour tout le reste (#110).
+ */
+export function sourceLang(source) {
+  return source && source.subject === 'anglais' ? 'en-GB' : null;
+}
+
+/**
  * Le « jeu » du défi du jour : il suit le plan déjà tiré, et marque chaque question de son origine.
  *
  * Pourquoi l'origine : cinq questions viennent de cinq jeux, et sur 120 jours simulés **76 % des

@@ -16,6 +16,7 @@ import {
 import { draw as drawDeco } from '../core/ui/art/kawaii-deco.js';
 import { play } from '../core/ui/art/kawaii.js';
 import { createSession } from '../core/engine.js';
+import { subjectName, sourceLang } from '../core/rewards.js';
 import { getGameProgress } from '../core/history.js';
 import { rewardEvents, rewardSummary, liveTotal } from '../core/rewards-live.js';
 import { currentCompanion, companionSummary } from '../core/companion-live.js';
@@ -26,11 +27,6 @@ import { isTrial, openOrTrial, TRIAL_END_TEXT } from '../core/trial.js';
 import * as audio from '../core/audio.js';
 
 const PRAISE = ['Bravo !', 'Super !', 'Exact !', 'Bien joué !', 'Génial !'];
-/** Noms des matières tels qu'ils s'écrivent à l'enfant (#110). */
-const SUBJECT_NAMES = {
-  'français': 'Français', maths: 'Maths', monde: 'Le monde', anglais: 'Anglais', emc: 'Vivre ensemble',
-};
-
 const END_TITLES = ['Continue, tu progresses !', 'Bien joué !', 'Très bien !', 'Bravo !'];
 const AUTO_NEXT_MS = 1100;
 const GAIN_MS = 1000;
@@ -80,15 +76,17 @@ const isForeign = (q) => Boolean(q.lang && !q.lang.startsWith('fr') && q.speak);
  * repère, « cow » se lit à la française. La matière est écrite en toutes lettres : « Body and
  * animals » est lui-même en anglais et ne renseigne pas une enfant de 7 ans.
  * Posé au-dessus de la consigne, là où elle regarde — pas dans l'en-tête, déjà chargé à 360 px.
+ *
+ * `aria-hidden` : la même phrase est déjà annoncée par la région vivante de l'en-tête, qui la précède
+ * immédiatement dans l'ordre de lecture. Sans cela, un lecteur d'écran la dit deux fois de suite
+ * (`visually-hidden` cache à l'œil, pas à l'arbre d'accessibilité).
  */
 function sourceTag(q) {
   const src = q.source;
   if (!src) return null;
-  // La couleur vient de l'île (`--island-*`), pas de la matière : c'est la même que sur la carte,
-  // donc l'enfant retrouve le code couleur qu'elle connaît déjà.
-  return h('p', { class: 'from', dataset: { island: src.island } },
-    h('span', { class: 'from__subject', text: SUBJECT_NAMES[src.subject] || src.subject }),
-    h('span', { class: 'from__title', text: src.title }));
+  return h('p', { class: 'from', dataset: { island: src.island }, 'aria-hidden': 'true' },
+    h('span', { class: 'from__subject', text: subjectName(src.subject) }),
+    h('span', { class: 'from__title', lang: sourceLang(src) || undefined, text: src.title }));
 }
 
 function noVoiceNote(q) {
@@ -261,7 +259,6 @@ export function createGameView(root, { app, game, onEnd }) {
       h('ol', { class: 'dots', 'aria-label': 'Progression' }, dots),
       pointsCounter(session),
       h('span', { class: 'play-head__count', 'aria-live': 'polite' }),
-      h('span', { class: 'play-head__from visually-hidden', 'aria-live': 'polite' }),
       buddy);
     const stage = h('div', { class: 'stage' });
     root.replaceChildren(head, stage);
@@ -279,12 +276,16 @@ export function createGameView(root, { app, game, onEnd }) {
     const question = session.current;
     const index = session.index;
     dots.forEach((d, i) => d.classList.toggle('is-current', i === index));
-    head.querySelector('.play-head__count').textContent = `${index + 1} / ${session.total}`;
-    // La matière change à 76 % des questions du défi : le changement doit s'entendre, pas seulement
-    // se voir. Région persistante (le `stage` est remplacé à chaque question, une région neuve
-    // n'annoncerait pas de façon fiable). Vide hors du défi : rien à annoncer dans un jeu (#110).
-    const announceFrom = head.querySelector('.play-head__from');
-    if (announceFrom) announceFrom.textContent = question.source ? `${SUBJECT_NAMES[question.source.subject] || question.source.subject}, ${question.source.title}.` : '';
+    // Une seule région vivante pour la question : le compteur. Deux régions sœurs mises à jour dans
+    // la même tâche se mettent en file et font deux annonces coup sur coup (#110). Le numéro reste
+    // visible, l'origine est ajoutée à côté mais cachée à l'œil : une région annonce tout son texte.
+    const count = head.querySelector('.play-head__count');
+    count.replaceChildren(
+      `${index + 1} / ${session.total}`,
+      question.source
+        ? h('span', { class: 'visually-hidden' }, `, ${subjectName(question.source.subject)}, `,
+          h('span', { lang: sourceLang(question.source) || undefined, text: question.source.title }), '.')
+        : '');
 
     if (buddyReacted) {
       buddyReacted = false;
