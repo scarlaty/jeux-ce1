@@ -106,6 +106,7 @@ export const PLACE_KINDS = {
   devinettes: { kind: 'hut', where: 'la cabane au point d\'interrogation' },
   phrase: { kind: 'tent', where: 'la tente des phrases' },
   homophones: { kind: 'well', where: 'le puits des mots jumeaux' },
+  'verbe-sujet': { kind: 'signpost', where: 'le poteau aux flèches des verbes' },
 };
 
 /** Décors de réserve, pour les jeux qui n'ont pas encore le leur. */
@@ -135,6 +136,7 @@ export const SHORT_TITLES = {
   devinettes: 'Devinettes',
   phrase: 'La phrase',
   homophones: 'Homophones',
+  'verbe-sujet': 'Verbe et sujet',
   'calcul-mental': 'Calcul mental',
   cdu: 'Centaines et dizaines',
   comparer: 'Comparer les nombres',
