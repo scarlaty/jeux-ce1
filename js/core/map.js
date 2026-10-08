@@ -143,6 +143,7 @@ export const SHORT_TITLES = {
   heure: 'Lire l\'heure',
   tirelire: 'La tirelire',
   'colors-numbers': 'Colors and numbers',
+  'body-animals': 'Body and animals',
   'besoins-vivant': 'Besoins du vivant',
   'regles-de-vie': 'Règles de vie',
 };

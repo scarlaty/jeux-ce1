@@ -14,13 +14,14 @@
 // L'ajouter ici suffit : `content()` (dom.js) et `validateQuestion()` (core/validate.js)
 // le prennent alors en compte partout — illustration, choix de QCM, éléments à ranger.
 import * as baseTen from './base-ten.js';
+import * as body from './body.js';
 import * as clock from './clock.js';
 import * as colored from './colored.js';
 import * as kawaii from './kawaii.js';
 import * as kawaiiDeco from './kawaii-deco.js';
 import * as money from './money.js';
 
-const registry = new Map(Object.entries({ 'base-ten': baseTen, clock, colored, kawaii, 'kawaii-deco': kawaiiDeco, money }));
+const registry = new Map(Object.entries({ 'base-ten': baseTen, body, clock, colored, kawaii, 'kawaii-deco': kawaiiDeco, money }));
 
 export function registerArt(kind, module) {
   registry.set(kind, module);

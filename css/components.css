@@ -629,6 +629,10 @@
 .show__content .art--swatch { width: clamp(6rem, 5rem + 8vw, 9rem); }
 .choice .art--swatch { width: clamp(4.5rem, 3rem + 9vw, 6.5rem); }
 .choice .art--objects { width: min(100%, 11rem); }
+/* Parties du corps dessinées (ui/art/body.js) : à la taille d'un émoji de choix ou d'illustration. */
+.art--body { height: 4.6rem; width: auto; }
+.art--body .body__shape { fill: var(--kawaii-peche); stroke: var(--kawaii-peche-deep); stroke-width: 1.8; stroke-linejoin: round; }
+.show__content .art--body { height: clamp(4.5rem, 3.5rem + 5vw, 6.5rem); }
 .choices:has(.art--objects) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
 .bubble__value .art { width: clamp(3.5rem, 20vw, 6.5rem); }
 
@@ -773,6 +777,9 @@
 .choices--large .choice .cursive { font-size: 3.2rem; line-height: 1.8; }
 .choices--images .choice { min-height: 120px; }
 .choices--images .emoji { font-size: 3.6rem; }
+.emoji[data-n] { white-space: nowrap; }
+.choices--images .emoji[data-n] { font-size: 2.5rem; }
+.show__content .emoji[data-n] { font-size: clamp(3rem, 2.5rem + 3vw, 4.5rem); }
 /* Image + mot écrit : le mot sous l'image, réduit s'il le faut pour tenir sur une ligne (--text-len, voir dom.js). */
 .choices--images .choice:has(.content-text) { flex-direction: column; gap: 0; container-type: inline-size; }
 .choices--images .choice .content-text {
