@@ -4,12 +4,13 @@
 //   plural : 'regular' (cats) | 'irregular' (feet, teeth, mice) | 'invariant' (sheep, fish)
 //   g      : genre du nom français ; elide : « l'oreille » (voyelle ou h muet)
 //   transparent : le mot anglais ressemble au mot français (lion, elephant) — repérable sans comprendre.
+// `art` : dessin de js/core/ui/art/body.js quand l'émoji se lit mal (🦶 ressemble à un nuage jaune sous Windows).
 // Écartés volontairement : 🐔 (coq ou poule ?), 🐀 / 🐇 (doublons de 🐭 / 🐰), 🦵 (jambe ou pied ?),
 // 💪, 👅 (langue ou bouche ?), 👀 (« regarder »), et les cheveux, la tête, les doigts, sans émoji net.
 
 const item = (kind, id, emoji, fr, g, frPlural, extra = {}) => ({
   kind, id, en: id, enPlural: extra.enPlural || `${id}s`, emoji, fr, g, frPlural,
-  elide: Boolean(extra.elide), plural: extra.plural || 'regular', transparent: Boolean(extra.transparent),
+  elide: Boolean(extra.elide), art: extra.art || null, plural: extra.plural || 'regular', transparent: Boolean(extra.transparent),
 });
 
 export const ANIMALS = [
@@ -39,7 +40,7 @@ export const PARTS = [
   item('part', 'nose', '👃', 'nez', 'm', 'nez'),
   item('part', 'mouth', '👄', 'bouche', 'f', 'bouches'),
   item('part', 'hand', '✋', 'main', 'f', 'mains'),
-  item('part', 'foot', '🦶', 'pied', 'm', 'pieds', { enPlural: 'feet', plural: 'irregular' }),
+  item('part', 'foot', '🦶', 'pied', 'm', 'pieds', { enPlural: 'feet', plural: 'irregular', art: 'foot' }),
   item('part', 'tooth', '🦷', 'dent', 'f', 'dents', { enPlural: 'teeth', plural: 'irregular' }),
 ];
 

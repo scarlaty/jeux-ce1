@@ -43,7 +43,9 @@ export function content(item, { cursive = false } = {}) {
   }
   if (item.emoji) {
     const label = item.label || item.text || '';
-    parts.push(h('span', { class: 'emoji', role: 'img', 'aria-label': label || null, 'aria-hidden': label ? null : 'true', text: item.emoji }));
+    // Plusieurs émojis côte à côte (« 🐱🐟 », « 👂👂 ») : `data-n` permet de les réduire pour qu'ils restent sur une ligne.
+    const n = typeof Intl !== 'undefined' && Intl.Segmenter ? [...new Intl.Segmenter().segment(item.emoji)].length : 1;
+    parts.push(h('span', { class: 'emoji', role: 'img', 'aria-label': label || null, 'aria-hidden': label ? null : 'true', 'data-n': n > 1 ? n : null, text: item.emoji }));
   }
   if (item.math && item.text) {
     parts.push(mathText(String(item.text)));

@@ -50,10 +50,12 @@ function compatible(ids, rng, count, chosen = []) {
 
 const sameKind = (id) => (getItem(id).kind === 'animal' ? ANIMAL_IDS : PARTS.map((p) => p.id));
 
-const picture = (item) => ({ value: item.id, emoji: item.emoji, label: item.fr });
+/** L'image d'un objet : un émoji, ou un dessin quand l'émoji se lit mal (le pied). */
+const look = (item, n = 1) => (item.art ? { art: { kind: 'body', shape: item.art, ...(n > 1 ? { count: n } : {}) } } : { emoji: item.emoji.repeat(n) });
+const picture = (item) => ({ value: item.id, ...look(item), label: item.fr });
 /** n exemplaires de la même image : « 2 pieds ». */
 const pictures = (item, n) => ({
-  value: `${item.id}-${n}`, emoji: item.emoji.repeat(n), label: `${n} ${n > 1 ? item.frPlural : item.fr}`,
+  value: `${item.id}-${n}`, ...look(item, n), label: `${n} ${n > 1 ? item.frPlural : item.fr}`,
 });
 
 const skillOf = (item) => (item.kind === 'animal' ? 'animaux en anglais' : 'parties du corps en anglais');
@@ -144,7 +146,7 @@ function wordQuestion(level, rng) {
     type: 'choice',
     prompt: 'Regarde l\'image, puis touche le bon mot.',
     display: {
-      show: { emoji: right.emoji, label: right.fr },
+      show: { ...look(right), label: right.fr },
       choices: rng.shuffle(words).map((id) => ({ value: id, text: getItem(id).en, lang: 'en-GB' })),
     },
     answer: right.id,

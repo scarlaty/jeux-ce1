@@ -70,6 +70,7 @@ const PRECACHE = [
   'js/core/storage.js',
   'js/core/validate.js',
   'js/core/ui/art/base-ten.js',
+  'js/core/ui/art/body.js',
   'js/core/ui/art/clock.js',
   'js/core/ui/art/colored.js',
   'js/core/ui/art/index.js',

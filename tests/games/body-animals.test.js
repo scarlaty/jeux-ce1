@@ -16,7 +16,7 @@ const WORDS = {
   frog: ['🐸', 'grenouille', 'frogs'], bear: ['🐻', 'ours', 'bears'], giraffe: ['🦒', 'girafe', 'giraffes'],
   snake: ['🐍', 'serpent', 'snakes'],
   ear: ['👂', 'oreille', 'ears'], eye: ['👁️', 'œil', 'eyes'], nose: ['👃', 'nez', 'noses'], mouth: ['👄', 'bouche', 'mouths'],
-  hand: ['✋', 'main', 'hands'], foot: ['🦶', 'pied', 'feet'], tooth: ['🦷', 'dent', 'teeth'],
+  hand: ['✋', 'main', 'hands'], foot: ['🖼', 'pied', 'feet'], tooth: ['🦷', 'dent', 'teeth'],
 };
 const PARTS = ['ear', 'eye', 'nose', 'mouth', 'hand', 'foot', 'tooth'];
 const ANIMALS = Object.keys(WORDS).filter((w) => !PARTS.includes(w));
@@ -30,6 +30,12 @@ const choices = (q) => q.display.choices.map(toChoice);
 function decode(emoji) {
   const unit = [...emoji.matchAll(/\p{Extended_Pictographic}️?|✋/gu)].map((m) => m[0]);
   return unit.map((e) => EMOJI_TO_WORD[e]);
+}
+
+/** Les objets montrés par un choix : émojis répétés, ou dessin du pied (art body). */
+function pics(c) {
+  if (c.art) return Array(c.art.count || 1).fill(c.art.shape);
+  return decode(c.emoji);
 }
 
 test('le jeu respecte le contrat', () => {
@@ -63,7 +69,7 @@ test('consigne en français, explication bienveillante, notion renseignée', () 
 test('questions à écouter : voix anglaise, le texte écrit est exactement ce qui est dit (#92)', () => {
   let listened = 0;
   for (const [, q] of all()) {
-    assert.ok(q.display.show?.text || q.display.show?.emoji, q.key);
+    assert.ok(q.display.show?.text || q.display.show?.emoji || q.display.show?.art, q.key);
     if (!q.speak) continue;
     listened += 1;
     assert.equal(q.lang, 'en-GB', q.key);
@@ -81,7 +87,7 @@ test('banque : émojis non écartés, uniques, pas de lien confus', () => {
   const emojis = Object.values(WORDS).map(([e]) => e);
   assert.equal(new Set(emojis).size, emojis.length);
   for (const e of emojis) assert.ok(!ecartes.includes(bare(e)), `émoji écarté : ${e}`);
-  for (const bad of ['🐀', '🐇', '🐔', '🦵', '👅', '👀']) for (const [, q] of all()) {
+  for (const bad of ['🐀', '🐇', '🐔', '🦵', '👅', '👀', '🦶']) for (const [, q] of all()) {
     assert.ok(!JSON.stringify(q.display).includes(bad), `${q.key} : ${bad}`);
   }
 });
@@ -116,7 +122,7 @@ test('une seule image correspond à ce qui est dit, et c\'est la bonne', () => {
       ? `${exp.words[0]}+${exp.words[1]}`
       : (form(q) === 'pluriel' || form(q) === 'pluriel-nombre' || form(q) === 'j-ai' ? `${exp.words[0]}-${exp.n}` : exp.words[0]);
     const matching = choices(q).filter((c) => {
-      const pic = decode(c.emoji);
+      const pic = pics(c);
       if (exp.words.length === 2) return pic.length === 2 && pic[0] === exp.words[0] && pic[1] === exp.words[1];
       if (['pluriel', 'pluriel-nombre', 'j-ai'].includes(form(q))) return new Set(pic).size === 1 && pic[0] === exp.words[0] && pic.length === exp.n;
       return pic.length === 1 && pic[0] === exp.words[0];
@@ -134,7 +140,7 @@ test('image → mot : un seul mot juste, jamais deux mots confondables', () => {
   const qs = all().filter(([, q]) => form(q) === 'mot-image');
   assert.ok(qs.length > 150);
   for (const [, q] of qs) {
-    const word = EMOJI_TO_WORD[q.display.show.emoji];
+    const word = EMOJI_TO_WORD[q.display.show.emoji] || (q.display.show.art ? q.display.show.art.shape : null);
     assert.equal(q.answer, word, q.key);
     const texts = choices(q).map((c) => c.text);
     assert.equal(new Set(texts).size, 4, q.key);
@@ -147,14 +153,14 @@ test('image → mot : un seul mot juste, jamais deux mots confondables', () => {
 
 test('oiseau et canard ne sont jamais ensemble dans une même question', () => {
   for (const [, q] of all()) {
-    const shown = new Set(choices(q).flatMap((c) => (c.emoji ? decode(c.emoji) : [c.text])));
+    const shown = new Set(choices(q).flatMap((c) => (c.text ? [c.text] : pics(c))));
     assert.ok(!(shown.has('bird') && shown.has('duck')), q.key);
     assert.ok(!(shown.has('bird') && q.display.show.text?.includes('duck')), q.key);
   }
 });
 
 test('niveaux : animaux d\'abord, corps ensuite, pluriels et phrases à la fin', () => {
-  const words = (level) => new Set(byLevel[level].flatMap((q) => choices(q).flatMap((c) => (c.emoji ? decode(c.emoji) : [c.text]))));
+  const words = (level) => new Set(byLevel[level].flatMap((q) => choices(q).flatMap((c) => (c.text ? [c.text] : pics(c)))));
   assert.deepEqual([...words(1)].sort(), [...FIRST_ANIMALS].sort());
   for (const w of [...ANIMALS, ...PARTS]) assert.ok(words(2).has(w), `niveau 2 : ${w}`);
   assert.ok(!byLevel[1].some((q) => form(q) === 'mot-image'));
@@ -224,9 +230,18 @@ test('image → mot : la longueur du mot ne trahit pas la réponse', () => {
 test('les images à deux exemplaires sont répétées, jamais plus', () => {
   for (const [, q] of all()) {
     for (const c of choices(q)) {
-      const pic = decode(c.emoji ?? '');
       if (c.text) continue;
+      const pic = pics(c);
       assert.ok(pic.length >= 1 && pic.length <= 2, `${q.key} : ${c.emoji}`);
     }
   }
+});
+
+test('dessin body : pied, un ou deux, nom accessible et contrôles', async () => {
+  const { artLabel, artErrors } = await import('../../js/core/ui/art/index.js');
+  assert.equal(artLabel({ kind: 'body', shape: 'foot' }), '1 pied');
+  assert.equal(artLabel({ kind: 'body', shape: 'foot', count: 2 }), '2 pieds');
+  assert.deepEqual(artErrors({ kind: 'body', shape: 'foot', count: 2 }), []);
+  assert.ok(artErrors({ kind: 'body', shape: 'hand' }).length > 0);
+  assert.ok(artErrors({ kind: 'body', shape: 'foot', count: 3 }).length > 0);
 });
