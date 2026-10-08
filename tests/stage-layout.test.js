@@ -18,3 +18,12 @@ test('la colonne de .stage ne dépasse jamais la page (pas de défilement horizo
   // (185 px chacun) la rendaient plus large que l'écran d'un téléphone.
   assert.match(ruleBody('.stage'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 });
+
+test('le tampon « Bien joué ! » ne crée jamais de défilement horizontal sur téléphone (08/10)', () => {
+  // Il apparaissait agrandi 1,8 fois et en taille fixe : 400 px de large sur un écran de 360 px.
+  assert.match(ruleBody('.stage'), /overflow-x:\s*clip/);
+  assert.match(ruleBody('.stamp--ok'), /font-size:\s*min\(.*\d+vw\)/);
+  const from = css.match(/@keyframes stamp-in\s*\{\s*from\s*\{[^}]*scale\(([\d.]+)\)/);
+  assert.ok(from, 'animation stamp-in introuvable');
+  assert.ok(Number(from[1]) <= 1.3, `le tampon part de ×${from[1]} : trop grand pour un téléphone`);
+});
