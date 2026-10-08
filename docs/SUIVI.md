@@ -45,10 +45,11 @@ Socle ajouté le 07/10 : dessin `money` (pièces agrandies x1,7 pour rester lisi
 
 Socle : `display.show.flash` (ms) affiche l'illustration brièvement puis propose « Revoir » (#26). Bonus de rapidité non fait : le moteur ne mesure pas le temps par question.
 
-### En cours (07/10) — 2 agents au plus, une issue chacun
+### En cours (08/10) — 2 agents au plus, une issue chacun
 
 | Qui | Issue | Branche |
 |---|---|---|
+| Claude (session scarlaty) | #42 Les homophones | `feat/42-homophones` |
 
 #105 **terminé** (v27) : points = jeton, étoiles = meilleur résultat, compagnon sur les étoiles de la carte, ourson débloqué à 30 étoiles. #87 **terminé** (v28) : `.stage` en `minmax(0, 1fr)`. #102, #103 **terminés** (v29) : double anneau de focus, étoile gagnée contrastée, panneau ancré sur le haut réel de l'île, liste élargie. #97, #106 **terminés** (v30) après juge : 0 % à un seul indice, genre ≠ déterminant, liste `never` (on ne nie que ce qui est impossible). Revers : niveau 2 réduit à 12 réponses (baleine 30 %) → #108.
 
