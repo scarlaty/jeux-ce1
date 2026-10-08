@@ -103,7 +103,7 @@ test('questions : une seule bonne réponse, présente, les deux formes de la pai
       const n = answersOf(template).length;
       assert.equal(values.length, n === 1 ? 2 : 4, q.key);
       if (n === 1) assert.deepEqual([...values].sort(), [...PAIRS[pairOf(q.answer)]].sort(), q.key);
-      assert.ok(q.display.show.text.includes('____') || q.display.show.text.includes('__1__'), q.key);
+      assert.ok(q.display.show.text.includes('____') || q.display.show.text.includes('[1]'), q.key);
       assert.ok(!completed(template).includes('{'), q.key);
     }
   }
@@ -288,13 +288,13 @@ test('« ils » et « elles » ne sont devant « ont » que dans une phrase sur 
 test('explication : applique l\'astuce à la phrase, cite le mot de remplacement, ne répète pas la réponse seule', () => {
   for (const t of ALL) {
     const e = explanationOf(t);
-    assert.ok(e.includes(completed(t).replace(/ ([:?!])/g, ' $1')), `la phrase juste manque : ${t}`);
+    assert.ok(e.includes(completed(t).replace(/ ([:?!])/g, ' $1')), `la phrase juste manque : ${t}`);
     answersOf(t).forEach((word, i) => {
       const h = hintFor(t, i);
       const used = REPLACE[word] || REPLACE[{ 'à': 'a', et: 'est' }[word]];
       assert.ok(h.includes(`« ${used} »`), h);
       assert.ok(h.includes(`C'est donc « ${word} »`), h);
-      assert.ok(h.includes(withWord(t, i, used).replace(/ ([:?!])/g, ' $1')), `phrase d'essai absente : ${h}`);
+      assert.ok(h.includes(withWord(t, i, used).replace(/\.$/, '').replace(/ ([:?!])/g, ' $1')), `phrase d'essai absente : ${h}`);
       assert.doesNotMatch(h, /\bfaux\b|\bnul\b|\bmauvais/i);
     });
     assert.ok(e.length > 60 && e.length < 420, `longueur ${e.length} : ${t}`);

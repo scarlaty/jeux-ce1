@@ -182,9 +182,9 @@ export function withWord(template, index, word) {
   return template.replace(GAP, (_, w) => { i += 1; return i === index ? word : w; });
 }
 
-/** Phrase montrée : un trou « ____ », ou « __1__ », « __2__ » s'il y en a deux. */
+/** Phrase montrée : un trou « ____ », ou « [1] », « [2] » s'il y en a deux. */
 export function gapped(template) {
   const n = answersOf(template).length;
   let i = 0;
-  return template.replace(GAP, () => { i += 1; return n === 1 ? '____' : `__${i}__`; });
+  return template.replace(GAP, () => { i += 1; return n === 1 ? '____' : `[${i}]`; });
 }

@@ -49,7 +49,7 @@ export function content(item, { cursive = false } = {}) {
     parts.push(mathText(String(item.text)));
   } else if (item.text !== undefined && item.text !== null && item.text !== '') {
     parts.push(h('span', {
-      class: `content-text${(item.cursive ?? cursive) ? ' cursive' : ''}`,
+      class: `content-text${(item.cursive ?? cursive) ? ' cursive' : ''}${item.wrap ? ' wrap' : ''}`,
       lang: item.lang || null,
       // Longueur du texte : la feuille de style s'en sert pour qu'un mot long tienne sur sa ligne.
       style: `--text-len: ${[...String(item.text)].length}`,

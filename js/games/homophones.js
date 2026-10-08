@@ -11,7 +11,7 @@ import {
   answersOf, completed, withWord, gapped,
 } from '../data/homophones.js';
 
-const NBSP = ' ';
+const NBSP = ' ';
 const shownText = (s) => s.replace(/ ([:?!])/g, `${NBSP}$1`);
 const quote = (s) => `« ${shownText(s)} »`;
 const slug = (template) => completed(template).toLowerCase();
@@ -22,11 +22,11 @@ const NOTE = { a: ' sans accent', 'à': ' avec un accent' };
 export function hintFor(template, index) {
   const word = answersOf(template)[index];
   if (REPLACE[word]) {
-    const test = withWord(template, index, REPLACE[word]);
+    const test = withWord(template, index, REPLACE[word]).replace(/\.$/, '');
     return `Remplace par « ${REPLACE[word]} » : ${quote(test)}, ça se dit. C'est donc « ${word} »${NOTE[word] || ''}.`;
   }
   const other = NO_REPLACE[word];
-  const test = withWord(template, index, REPLACE[other]);
+  const test = withWord(template, index, REPLACE[other]).replace(/\.$/, '');
   const why = word === 'et' ? ', qui relie deux mots' : NOTE[word];
   return `Remplace par « ${REPLACE[other]} » : ${quote(test)}, ça ne se dit pas. C'est donc « ${word} »${why}.`;
 }
@@ -45,7 +45,7 @@ const single = (template, rng) => {
     prompt: 'Quel mot va dans la phrase ?',
     speak: `Quel mot va dans la phrase ? Écoute : ${gapped(template).replace('____', 'blanc')}`,
     display: {
-      show: { text: shownText(gapped(template)), cursive: true },
+      show: { text: shownText(gapped(template)), cursive: true, wrap: true },
       choices: rng.shuffle(PAIRS[pair]).map((w) => ({ value: w, text: w })),
     },
     answer,
@@ -63,10 +63,10 @@ const double = (template, rng) => {
     key: `homophones:${slug(template)}`,
     type: 'choice',
     prompt: 'Quels mots vont dans la phrase ? Il y a deux trous.',
-    speak: `Quels mots vont dans la phrase ? Il y a deux trous. Écoute : ${gapped(template).replace('__1__', 'blanc un').replace('__2__', 'blanc deux')}`,
+    speak: `Quels mots vont dans la phrase ? Il y a deux trous. Écoute : ${gapped(template).replace('[1]', 'blanc un').replace('[2]', 'blanc deux')}`,
     display: {
-      show: { text: shownText(gapped(template)), cursive: true },
-      choices: rng.shuffle(combos).map(([a, b]) => ({ value: `${a}|${b}`, text: `1 : ${a}   2 : ${b}` })),
+      show: { text: shownText(gapped(template)), cursive: true, wrap: true },
+      choices: rng.shuffle(combos).map(([a, b]) => ({ value: `${a}|${b}`, text: `[1] ${a}   [2] ${b}` })),
     },
     answer: answers.join('|'),
     explain: explanationOf(template),
