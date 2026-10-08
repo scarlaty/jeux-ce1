@@ -91,6 +91,13 @@ export const GAMES = [
     load: () => import('./cdu.js'),
   },
   {
+    id: 'comparer',
+    title: 'Plus grand, plus petit',
+    island: 'nombres',
+    subject: 'maths',
+    load: () => import('./comparer.js'),
+  },
+  {
     id: 'ecrire-nombres',
     title: 'Écrire les nombres',
     island: 'nombres',

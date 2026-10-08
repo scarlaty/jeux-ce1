@@ -141,6 +141,10 @@ const SPOKEN_SIGNS_FR = [
   [/ − /g, ' moins '],
   [/ × /g, ' fois '],
   [/ = /g, ' égale '],
+  // Comparaison : « < » et « > » seuls (réponse d'un choix, « La bonne réponse est : < ») ou entre deux nombres.
+  [/(?<=^|\s)<(?=$|[\s.,;:!?])/g, 'plus petit que'],
+  [/(?<=^|\s)>(?=$|[\s.,;:!?])/g, 'plus grand que'],
+  [/(?<=\s)=(?=[.,;:!?]|$)/g, 'égal à'],
   // Argent : « 50 c » (centimes) et « 5 € » s'écrivent avec une espace insécable (js/core/ui/art/money.js).
   [/(?<![\d])1 €/g, '1 euro'],
   [/ €/g, ' euros'],

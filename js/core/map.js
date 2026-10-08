@@ -137,6 +137,7 @@ export const SHORT_TITLES = {
   homophones: 'Homophones',
   'calcul-mental': 'Calcul mental',
   cdu: 'Centaines et dizaines',
+  comparer: 'Comparer les nombres',
   'ecrire-nombres': 'Écrire les nombres',
   tables: 'Les tables',
   heure: 'Lire l\'heure',

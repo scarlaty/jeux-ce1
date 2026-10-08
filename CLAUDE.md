@@ -177,6 +177,7 @@ comme un calcul : morceaux séparés par des espaces, vrais signes `+ − × =`,
 trouver, taille ajustée pour tenir sur une ligne — voir `mathText` dans `ui/dom.js`). Un mot long dans
 `show.text` (ou sous l'image d'un choix illustré) rapetisse pour tenir sur sa ligne (`--text-len`, posé par
 `content()`), et l'image, le mot et le bouton « écouter » passent à la ligne plutôt que de déborder.
+`display.row: true` (QCM) : trois choix très courts, comme les signes < = >, restent sur une seule ligne même sur téléphone.
 `show.wrap: true` : une phrase entière passe à la ligne, à taille fixe et lisible, au lieu de rapetisser sur une ligne (« Les homophones »).
 `show.flash: <ms>` (300 à 5000, vérifié par `validateQuestion`) : après un décompte 3, 2, 1, l'illustration n'est visible
 que ce temps puis disparaît (sa place est conservée, `aria-hidden`) ; les réponses n'apparaissent qu'ensuite, avec un
