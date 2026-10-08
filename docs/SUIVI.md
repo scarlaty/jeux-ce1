@@ -63,6 +63,29 @@ sur la phrase seule passe de 95 % à **33 %** (le hasard exact) ; le même solve
 niveau 2 ramené à 0,00 %. Reste ouvert : **#109** (le seul prénom de la situation prédit le signe à 68 %, et la
 banque du niveau 3 est trop courte pour être re-contrainte).
 
+#96 **fermé** le 08/10 : la carte au trésor, livrée en trois lots (v21 à v23), vérifiée à l'écran avant
+clôture. Suites déjà tracées : #98 (intérieurs distincts par île — il est générique aujourd'hui), #99
+(densité), #100 (zoom).
+
+#110 **terminé** (v38) — bug signalé par l'utilisatrice en jouant : dans le défi du jour, rien ne disait
+de quelle matière venait la question. Mesuré : **76,3 % des questions changent de matière** par rapport à
+la précédente (120 jours simulés), et l'anglais en fait 15,7 % : l'enfant voyait « duck » avec pour toute
+consigne « Écoute, puis touche le bon animal. ». Chaque question affiche désormais sa matière et son jeu
+au-dessus de la consigne. Relu par les juges **visuel** et **accessibilité** : aucun bloquant, cinq défauts
+corrigés (information présente deux fois dans l'arbre d'accessibilité, deux régions `aria-live` annonçant
+coup sur coup, titres anglais annoncés comme du français, étiquette devenue le plus petit texte de l'écran
+sur tablette, cinq lignes de CSS recopiant `tokens.css`). **Un signalement a été écarté après mesure** —
+l'étiquette cachée par la barre collante : 8 mesures donnent `scrollY` à 0 et l'étiquette visible à 26 px
+sur 26 à chaque nouvelle question. Les deux juges ont par ailleurs cru la branche désynchronisée de `main`
+alors que leurs worktrees étaient à jour : `main` avait avancé **trois fois** pendant le ticket.
+
+**Deux pièges de mesure rencontrés ce jour-là, à connaître.** (1) Un test qui **recopie** la logique d'un
+écran au lieu de l'importer reste vert pendant que l'écran régresse : `buildDailyGame` est passé dans
+`core/rewards.js` pour cette seule raison, et la correction a été validée en la retirant du code réel pour
+voir le test échouer. (2) Un script de mesure qui **modifie le DOM** (ici, réécrire le texte de l'étiquette
+pour tester des largeurs) laisse un état trompeur : la capture suivante montrait « Anglais » sur une
+question de maths. Recharger avant de conclure.
+
 **Leçon de ces cinq relectures, à retenir avant d'écrire un test de raccourci.** Les trois défauts successifs
 de « La phrase » n'étaient pas dans le contenu : ils étaient dans **ce que la mesure avait le droit de voir**.
 (1) le test ne montrait au solveur qu'une projection choisie par l'auteur ; (2) le solveur ignorait les deux
