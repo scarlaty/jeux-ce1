@@ -129,6 +129,7 @@ const PRECACHE = [
   'js/games/calcul-mental.js',
   'js/games/cdu.js',
   'js/games/colors-numbers.js',
+  'js/games/comparer.js',
   'js/games/demo.js',
   'js/games/devinettes.js',
   'js/games/ecrire-nombres.js',

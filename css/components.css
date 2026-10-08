@@ -664,6 +664,10 @@
   .stage--with-show.stage--keypad:has(.math) { grid-template-columns: minmax(0, 1fr) 340px; }
 }
 
+/* Trois choix très courts (display.row : les signes < = >) : une seule ligne, à toutes les largeurs. */
+.choices.choices--row,
+.stage--with-show.stage--choice .choices.choices--row { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 420px; }
+
 /* Le matériel de numération (base-ten) est le dessin le plus gourmand en largeur : face au pavé
    il prend tout le reste, et en QCM les choix restent côte à côte sur toute la largeur. */
 @media (min-width: 900px) {

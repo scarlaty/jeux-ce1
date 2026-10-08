@@ -41,6 +41,12 @@ test('les signes de calcul sont lus avec des mots', () => {
     '38 plus 7 : 38 plus 2 égale 40, puis 40 plus 5 égale 45.');
   assert.equal(speakableText('15 − 8 = ?'), '15 moins 8 égale combien ?');
   assert.equal(speakableText('3 × 4 = 12'), '3 fois 4 égale 12');
+  // Signes de comparaison seuls (réponse d'un choix, #48) ou entre deux nombres.
+  assert.equal(speakableText('La bonne réponse est : <. 409 est plus petit que 490.'),
+    'La bonne réponse est : plus petit que. 409 est plus petit que 490.');
+  assert.equal(speakableText('La bonne réponse est : >.'), 'La bonne réponse est : plus grand que.');
+  assert.equal(speakableText('La bonne réponse est : =.'), 'La bonne réponse est : égal à.');
+  assert.equal(speakableText('409 < 490'), '409 plus petit que 490');
   // Le trait d'union et les signes collés ne sont pas touchés.
   assert.equal(speakableText('quarante-cinq, c\'est-à-dire 45'), 'quarante-cinq, c\'est-à-dire 45');
 });

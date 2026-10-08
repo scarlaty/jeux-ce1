@@ -4,6 +4,7 @@
 //   choices: [ 'mot' | 12 | { value, text?, emoji?, label?, lang? } ],   // 2 à 6 choix
 //   cursive?: true,   // les textes des choix sont des mots français à lire (police cursive)
 //   large?: true,     // gros caractères : choix d'une seule lettre ou d'un son (b / d)
+//   row?: true,       // 3 choix très courts (< = >) toujours sur une seule ligne, même sur téléphone
 //   show?: { … }      // illustration commune (voir ui/index.js)
 // Un choix dessiné peut porter `label` (son nom, sans le montrer) : la correction l'écrit à côté du dessin.
 // }
@@ -22,7 +23,7 @@ export function create(question, ctx) {
   let picked = null;
 
   const list = h('div', {
-    class: ['choices', withImages && 'choices--images', many && 'choices--many', display.large && 'choices--large'].filter(Boolean).join(' '),
+    class: ['choices', withImages && 'choices--images', many && 'choices--many', display.large && 'choices--large', display.row && 'choices--row'].filter(Boolean).join(' '),
     role: 'group',
     'aria-label': 'Réponses possibles',
   });
