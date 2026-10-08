@@ -11,6 +11,7 @@ import { islandScene } from '../core/ui/map-scene.js';
 import { islandPlaces, STARS_PER_GAME } from '../core/map.js';
 import { GAMES, getIsland } from '../games/registry.js';
 import { getGameProgress } from '../core/history.js';
+import { openOrTrial } from '../core/trial.js';
 import {
   totalStars, islandUnlocked, islandStarsLeft, islandStickers, readRewards,
 } from '../core/rewards.js';
@@ -48,7 +49,7 @@ export default {
     const stars = totalStars(profile?.progress);
     app.setTitle(island.name);
 
-    if (!islandUnlocked(island.id, stars)) {
+    if (!openOrTrial(islandUnlocked(island.id, stars))) {
       view.append(lockedPage(island, islandStarsLeft(island.id, stars)));
       return;
     }

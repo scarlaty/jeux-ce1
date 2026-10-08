@@ -16,6 +16,7 @@ import {
   weeklySeries,
 } from '../core/stats.js';
 import { makeGateChallenge, checkGate, GATE_MAX_TRIES } from '../core/gate.js';
+import { isTrial, enterTrial, exitTrial } from '../core/trial.js';
 import {
   applyBackup, backupFilename, buildBackup, describeBackup, parseBackup, serializeBackup,
 } from '../core/backup.js';
@@ -102,6 +103,22 @@ function renderGate(root, onPass) {
   field.focus({ preventScroll: true });
 }
 
+// --- Mode essai (#111) -----------------------------------------------------------------------
+
+/** Carte sobre : l'adulte essaie les jeux, tout est ouvert, rien n'est enregistré. */
+function trialCard(app) {
+  const active = isTrial();
+  return h('section', { class: 'card trial-card', 'aria-labelledby': 'essai-titre' },
+    h('h2', { class: 'trial-card__title', id: 'essai-titre', text: 'Mode essai' }),
+    h('p', { class: 'trial-card__text', text: active
+      ? 'Le mode essai est en cours : tout est ouvert et rien n\'est enregistré pour ce profil.'
+      : 'Essayez chaque jeu, à chaque niveau : tout est ouvert et rien n\'est enregistré (ni score, ni étoile, ni point, ni coffre). La progression de l\'enfant reste exactement comme elle est. Le mode s\'arrête en quittant ou en rechargeant la page.' }),
+    active
+      ? h('button', { type: 'button', class: 'btn btn--secondary', onclick: exitTrial }, h('span', { text: 'Quitter le mode essai' }))
+      : h('button', { type: 'button', class: 'btn btn--secondary', onclick: () => { enterTrial(); app.navigate('/'); } },
+        h('span', { text: 'Commencer le mode essai' })));
+}
+
 // --- Onglets ------------------------------------------------------------------------------------
 
 const TABS = [
@@ -171,7 +188,7 @@ function renderSpace(root, app) {
     const profile = app.store.getProfile(profileId) || app.store.getProfile(app.profileId);
     panel.setAttribute('aria-labelledby', `tab-${tab}`);
     panel.replaceChildren(PANELS[tab](profile, app, draw));
-    root.replaceChildren(h('section', { class: 'page parents' }, header(profile), tabBar(), panel));
+    root.replaceChildren(h('section', { class: 'page parents' }, header(profile), trialCard(app), tabBar(), panel));
   }
 
   draw();
@@ -396,7 +413,7 @@ function backupPanel(profile, app, redraw) {
     cancel.focus({ preventScroll: true });
   }
 
-  return h('div', { class: 'parents__content' },
+  const exportPart = [
     sectionTitle('Exporter'),
     h('p', { class: 'parents__text', text: 'La sauvegarde contient tous les profils de cette tablette : prénoms, avatars, progression et historique. Les réglages de l\'appareil (thème, son) n\'en font pas partie. Rien n\'est envoyé sur Internet.' }),
     h('div', { class: 'parents__actions' },
@@ -404,25 +421,31 @@ function backupPanel(profile, app, redraw) {
       h('button', { type: 'button', class: 'btn btn--secondary', onclick: copyCode }, h('span', { text: 'Copier le code' }))),
     h('label', { class: 'field-row__label', for: 'code-export', text: 'Code à recopier' }),
     code,
+  ];
+  // Importer et effacer écrivent dans les profils : indisponibles pendant le mode essai (#111).
+  const writePart = isTrial()
+    ? [h('p', { class: 'parents__text', text: 'Importer une sauvegarde et effacer la progression sont indisponibles pendant le mode essai.' })]
+    : [
+      sectionTitle('Importer'),
+      h('p', { class: 'parents__text', text: 'Choisissez un fichier de sauvegarde, ou collez le code ci-dessous. La sauvegarde est vérifiée et résumée avant d\'écrire quoi que ce soit.' }),
+      h('div', { class: 'field-row' },
+        h('label', { class: 'field-row__label', for: 'fichier', text: 'Fichier' }),
+        file),
+      h('label', { class: 'field-row__label', for: 'code-import', text: 'Ou code copié' }),
+      pasted,
+      h('div', { class: 'parents__actions' },
+        h('button', { type: 'button', class: 'btn btn--primary', onclick: () => review(pasted.value) },
+          h('span', { text: 'Vérifier ce code' }))),
+      message,
+      confirmBox,
 
-    sectionTitle('Importer'),
-    h('p', { class: 'parents__text', text: 'Choisissez un fichier de sauvegarde, ou collez le code ci-dessous. La sauvegarde est vérifiée et résumée avant d\'écrire quoi que ce soit.' }),
-    h('div', { class: 'field-row' },
-      h('label', { class: 'field-row__label', for: 'fichier', text: 'Fichier' }),
-      file),
-    h('label', { class: 'field-row__label', for: 'code-import', text: 'Ou code copié' }),
-    pasted,
-    h('div', { class: 'parents__actions' },
-      h('button', { type: 'button', class: 'btn btn--primary', onclick: () => review(pasted.value) },
-        h('span', { text: 'Vérifier ce code' }))),
-    message,
-    confirmBox,
-
-    sectionTitle('Remise à zéro'),
-    h('p', { class: 'parents__text', text: 'Pour repartir de zéro sur ce profil, sans supprimer le profil lui-même.' }),
-    h('div', { class: 'parents__actions' },
-      h('button', { type: 'button', class: 'btn btn--ghost', onclick: askReset },
-        h('span', { text: 'Effacer la progression…' }))));
+      sectionTitle('Remise à zéro'),
+      h('p', { class: 'parents__text', text: 'Pour repartir de zéro sur ce profil, sans supprimer le profil lui-même.' }),
+      h('div', { class: 'parents__actions' },
+        h('button', { type: 'button', class: 'btn btn--ghost', onclick: askReset },
+          h('span', { text: 'Effacer la progression…' }))),
+    ];
+  return h('div', { class: 'parents__content' }, exportPart, writePart);
 }
 
 const PANELS = {

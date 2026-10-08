@@ -22,6 +22,7 @@ import { currentCompanion, companionSummary } from '../core/companion-live.js';
 import { chestSummary } from '../core/chest-live.js';
 import { chestScene } from '../core/ui/chest.js';
 import { loadGame } from '../games/registry.js';
+import { isTrial, openOrTrial, TRIAL_END_TEXT } from '../core/trial.js';
 import * as audio from '../core/audio.js';
 
 const PRAISE = ['Bravo !', 'Super !', 'Exact !', 'Bien joué !', 'Génial !'];
@@ -104,6 +105,17 @@ export function gradeBanner(grade) {
 }
 
 /** Les lignes poussées dans `result.extras` par les récompenses et les autres modules. */
+/** Mode essai (#111) : seule ligne ajoutée à l'écran de fin, à la place des gains. */
+export function trialEndNote() {
+  return isTrial() ? h('p', { class: 'end__trial', id: 'essai-fin', text: TRIAL_END_TEXT }) : null;
+}
+
+/** Les boutons de l'écran de fin annoncent la ligne du mode essai quand ils prennent le focus. */
+export function describeTrialEnd(root) {
+  if (!isTrial()) return;
+  for (const b of root.querySelectorAll('.end__actions .btn')) b.setAttribute('aria-describedby', 'essai-fin');
+}
+
 export function extrasList(extras) {
   if (!extras?.length) return null;
   return h('ul', { class: 'end__extras' }, extras.map((x) => h('li', {},
@@ -184,6 +196,7 @@ export function createGameView(root, { app, game, onEnd }) {
 
   /** Compteur de points en direct (#16) : visible pendant toute la partie. */
   function pointsCounter(session) {
+    if (isTrial()) return null;   // mode essai : aucun point en jeu
     const initial = liveTotal(session);
     const value = h('span', { class: 'points-chip__value', text: String(initial) });
     const chip = h('span', { class: 'points-chip', 'aria-label': plural(initial, 'point') }, icon('coin', { size: 20, className: 'icon--points' }), value);
@@ -364,7 +377,7 @@ export default {
       return getGameProgress(app.store.getProfile(app.profileId), game.id);
     }
 
-    const isOpen = (level, progress) => game.demo || level <= progress.unlocked;
+    const isOpen = (level, progress) => game.demo || openOrTrial(level <= progress.unlocked);
 
     // --- Choix du niveau ---------------------------------------------------------------------
 
@@ -430,6 +443,7 @@ export default {
         unlocked && h('p', { class: 'end__unlocked' }, icon('star', { size: 22 }), h('span', { text: `Le niveau ${unlocked} est ouvert !` })),
         hasNext && !nextOpen && h('p', { class: 'end__hint', text: `Gagne 3 étoiles pour ouvrir le niveau ${level + 1}.` }),
         extrasList(result.extras),
+        trialEndNote(),
         h('div', { class: 'end__actions' },
           companionAction(session),
           next || null,
@@ -437,6 +451,7 @@ export default {
           h('button', { type: 'button', class: 'btn btn--secondary', onclick: showLevels }, h('span', { text: 'Changer de niveau' })),
           h('a', { class: 'btn btn--ghost', href: '#/album' }, icon('album'), h('span', { text: 'Mon album' })),
           h('a', { class: 'btn btn--ghost', href: '#/' }, icon('home'), h('span', { text: 'La carte' })))));
+      describeTrialEnd(root);
       if (chest) chest.focus(); else root.querySelector('.end__actions .btn').focus({ preventScroll: true });
     }
 

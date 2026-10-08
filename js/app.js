@@ -7,6 +7,7 @@ import { setupOffline } from './core/offline.js';
 import { installRewards } from './core/rewards-live.js';
 import { installCompanion } from './core/companion-live.js';
 import { installChest } from './core/chest-live.js';
+import { isTrial, exitTrial, onTrialChange, TRIAL_BANNER_TEXT } from './core/trial.js';
 import * as audio from './core/audio.js';
 import { h, titleLength } from './core/ui/dom.js';
 import { icon } from './core/ui/icons.js';
@@ -75,11 +76,25 @@ function buildShell(store) {
   const note = h('p', { class: 'storage-note', role: 'status', hidden: true });
   const footer = h('footer', { class: 'appfoot' }, note);
 
-  document.body.replaceChildren(header, view, footer);
+  // Mode essai (#111) : bandeau permanent sous la barre du haut, dans le même bloc collant qu'elle.
+  const trialBar = h('div', { class: 'trial-bar', role: 'status', hidden: true });
+  const renderTrial = (active) => {
+    trialBar.hidden = !active;
+    trialBar.replaceChildren(...(active ? [
+      h('p', { class: 'trial-bar__text', text: TRIAL_BANNER_TEXT }),
+      h('button', { type: 'button', class: 'trial-bar__exit', onclick: exitTrial, 'aria-label': 'Quitter le mode essai' },
+        h('span', { text: 'Quitter' })),
+    ] : []));
+  };
+  renderTrial(isTrial());
+  const topbar = h('div', { class: 'topbar' }, header, trialBar);
+
+  document.body.replaceChildren(topbar, view, footer);
 
   return {
     view,
     renderProfile,
+    renderTrial,
     setTitle: (text) => {
       title.textContent = text || APP_TITLE;
       title.dataset.length = titleLength(title.textContent);
@@ -113,6 +128,7 @@ function createAppContext(store, shell, getRouter) {
     setTitle: shell.setTitle,
     /** Enregistre une partie terminée (passé au moteur comme `record`). */
     record(result) {
+      if (isTrial()) return null;   // mode essai : aucune écriture (filet central : storage.js)
       const summary = recordResult(store, profileId, result);
       shell.refreshStorageNote();
       return summary;
@@ -143,6 +159,9 @@ function start() {
   let cleanup = null;
   let renderId = 0;
 
+  // Entrer ou sortir du mode essai change ce qui est ouvert : on redessine l'écran en cours.
+  onTrialChange((active) => { shell.renderTrial(active); router?.reload(); });
+
   router = createRouter({
     routes: SCREENS,
     async onRoute({ route, params, path }) {
@@ -153,6 +172,9 @@ function start() {
         router.navigate('/bienvenue', { replace: true });
         return;
       }
+      // Gérer les profils n'a pas de sens en mode essai : on le quitte. Choisir un animal = écrire : retour à la carte.
+      if (isTrial() && (path.startsWith('/profil') || path === '/bienvenue')) exitTrial();
+      if (isTrial() && path === '/compagnon') { router.navigate('/', { replace: true }); return; }
       const id = ++renderId;
       app.showProfile();
       audio.stopSpeaking();

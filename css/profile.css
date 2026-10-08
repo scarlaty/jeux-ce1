@@ -443,3 +443,51 @@
   .confirm__actions .btn,
   .parents__actions .btn { flex: 1 1 100%; max-width: none; }
 }
+
+/* ---------- Mode essai (#111) : sobre, sans kawaii, contrastes AA en clair et en sombre ---------- */
+
+/* La barre du haut et le bandeau restent collés ensemble. */
+.topbar { position: sticky; top: 0; z-index: 20; }
+.topbar > .appbar { position: static; }
+
+.trial-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  height: 56px;   /* = le bouton : le bandeau ne mange pas l'écran (barre du haut + bandeau collants) */
+  padding: 0 var(--gutter);
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 0 2px 0 var(--rule-strong);
+}
+.trial-bar[hidden] { display: none; }
+.trial-bar__text { flex: 1 1 0; min-width: 0; font-size: var(--text-s); font-weight: 700; line-height: 1.15; }
+.trial-bar__exit {
+  flex: 0 0 auto;
+  min-width: 56px;
+  min-height: 56px;
+  padding: 0 var(--space-4);
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  border: 2px solid var(--paper);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+/* Anneau clair sur le fond foncé du bandeau (--focus rose n'y atteint pas 3:1) ; vérifié par tests/trial.test.js. */
+.trial-bar__exit:focus-visible { outline: 3px solid var(--paper); outline-offset: 2px; }
+
+.trial-card { display: grid; gap: var(--space-3); }
+.trial-card__title { font-size: var(--text-m); }
+.trial-card__text { color: var(--ink-soft); }
+.trial-card .btn { justify-self: start; }
+.end__trial { font-weight: 700; color: var(--ink-soft); }
+@media (max-width: 520px) {
+  .trial-card .btn { justify-self: stretch; }
+}

@@ -27,3 +27,10 @@ test('le tampon « Bien joué ! » ne crée jamais de défilement horizontal sur
   assert.ok(from, 'animation stamp-in introuvable');
   assert.ok(Number(from[1]) <= 1.3, `le tampon part de ×${from[1]} : trop grand pour un téléphone`);
 });
+
+test('le titre de fin (.stamp--static) ne crée pas de défilement horizontal pendant son animation', () => {
+  const from = css.match(/@keyframes stamp-static-in\s*\{\s*from\s*\{[^}]*scale\(([\d.]+)\)/);
+  assert.ok(from, 'animation stamp-static-in introuvable');
+  assert.ok(Number(from[1]) <= 1.25, `le titre part de ×${from[1]}`);
+  assert.match(ruleBody('.end__title'), /font-size:\s*min\(.*\d+vw\)/);
+});
