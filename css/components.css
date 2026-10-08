@@ -652,6 +652,11 @@
   .stage--with-show:is(.stage--choice, .stage--keypad) .prompt,
   .stage--with-show:is(.stage--choice, .stage--keypad) .feedback { grid-column: 1 / -1; }
   .stage--with-show:is(.stage--choice, .stage--keypad) .show { min-height: 240px; align-self: center; }
+  /* Une phrase entière (show.wrap) a besoin de toute la largeur : coincée dans la colonne de gauche,
+     elle se coupait presque mot à mot (« Les homophones », tablette paysage). Réponses dessous. */
+  .stage--with-show:is(.stage--choice, .stage--keypad):has(.content-text.wrap) { grid-template-columns: minmax(0, 1fr); }
+  .stage--with-show:is(.stage--choice, .stage--keypad):has(.content-text.wrap) .show { min-height: 0; }
+  .stage--with-show.stage--choice:has(.content-text.wrap) .choices:not(.choices--images) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 560px; width: 100%; }
   .stage--with-show.stage--choice .choices:not(.choices--images) { grid-template-columns: 1fr; max-width: 380px; }
   .stage--with-show.stage--choice .choices:has(.art--swatch) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 380px; }
   .stage--with-show.stage--choice .choices:has(.art--objects) { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 520px; }
