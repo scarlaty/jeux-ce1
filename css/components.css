@@ -391,7 +391,8 @@
   border-color: var(--border-strong);
   box-shadow: none;
 }
-.level-card.is-locked .level-card__number { background: var(--border-strong); color: var(--surface); }
+/* Éteint, mais lisible : --surface sur --border-strong ne donnait que 2,16:1 (#113). */
+.level-card.is-locked .level-card__number { background: var(--surface); color: var(--ink-soft); border-color: var(--border-strong); }
 .level-card.is-locked .level-card__label { color: var(--ink-soft); }
 .level-card:disabled { cursor: default; }
 
@@ -443,6 +444,15 @@
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
+}
+
+/* Cible de focus programmatique : à chaque nouvelle question on y renvoie le focus perdu. L'anneau
+   plein de 4 px y ressemblait à une erreur (un cadre rose autour d'un paragraphe), mais ne rien
+   montrer du tout priverait l'enfant au clavier de tout repère : trait discret, en retrait (#113). */
+.prompt[tabindex="-1"]:focus { outline: none; }
+.prompt[tabindex="-1"]:focus-visible {
+  outline: 2px dashed var(--border-strong);
+  outline-offset: 6px;
 }
 
 .prompt {
@@ -604,10 +614,15 @@
   background: var(--surface-sunk); border: 3px dashed var(--border-strong); border-radius: var(--radius-l);
 }
 .amount__tray.is-empty::before { content: 'Touche une pièce ou un billet'; color: var(--ink-faint); }
-.amount__total { margin: 0; font-family: var(--font-title); font-size: 1.5rem; color: var(--ink); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
+/* `position: relative` : sans elle la pastille ✓/✗ remontait au coin de la zone de jeu, et le
+   juste/faux n'était plus porté que par la couleur du total (#113). */
+.amount__total { position: relative; margin: 0; font-family: var(--font-title); font-size: 1.5rem; color: var(--ink); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
 .amount__total-value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .amount__total.is-right { color: var(--success); }
 .amount__total.is-wrong { color: var(--retry); }
+/* Le total est une boîte à la largeur de son texte : une pastille en absolu y mordrait sur le
+   montant. Elle prend donc sa place dans la ligne, à côté de la somme. */
+.amount__total .badge { position: static; flex: none; }
 .amount__palette { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-3); width: 100%; }
 .amount__option, .amount__piece {
   display: inline-flex; align-items: center; justify-content: center;

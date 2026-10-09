@@ -3,7 +3,7 @@
 //
 // display : { maxLength?: 4, prefix?: '', suffix?: '', show?: { … } }
 // answer  : entier positif.
-import { h } from './dom.js';
+import { h, keyAction } from './dom.js';
 import { icon, badge } from './icons.js';
 
 export function create(question, ctx) {
@@ -55,10 +55,10 @@ export function create(question, ctx) {
   }
 
   function onKey(e) {
-    if (locked || e.altKey || e.ctrlKey || e.metaKey) return;
-    if (/^[0-9]$/.test(e.key)) type(e.key);
-    else if (e.key === 'Backspace') erase();
-    else if (e.key === 'Enter' && value) { e.preventDefault(); validate(); }
+    const action = keyAction(e, { empty: !value, locked });
+    if (action === 'validate') { e.preventDefault(); validate(); }
+    else if (action === 'erase') erase();
+    else if (action === 'input' && /^[0-9]$/.test(e.key)) type(e.key);
   }
   document.addEventListener('keydown', onKey);
   render();

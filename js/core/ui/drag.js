@@ -11,7 +11,7 @@
 //   show?: { … }
 // }
 // answer : { [idÉlément]: idBoîte }
-import { h, content } from './dom.js';
+import { h, content, dropKey } from './dom.js';
 import { icon, badge } from './icons.js';
 
 const POOL = 'pool';
@@ -35,7 +35,7 @@ export function create(question, ctx) {
       tabindex: '0',
       'aria-label': id === POOL ? 'Réserve' : `Boîte « ${label} »`,
       onclick: () => dropSelected(id),
-      onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dropSelected(id); } },
+      onkeydown: (e) => { if (dropKey(e)) { e.preventDefault(); dropSelected(id); } },
     }, id === POOL ? null : h('span', { class: 'drop-zone__label', text: label }), body);
     zones.set(id, { el, body });
     return el;

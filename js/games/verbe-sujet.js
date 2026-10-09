@@ -86,7 +86,9 @@ function verbeQuestion(item, level, rng) {
     type: 'choice',
     prompt: `Touche le verbe conjugué de la phrase.${help}`,
     speak: `Touche le verbe conjugué de la phrase. Écoute : ${noFinal(item.text)}`,
-    display: { choices: choice(item.words, rng, true) },
+    // La consigne parle de « la phrase » : il faut donc la montrer, comme les deux autres formes
+    // de ce jeu. Sans `show`, elle n'existait qu'éparpillée dans les boutons (#113).
+    display: { show: { text: item.text, cursive: true, wrap: true }, choices: choice(item.words, rng, true) },
     answer: item.verbe,
     explain: explainVerbe(item),
     skill: 'trouver le verbe conjugué',

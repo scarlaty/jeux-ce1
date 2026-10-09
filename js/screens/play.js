@@ -5,7 +5,7 @@
 // `createGameView` est aussi utilisé par l'écran du défi du jour (#/defi) : il rend l'en-tête
 // (progression + points en direct), les questions et les corrections, puis rend la main avec
 // `onEnd(result, { session })` — chaque écran dessine sa propre fin de partie.
-import { h, content } from '../core/ui/dom.js';
+import { h, content, focusKeeper } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
@@ -261,10 +261,17 @@ export function createGameView(root, { app, game, onEnd }) {
       h('span', { class: 'play-head__count', 'aria-live': 'polite' }),
       buddy);
     const stage = h('div', { class: 'stage' });
+    // La carte de niveau qui a lancé la partie va disparaître : si c'est elle qui avait le focus,
+    // il faut le rendre à la première question et non à <body> (#113).
+    pendingFocus = focusKeeper(root);
     root.replaceChildren(head, stage);
     renderQuestion(session, head, dots, stage);
     return session;
   }
+
+  /* Relevé du focus transmis d'une question à la suivante : il est pris dans `onAnswer`, avant que
+     `showResult` ne masque le bouton validé. Variable de fermeture, propre à cette vue de partie. */
+  let pendingFocus = null;
 
   function renderQuestion(session, head, dots, stage) {
     clearTimeout(timer);
@@ -299,6 +306,11 @@ export function createGameView(root, { app, game, onEnd }) {
       submit: (value) => onAnswer(value),
     });
 
+    // Relève pris AVANT la mutation. Sur le chemin « bonne réponse », `showResult` masque le bouton
+    // validé tout de suite alors que la question suivante n'arrive que 1 100 ms plus tard : le
+    // relève doit donc venir d'`onAnswer`, sinon le focus est déjà perdu quand on regarde (#113).
+    const restoreFocus = pendingFocus || focusKeeper(stage);
+    pendingFocus = null;
     const show = question.display?.show;
     const lang = question.lang || 'fr-FR';
     const showContent = show && h('div', { class: `show__content${show.text && !show.emoji ? ' show__content--text' : ''}` }, content(show, { cursive: Boolean(show.cursive) }));
@@ -318,8 +330,14 @@ export function createGameView(root, { app, game, onEnd }) {
       answerEl,
       feedback,
     ].filter(Boolean));
+    // Le bouton qui avait le focus vient d'être retiré du DOM : sans cela, l'enfant au clavier
+    // repart de la barre du haut à chacune des dix questions. On vise le bloc de consigne et non
+    // son texte, pour que la tabulation suivante trouve le bouton « écouter » (#113).
+    restoreFocus(() => stage.querySelector('.prompt'));
 
     function onAnswer(value) {
+      // Avant toute chose : `showResult` va masquer ou désactiver le bouton qui a le focus.
+      pendingFocus = focusKeeper(stage);
       const fb = session.answer(value);
       ui.showResult({ correct: fb.correct, given: value, answer: fb.answer });
       const dot = dots[index];

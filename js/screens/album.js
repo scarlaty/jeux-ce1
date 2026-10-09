@@ -5,7 +5,7 @@ import { icon } from '../core/ui/icons.js';
 import { mascotSticker, albumFace } from '../core/ui/mascot.js';
 import { ISLANDS } from '../games/registry.js';
 import {
-  readRewards, islandStickers, gradeProgress, stickerCount, stickerTotal, GRADES, gradeRank,
+  readRewards, islandStickers, gradeProgress, stickerCount, stickerTotal, stickerHint, GRADES, gradeRank,
 } from '../core/rewards.js';
 
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
@@ -73,7 +73,7 @@ export default {
       h('h2', { class: 'album-subtitle', text: 'Mes grades' }),
       gradeLadder(rewards.points),
       h('h2', { class: 'album-subtitle', text: 'Mes gommettes' }),
-      h('p', { class: 'album-hint cursive', text: 'Réussis une partie pour gagner une gommette, et trois étoiles pour en gagner deux !' }),
+      h('p', { class: 'album-hint cursive', text: stickerHint(rewards) }),
       h('div', { class: 'album-islands' }, ISLANDS.map((island) => islandSection(island, rewards.stickers[island.id] || []))),
       h('div', { class: 'album-actions' },
         h('a', { class: 'btn btn--primary', href: '#/' }, icon('home'), h('span', { text: 'La carte des îles' })))));

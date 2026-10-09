@@ -17,7 +17,8 @@ const fill = (color) => `fill: var(--swatch-${color})`;
 export function label(spec) {
   // Une description mal formée garde un nom : c'est `check` qui la signale.
   if (!getColor(spec.color)) return 'Dessin de couleur';
-  if (spec.shape === 'swatch') return `Pastille ${colorFr(spec.color)}`;
+  // « Pastille » est féminin : sans cet accord, 6 libellés sur 11 étaient fautifs (#113).
+  if (spec.shape === 'swatch') return `Pastille ${colorFr(spec.color, { feminine: true })}`;
   if (!getThing(spec.shape) || !Number.isInteger(spec.count)) return 'Dessin de couleur';
   return thingsFr({ thing: spec.shape, color: spec.color, count: spec.count });
 }

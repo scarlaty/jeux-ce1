@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { artErrors, artKinds, artLabel, registerArt } from '../js/core/ui/art/index.js';
 import { handAngles, label } from '../js/core/ui/art/clock.js';
 import { label as baseTenLabel, layout, pieceWords } from '../js/core/ui/art/base-ten.js';
+import { label as coloredLabel } from '../js/core/ui/art/colored.js';
+import { COLORS } from '../js/data/anglais.js';
 import { validateQuestion } from '../js/core/validate.js';
 
 // Les dessins sont décrits par les jeux et dessinés par le socle : la partie « description »
@@ -138,4 +140,17 @@ test('display.show peut être un dessin seul', () => {
   assert.deepEqual(validateQuestion(q), []);
   q.display.show = { art: { kind: 'clock', hours: 7 } };
   assert.deepEqual(validateQuestion(q), ['clock.minutes : entier de 0 à 59']);
+});
+
+/* Le nom accessible est lu par la synthèse vocale, dans un jeu de langue : « Pastille bleu »
+   était fautif sur 6 des 11 couleurs, faute de l'option { feminine } (#113). */
+test("le nom d'une pastille de couleur est accordé au féminin", () => {
+  for (const color of COLORS) {
+    const nom = coloredLabel({ shape: 'swatch', color: color.id });
+    assert.equal(nom, `Pastille ${color.fr[1]}`, `couleur ${color.id}`);
+  }
+  // Témoins explicites : les six qui étaient faux.
+  assert.equal(coloredLabel({ shape: 'swatch', color: 'blue' }), 'Pastille bleue');
+  assert.equal(coloredLabel({ shape: 'swatch', color: 'white' }), 'Pastille blanche');
+  assert.equal(coloredLabel({ shape: 'swatch', color: 'purple' }), 'Pastille violette');
 });

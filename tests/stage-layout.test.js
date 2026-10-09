@@ -40,3 +40,20 @@ test('la colonne des réponses (.answer) ne grandit pas avec son contenu (08/10)
   // la colonne « auto » de .answer prenait la largeur minimale de ses choix.
   assert.match(ruleBody('.answer'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 });
+
+/* La pastille ✓/✗ est en `position: absolute` : son hôte doit être `position: relative`, sinon elle
+   remonte au coin de la zone de jeu. `.amount__total` était le seul oublié, et le juste/faux du type
+   « amount » n'était plus porté que par la couleur — ce que le projet interdit (#113). */
+test('chaque hôte de pastille ✓/✗ est un repère de positionnement', () => {
+  for (const selector of ['.answer-field', '.choice', '.token', '.order-slot', '.amount__total']) {
+    const body = ruleBody(selector);
+    assert.match(body, /position:\s*relative/, `${selector} doit être position: relative`);
+  }
+});
+
+/* La pastille du total du type « amount » est dans le FLUX : en absolu elle mordait sur le montant
+   (400 px² de recouvrement à toutes les largeurs), et le juste/faux redevenait une affaire de
+   couleur. C'est un invariant de règle, pas une décision de code : le lire ici suffit (#113). */
+test('la pastille du total reste dans le flux', () => {
+  assert.match(ruleBody('.amount__total .badge'), /position:\s*static/);
+});

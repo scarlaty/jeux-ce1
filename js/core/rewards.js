@@ -172,12 +172,6 @@ export function findSticker(island, id) {
   return islandStickers(island).find((s) => s.id === id) || null;
 }
 
-/** Nombre de gommettes gagnées par une partie : 1 dès que la partie est réussie, 2 avec 3 étoiles. */
-export function stickersWon(stars = 0) {
-  if (stars >= 3) return 2;
-  return stars >= 1 ? 1 : 0;
-}
-
 /** Les `count` prochaines gommettes de l'île qui ne sont pas déjà dans `owned`. */
 export function nextStickers(owned = [], island, count = 1) {
   if (count <= 0) return [];
@@ -220,6 +214,18 @@ export function stickerCount(rewards) {
 
 export function stickerTotal() {
   return STICKER_ISLANDS.reduce((sum, island) => sum + islandStickers(island).length, 0);
+}
+
+/**
+ * Phrase d'encouragement de l'album. Elle décrit le coffre (#91), seule source de gommettes :
+ * la version précédente promettait deux gommettes pour trois étoiles, ce que le jeu n'a jamais
+ * fait, et la promesse était même inversée (un coffre doré sort une gommette moins souvent
+ * qu'un coffre de bois). Collection terminée : on le dit, comme pour les grades (#113).
+ */
+export function stickerHint(rewards) {
+  if (stickerCount(rewards) >= stickerTotal()) return 'Tu as collé toutes les gommettes. Bravo !';
+  return "Les gommettes sortent des coffres. Réussis une partie pour en gagner un : plus tu as "
+    + "d'étoiles, plus il est beau !";
 }
 
 /**

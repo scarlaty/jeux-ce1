@@ -7,7 +7,7 @@
 //   show?: { … }
 // }
 // answer : la liste dans le bon ordre.
-import { h, content } from './dom.js';
+import { h, content, focusKeeper } from './dom.js';
 import { icon, badge } from './icons.js';
 import { sameAnswer } from '../engine.js';
 
@@ -35,6 +35,7 @@ export function create(question, ctx) {
   pool.append(...poolButtons);
 
   function render() {
+    const restoreFocus = focusKeeper(root);
     line.replaceChildren(...items.map((_, pos) => {
       const index = placed[pos];
       if (index === undefined) return h('li', { class: 'order-slot', 'aria-label': `case ${pos + 1} vide` });
@@ -56,6 +57,13 @@ export function create(question, ctx) {
       b.setAttribute('aria-hidden', used ? 'true' : 'false');
     });
     okButton.disabled = placed.length !== items.length;
+    // Le jeton qu'on vient de poser est désactivé alors qu'il a le focus : sans cela, l'enfant
+    // au clavier repart du haut de la page à chaque mot placé (#113).
+    // La dernière case remplie, sinon le prochain jeton à ranger, sinon « Valider ».
+    restoreFocus(() => {
+      const filled = line.querySelectorAll('.order-slot.is-filled button');
+      return filled[filled.length - 1] || poolButtons.find((b) => !b.disabled) || okButton;
+    });
   }
 
   function validate() {
@@ -64,10 +72,12 @@ export function create(question, ctx) {
     ctx.submit(placed.map((i) => items[i]));
   }
 
+  const root = h('div', { class: 'order' }, line, pool, okButton);
+
   render();
 
   return {
-    el: h('div', { class: 'order' }, line, pool, okButton),
+    el: root,
     showResult() {
       locked = true;
       pool.hidden = true;
