@@ -35,7 +35,12 @@ export function create(question, ctx) {
       tabindex: '0',
       'aria-label': id === POOL ? 'Réserve' : `Boîte « ${label} »`,
       onclick: () => dropSelected(id),
-      onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dropSelected(id); } },
+      // Seule la zone elle-même répond à Entrée : sinon `preventDefault` annule l'activation du
+      // jeton qui a le focus, et plus rien n'est sélectionnable au clavier (issue #113).
+      onkeydown: (e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dropSelected(id); }
+      },
     }, id === POOL ? null : h('span', { class: 'drop-zone__label', text: label }), body);
     zones.set(id, { el, body });
     return el;

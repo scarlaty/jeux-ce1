@@ -105,3 +105,12 @@ export function mathText(text) {
   });
   return h('span', { class: 'content-text math', style: `--math-em: ${em.toFixed(2)}` }, children);
 }
+
+/* Un raccourci clavier posé sur `document` ne doit jamais voler Entrée ou Espace à un bouton qui a le
+   focus : `preventDefault` sur `keydown` annule le clic que le navigateur synthétise, et la commande
+   visée ne s'exécute pas. C'est ce qui rendait le pavé et le clavier de lettres injouables (#113). */
+export const CONTROLS = 'button, a[href], [role="button"]';
+export function onControl(e) {
+  const el = e && e.target;
+  return typeof el?.closest === 'function' && !!el.closest(CONTROLS);
+}

@@ -3,7 +3,7 @@
 //
 // display : { maxLength?: 4, prefix?: '', suffix?: '', show?: { … } }
 // answer  : entier positif.
-import { h } from './dom.js';
+import { h, onControl } from './dom.js';
 import { icon, badge } from './icons.js';
 
 export function create(question, ctx) {
@@ -58,7 +58,12 @@ export function create(question, ctx) {
     if (locked || e.altKey || e.ctrlKey || e.metaKey) return;
     if (/^[0-9]$/.test(e.key)) type(e.key);
     else if (e.key === 'Backspace') erase();
-    else if (e.key === 'Enter' && value) { e.preventDefault(); validate(); }
+    else if (e.key === 'Enter' && value) {
+      // Entrée sur un bouton doit activer CE bouton : `preventDefault` annulerait le clic que le
+      // navigateur synthétise, et le raccourci enverrait un nombre incomplet (issue #113).
+      if (onControl(e)) return;
+      e.preventDefault(); validate();
+    }
   }
   document.addEventListener('keydown', onKey);
   render();
