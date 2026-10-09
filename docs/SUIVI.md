@@ -209,9 +209,24 @@ sur onze étaient mal accordés.
    défauts — dont un en déplaçant `if (onControl(e)) return;` après `preventDefault`, texte identique
    au caractère près — avec 737 tests verts. Vérifier un garde-fou en cassant le code exprès, sinon
    on ne sait pas s'il garde quelque chose.
-3. **Le moment du relève compte autant que le relève.** Le focus était relevé au rendu de la question
+3. **Le moment du relevé compte autant que le relevé.** Le focus était relevé au rendu de la question
    suivante, 1 100 ms après que `showResult` eut masqué le bouton validé : le correctif ne marchait
    que sur le chemin d'erreur, jamais sur un QCM. Mesuré par le juge accessibilité, pas par les tests.
+
+### Ce qui est gardé, et ce qui ne l'est pas
+
+Une contre-revue a muté le code douze fois : **six mutations attrapées, six passées**. La ligne de
+partage est nette et vaut pour la suite du projet :
+
+- **tout ce qui est devenu une fonction pure de `js/core/ui/dom.js` est réellement gardé** (6/6) :
+  `keyAction`, `dropKey`, `focusKeeper`, `keepFocus` ;
+- **rien de ce qui est resté dans un écran n'est gardé** (0/4). En particulier, déplacer le relevé du
+  focus de `onAnswer` vers `renderQuestion` — exactement la leçon n° 3 ci-dessus — **ne fait rougir
+  aucun test**. Un test unitaire ne voit pas *où* un appel est placé, seulement ce qu'il fait.
+
+Ce point repose donc sur la relecture humaine et sur une vérification au clavier dans un navigateur.
+Il est écrit ici plutôt que supposé : le message du commit `813ef51` affirmait à tort que les trois
+mutations échouaient, alors que seules celles de `dom.js` sont couvertes.
 
 ### Refus assumé : le contour de la mer de nuit
 

@@ -446,11 +446,14 @@
   align-items: start;
 }
 
-/* Cible de focus programmatique : à chaque nouvelle question on y renvoie le focus perdu, mais un
-   anneau de 4 px autour d'un bloc non interactif se lit comme une erreur. Le focus reste annoncé
-   au lecteur d'écran, et la tabulation suivante allume l'anneau du bouton « écouter » (#113). */
-.prompt[tabindex="-1"]:focus,
-.prompt[tabindex="-1"]:focus-visible { outline: none; }
+/* Cible de focus programmatique : à chaque nouvelle question on y renvoie le focus perdu. L'anneau
+   plein de 4 px y ressemblait à une erreur (un cadre rose autour d'un paragraphe), mais ne rien
+   montrer du tout priverait l'enfant au clavier de tout repère : trait discret, en retrait (#113). */
+.prompt[tabindex="-1"]:focus { outline: none; }
+.prompt[tabindex="-1"]:focus-visible {
+  outline: 2px dashed var(--border-strong);
+  outline-offset: 6px;
+}
 
 .prompt {
   display: flex;

@@ -3,6 +3,7 @@
 import { test, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createEmitter, createSession } from '../js/core/engine.js';
 import { createMemoryBackend, createStorage, createStore, defaultProfile } from '../js/core/storage.js';
@@ -190,7 +191,7 @@ test('le mode n\'est jamais lu ni écrit dans un stockage persistant', () => {
 test('les écrans et app.js (non importables sous node, DOM) restent syntaxiquement valides', () => {
   const files = ['js/app.js', ...readdirSync(new URL('../js/screens/', import.meta.url)).map((f) => `js/screens/${f}`)];
   for (const f of files) {
-    const out = spawnSync(process.execPath, ['--check', new URL(`../${f}`, import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')], { encoding: 'utf8' });
+    const out = spawnSync(process.execPath, ['--check', fileURLToPath(new URL(`../${f}`, import.meta.url))], { encoding: 'utf8' });
     assert.equal(out.status, 0, `${f} : ${out.stderr}`);
   }
 });

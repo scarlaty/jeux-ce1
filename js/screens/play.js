@@ -269,11 +269,11 @@ export function createGameView(root, { app, game, onEnd }) {
     return session;
   }
 
-/* Relevé du focus transmis d'une question à la suivante : il est pris dans `onAnswer`, avant que
-   `showResult` ne masque le bouton validé. Un seul écran de partie vit à la fois. */
-let pendingFocus = null;
+  /* Relevé du focus transmis d'une question à la suivante : il est pris dans `onAnswer`, avant que
+     `showResult` ne masque le bouton validé. Variable de fermeture, propre à cette vue de partie. */
+  let pendingFocus = null;
 
-function renderQuestion(session, head, dots, stage) {
+  function renderQuestion(session, head, dots, stage) {
     clearTimeout(timer);
     timer = null;
     try { ui?.destroy?.(); } catch (err) { console.error(err); }

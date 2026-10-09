@@ -50,3 +50,10 @@ test('chaque hôte de pastille ✓/✗ est un repère de positionnement', () => 
     assert.match(body, /position:\s*relative/, `${selector} doit être position: relative`);
   }
 });
+
+/* La pastille du total du type « amount » est dans le FLUX : en absolu elle mordait sur le montant
+   (400 px² de recouvrement à toutes les largeurs), et le juste/faux redevenait une affaire de
+   couleur. C'est un invariant de règle, pas une décision de code : le lire ici suffit (#113). */
+test('la pastille du total reste dans le flux', () => {
+  assert.match(ruleBody('.amount__total .badge'), /position:\s*static/);
+});
