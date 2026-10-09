@@ -184,3 +184,42 @@ annulées (commentaire 🔓 sur chaque issue) : **tout le reste est libre**, à 
 
 Bug corrigé le 08/10 (v36) : le tampon « Bien joué ! » apparaissait agrandi ×1,8 et débordait (400 px sur un écran de 360 px) ; taille plafonnée à 7vw, animation ×1,25, `.stage` en `overflow-x: clip` (testé).
 **Mode essai pour les adultes** (#111, v37) : depuis l'espace parents, tout est ouvert et rien n'est enregistré (garde central dans `storage.js` + mode figé au départ de chaque partie dans `engine.js`). Juges visuel et accessibilité passés ; vérifié dans le navigateur : localStorage identique à l'octet après une partie en essai.
+
+
+## Audit UI/UX du 09/10 et issue #113
+
+Six audits indépendants (boucle de jeu, types de question, récompenses/identité, espace parents,
+système de design, rendu) ont tourné sur `main` @78a0118 (v39). L'issue **#113** a traité les seuls
+constats bloquants ; le reste attend des tickets.
+
+**Corrigé (#113)** : le pavé, le clavier de lettres et le glisser-déposer étaient injouables au
+clavier (cinq jeux muets) ; le focus retombait sur `<body>` à chaque question ; deux contrastes sous
+AA (chiffre d'un niveau verrouillé 2,16:1, pastille « C'est toi » 2,85:1 sur l'ardoise) ; l'album
+promettait des gommettes que le coffre ne donne plus ; la pastille ✓/✗ du type `amount` était posée
+hors de sa cible ; la question « verbe conjugué » n'affichait pas sa phrase ; six libellés de couleur
+sur onze étaient mal accordés.
+
+### Trois pièges, tous du même genre que les précédents
+
+1. **Un raccourci clavier posé sur `document` vole l'activation des boutons.** `preventDefault()` sur
+   `keydown` annule le clic que le navigateur synthétise pour le bouton focalisé. Trois composants
+   avaient le défaut ; un seul l'avait rendu visible. **Une décision écrite dans un gestionnaire ne
+   se teste pas** : elle vit désormais dans `keyAction` / `dropKey` / `focusKeeper` (purs, testés).
+2. **Un `assert.match` sur le texte source n'est pas un garde-fou.** La revue a réintroduit les trois
+   défauts — dont un en déplaçant `if (onControl(e)) return;` après `preventDefault`, texte identique
+   au caractère près — avec 737 tests verts. Vérifier un garde-fou en cassant le code exprès, sinon
+   on ne sait pas s'il garde quelque chose.
+3. **Le moment du relève compte autant que le relève.** Le focus était relevé au rendu de la question
+   suivante, 1 100 ms après que `showResult` eut masqué le bouton validé : le correctif ne marchait
+   que sur le chemin d'erreur, jamais sur un QCM. Mesuré par le juge accessibilité, pas par les tests.
+
+### Refus assumé : le contour de la mer de nuit
+
+Sur l'ardoise, `--kw-outline` (#5d3849) tombe à **1,08:1** sur `--sea-deep` : voiliers, bouée et
+baleine n'ont plus de trait. La mer a été assombrie de 78 % quand le contour n'était éclairci que de
+37 %. Un contour éclairci a été essayé **puis retiré** : `--kw-outline` peint aussi `.sc-ink`,
+`.sc-smile` et `.sc-dot`, donc tous les habitants de la mer perdaient yeux et bouche (1,03-1,09:1), et
+les traits posés sur les remplissages pastel disparaissaient (voile crème 1,09:1). **Aucune couleur
+unique ne tient à la fois sur les trois tons de mer et sur les corps clairs** (sept candidates
+calculées) : la réponse est un liseré à deux tons, ou une mer de nuit moins sombre. À reprendre dans
+son propre ticket plutôt qu'à moitié.
