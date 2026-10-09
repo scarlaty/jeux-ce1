@@ -6,8 +6,8 @@ import {
   POINTS_PER_CORRECT, COMPLETION_POINTS, DAILY_BONUS_POINTS, STREAK_BONUSES,
   streakBonus, answerPoints, runPoints,
   GRADES, gradeRank, gradeFor, gradeProgress, gradeGained,
-  STICKERS, STICKER_ISLANDS, islandStickers, findSticker, stickersWon, nextStickers,
-  defaultRewards, normalizeRewards, readRewards, stickerCount, stickerTotal, applyGameRewards,
+  STICKERS, STICKER_ISLANDS, islandStickers, findSticker, nextStickers,
+  defaultRewards, normalizeRewards, readRewards, stickerCount, stickerTotal, stickerHint, applyGameRewards,
   DAILY_QUESTIONS, dailyKey, dailySeed, hashString, isDailyDone, buildDailyPlan, DISCOVERY_MAX_PLAYS,
   SUBJECT_WEIGHTS,
   gameStars, totalStars, ISLAND_UNLOCK_STARS, islandUnlocked, islandStarsLeft, islandUnlockStars,
@@ -113,17 +113,26 @@ test('le catalogue de gommettes couvre les cinq îles, sans doublon', () => {
   assert.deepEqual(islandStickers('nulle-part'), []);
 });
 
-test('une partie réussie donne au moins une gommette, trois étoiles en donnent deux', () => {
-  assert.equal(stickersWon(0), 0);
-  assert.equal(stickersWon(1), 1);
-  assert.equal(stickersWon(2), 1);
-  assert.equal(stickersWon(3), 2);
+test("les gommettes suivantes sont les premières non possédées de l'île", () => {
   assert.deepEqual(nextStickers([], 'mots', 1).map((s) => s.id), [STICKERS.mots[0].id]);
   assert.deepEqual(nextStickers([STICKERS.mots[0].id], 'mots', 2).map((s) => s.id),
     [STICKERS.mots[1].id, STICKERS.mots[2].id]);
   // Collection complète : plus rien à gagner, mais aucune erreur.
   assert.deepEqual(nextStickers(STICKERS.mots.map((s) => s.id), 'mots', 2), []);
   assert.deepEqual(nextStickers([], 'mots', 0), []);
+});
+
+/* L'ancienne phrase de l'album promettait deux gommettes pour trois étoiles. Le coffre (#91) n'en
+   rend jamais deux, et un coffre doré en sort même moins souvent qu'un coffre de bois : la
+   promesse était fausse ET inversée. Elle vit désormais ici, où un test peut la lire (#113). */
+test("la phrase de l'album ne promet aucune gommette, et dit quand la collection est finie", () => {
+  const vide = stickerHint(normalizeRewards(undefined));
+  assert.doesNotMatch(vide, /gommette, et trois|en gagner deux/);
+  assert.match(vide, /coffre/);
+
+  const toutes = { stickers: Object.fromEntries(STICKER_ISLANDS.map((i) => [i, islandStickers(i).map((s) => s.id)])) };
+  assert.equal(stickerCount(toutes), stickerTotal());
+  assert.match(stickerHint(toutes), /toutes les gommettes/);
 });
 
 // --- État des récompenses ----------------------------------------------------------------------

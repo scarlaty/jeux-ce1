@@ -40,3 +40,13 @@ test('la colonne des réponses (.answer) ne grandit pas avec son contenu (08/10)
   // la colonne « auto » de .answer prenait la largeur minimale de ses choix.
   assert.match(ruleBody('.answer'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
 });
+
+/* La pastille ✓/✗ est en `position: absolute` : son hôte doit être `position: relative`, sinon elle
+   remonte au coin de la zone de jeu. `.amount__total` était le seul oublié, et le juste/faux du type
+   « amount » n'était plus porté que par la couleur — ce que le projet interdit (#113). */
+test('chaque hôte de pastille ✓/✗ est un repère de positionnement', () => {
+  for (const selector of ['.answer-field', '.choice', '.token', '.order-slot', '.amount__total']) {
+    const body = ruleBody(selector);
+    assert.match(body, /position:\s*relative/, `${selector} doit être position: relative`);
+  }
+});

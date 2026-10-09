@@ -531,3 +531,16 @@ test('mixité : prénoms de filles et de garçons à parts égales, Papa et Mama
   }
   assert.doesNotMatch(text, /\b(tu|je|j'|toi|ton|ta|tes)\b/i);
 });
+
+/* La consigne de chaque forme parle de « la phrase ». La question « verbe conjugué » n'avait pas de
+   `show` : la phrase n'existait qu'éparpillée dans les boutons, sans ponctuation ni majuscule, sur
+   deux colonnes à 360 px, et elle n'était énoncée nulle part au lecteur d'écran (#113). */
+test('chaque question montre la phrase entière', () => {
+  for (const level of [1, 2, 3]) {
+    for (const q of questions(level, 600)) {
+      const show = q.display && q.display.show;
+      assert.ok(show && typeof show.text === 'string' && show.text.length > 0,
+        `${q.key} : la phrase n'est pas affichée`);
+    }
+  }
+});

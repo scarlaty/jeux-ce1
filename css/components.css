@@ -605,7 +605,9 @@
   background: var(--surface-sunk); border: 3px dashed var(--border-strong); border-radius: var(--radius-l);
 }
 .amount__tray.is-empty::before { content: 'Touche une pièce ou un billet'; color: var(--ink-faint); }
-.amount__total { margin: 0; font-family: var(--font-title); font-size: 1.5rem; color: var(--ink); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
+/* `position: relative` : sans elle la pastille ✓/✗ remontait au coin de la zone de jeu, et le
+   juste/faux n'était plus porté que par la couleur du total (#113). */
+.amount__total { position: relative; margin: 0; font-family: var(--font-title); font-size: 1.5rem; color: var(--ink); display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
 .amount__total-value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .amount__total.is-right { color: var(--success); }
 .amount__total.is-wrong { color: var(--retry); }
