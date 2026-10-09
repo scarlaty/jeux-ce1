@@ -59,7 +59,12 @@ export function create(question, ctx) {
     okButton.disabled = placed.length !== items.length;
     // Le jeton qu'on vient de poser est désactivé alors qu'il a le focus : sans cela, l'enfant
     // au clavier repart du haut de la page à chaque mot placé (#113).
-    if (hadFocus) keepFocus(line.querySelector('.order-slot.is-filled:last-of-type button') || okButton);
+    if (hadFocus) {
+      // La case qu'on vient de remplir, sinon le prochain jeton à ranger, sinon « Valider ».
+      const remplies = line.querySelectorAll('.order-slot.is-filled button');
+      const suivant = poolButtons.find((b) => !b.disabled);
+      keepFocus(remplies[remplies.length - 1] || suivant || okButton);
+    }
   }
 
   function validate() {

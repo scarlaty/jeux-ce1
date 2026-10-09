@@ -124,10 +124,20 @@ export function focusedWithin(root) {
   return !!el && el !== document.body && root.contains(el);
 }
 
+/* Le focus est perdu quand il est revenu à <body>, mais aussi quand il reste accroché à un
+   élément qu'on vient de détacher ou de désactiver : Chrome garde un bouton `disabled` comme
+   activeElement, et tabuler depuis là est imprévisible. */
+function focusLost() {
+  const el = document.activeElement;
+  if (!el || el === document.body) return true;
+  if (el.disabled) return true;
+  return el.isConnected === false;
+}
+
 export function keepFocus(el) {
   if (!el || typeof document === 'undefined') return;
-  // Deuxième garde : si quelque chose a déjà le focus, on n'y touche pas.
-  if (document.activeElement && document.activeElement !== document.body) return;
+  // Deuxième garde : si quelque chose de valide a le focus, on n'y touche pas.
+  if (!focusLost()) return;
   if (!el.hasAttribute('tabindex') && !el.matches('a[href], button, input, select, textarea')) {
     el.setAttribute('tabindex', '-1');
   }

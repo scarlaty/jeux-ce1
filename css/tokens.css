@@ -186,6 +186,10 @@
   /* Contour des dessins (#96) : jamais un noir pur, une prune très sombre. Variable dédiée,
      car sur l'ardoise elle s'éclaircit — sinon le trait se perd dans le fond. */
   --kw-outline: #4a2c3d;
+  /* Contour des objets posés sur l'eau. En clair il est identique au contour général ; sur
+     l'ardoise la mer descend à #22405e et le prune n'y fait plus que 1,08:1 — voiliers et bouée
+     perdaient leur trait. Mesuré sur les trois tons de mer, voir tests/contrast.test.js (#113). */
+  --kw-outline-sea: #4a2c3d;
 
   /* --- Carte au trésor (#96) : ciel, mer, terre, matières ---
      Des matières, pas des teintes d'interface : chacune a son ton clair, sa teinte et son ombre.
@@ -317,6 +321,7 @@
     /* Sur l'ardoise le contour s'éclaircit : une prune moins sombre, qui tient encore sur les
        pastels mais ne se noie plus dans le fond ni dans la mer du soir. */
     --kw-outline: #5d3849;
+    --kw-outline-sea: #f3e6ec;
     --map-sky: #33455f;
     --map-sky-low: #4d4a5e;
     --sea-deep: #22405e;
@@ -444,6 +449,7 @@
   /* Sur l'ardoise le contour s'éclaircit : une prune moins sombre, qui tient encore sur les
      pastels mais ne se noie plus dans le fond ni dans la mer du soir. */
   --kw-outline: #5d3849;
+  --kw-outline-sea: #f3e6ec;
   --map-sky: #33455f;
   --map-sky-low: #4d4a5e;
   --sea-deep: #22405e;

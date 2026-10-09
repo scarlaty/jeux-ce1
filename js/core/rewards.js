@@ -224,8 +224,8 @@ export function stickerTotal() {
  */
 export function stickerHint(rewards) {
   if (stickerCount(rewards) >= stickerTotal()) return 'Tu as collé toutes les gommettes. Bravo !';
-  return 'Réussis une partie pour gagner un coffre : il peut contenir une gommette ou un accessoire '
-    + "pour ton compagnon. Plus tu as d'étoiles, plus le coffre est beau !";
+  return "Les gommettes sortent des coffres. Réussis une partie pour en gagner un : plus tu as "
+    + "d'étoiles, plus il est beau !";
 }
 
 /**

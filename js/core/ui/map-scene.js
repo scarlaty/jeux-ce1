@@ -478,10 +478,12 @@ export function archipelagoScene(entries) {
     propDefs(scene, [...ARCHIPELAGO_PROPS, ...idsOf(ARCHIPELAGO_SEA), ...idsOf(foreground)])),
   sky({ horizon, scene }),
   sea({ horizon }),
-  use('boat', { scene, x: 84, y: 46, scale: 0.5, tint: 'menthe' }),
-  use('boat', { scene, x: 157, y: 109, scale: 0.6, tint: 'citron' }),
-  use('boat', { scene, x: 100, y: 118, scale: 0.52, tint: 'rose' }),
-  n('g', { class: 'sc-sea-life' }, scatter(scene, ARCHIPELAGO_SEA)),
+  // Tout ce qui flotte partage le contour éclairci de l'eau (voir --kw-outline-sea).
+  n('g', { class: 'sc-afloat' },
+    use('boat', { scene, x: 84, y: 46, scale: 0.5, tint: 'menthe' }),
+    use('boat', { scene, x: 157, y: 109, scale: 0.6, tint: 'citron' }),
+    use('boat', { scene, x: 100, y: 118, scale: 0.52, tint: 'rose' }),
+    n('g', { class: 'sc-sea-life' }, scatter(scene, ARCHIPELAGO_SEA))),
   entries.map((entry) => archipelagoIsland(entry, scene)),
   n('g', { class: 'sc-foreground' }, scatter(scene, foreground)),
   tipLayer());

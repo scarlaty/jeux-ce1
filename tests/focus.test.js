@@ -56,6 +56,18 @@ test('keepFocus rend focalisable un élément qui ne l\'est pas', () => {
   assert.equal(texte.focused, true);
 });
 
+/* Chrome garde un bouton `disabled` comme activeElement : mesuré en jouant une question
+   « remettre dans l'ordre » au clavier, le focus restait sur le jeton masqué qu'on venait de
+   poser. Pour l'enfant qui tabule, c'est aussi perdu que <body>. */
+test('un élément désactivé ou détaché compte comme un focus perdu', () => {
+  for (const mort of [{ tag: 'b', disabled: true }, { tag: 'b', isConnected: false }]) {
+    globalThis.document = fakeDoc(mort);
+    const cible = node({ matches: true });
+    keepFocus(cible);
+    assert.equal(cible.focused, true, `focus à rendre : ${JSON.stringify(mort)}`);
+  }
+});
+
 /* Garde-fou de régression : les quatre endroits qui retiraient ou désactivaient l'élément focalisé
    doivent passer par ce geste. Sans cela, le défaut revient sans qu'aucun test ne bronche. */
 test('les quatre points de perte de focus sont couverts', () => {
