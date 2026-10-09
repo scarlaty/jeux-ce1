@@ -20,7 +20,7 @@ const node = (opts = {}) => ({
 });
 
 globalThis.document = fakeDoc(body);
-const { keepFocus, focusedWithin } = await import('../js/core/ui/dom.js');
+const { keepFocus, focusedWithin, focusKeeper } = await import('../js/core/ui/dom.js');
 
 test('focusedWithin ne voit rien quand le focus est sur <body>', () => {
   globalThis.document = fakeDoc(body);
@@ -68,17 +68,44 @@ test('un élément désactivé ou détaché compte comme un focus perdu', () => 
   }
 });
 
-/* Garde-fou de régression : les quatre endroits qui retiraient ou désactivaient l'élément focalisé
-   doivent passer par ce geste. Sans cela, le défaut revient sans qu'aucun test ne bronche. */
-test('les quatre points de perte de focus sont couverts', () => {
-  const sources = {
-    'js/screens/play.js': 'changement de question',
-    'js/core/ui/order.js': 'mot rangé',
-    'js/core/ui/amount.js': 'pièce retirée',
-    'js/core/ui/chest.js': 'ouverture du coffre',
-  };
-  for (const [file, quoi] of Object.entries(sources)) {
-    const src = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
-    assert.match(src, /keepFocus\(/, `${file} (${quoi}) doit rendre le focus`);
-  }
+/* `focusKeeper` porte ENSEMBLE le relevé et la garde : un composant ne peut plus « oublier » la
+   condition, ce qui était le cas quand chacun écrivait son propre `if (hadFocus)`. Une revue a
+   montré qu'en retirant cette garde, le vol de focus au doigt revenait sans faire rougir un test. */
+test("focusKeeper ne rend rien si le focus n'était pas dans le composant", () => {
+  globalThis.document = fakeDoc(body);
+  const restore = focusKeeper({ contains: () => false });
+  const cible = node({ matches: true });
+  assert.equal(restore(cible), false, 'aucun focus ne doit être posé');
+  assert.equal(cible.focused, false);
+});
+
+test("focusKeeper rend le focus quand il venait du composant et vient d'être perdu", () => {
+  const dedans = { tag: 'button' };
+  globalThis.document = fakeDoc(dedans, () => true);
+  const restore = focusKeeper({ contains: (el) => el === dedans });
+  // La mutation a eu lieu : l'élément focalisé est désormais détaché.
+  globalThis.document = fakeDoc({ tag: 'button', isConnected: false });
+  const cible = node({ matches: true });
+  assert.equal(restore(cible), true);
+  assert.equal(cible.focused, true);
+});
+
+test('focusKeeper accepte une cible calculée après la mutation', () => {
+  const dedans = { tag: 'button' };
+  globalThis.document = fakeDoc(dedans, () => true);
+  const restore = focusKeeper({ contains: (el) => el === dedans });
+  globalThis.document = fakeDoc(body);
+  const cible = node({ matches: true });
+  let appels = 0;
+  restore(() => { appels += 1; return cible; });
+  assert.equal(appels, 1, 'la cible doit être choisie APRÈS la mutation');
+  assert.equal(cible.focused, true);
+});
+
+test('keepFocus refuse une cible désactivée', () => {
+  globalThis.document = fakeDoc(body);
+  const eteint = node({ matches: true });
+  eteint.disabled = true;
+  keepFocus(eteint);
+  assert.equal(eteint.focused, false, "un bouton désactivé n'accepte pas le focus");
 });

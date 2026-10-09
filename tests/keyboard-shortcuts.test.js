@@ -1,33 +1,52 @@
 // Un raccourci posé sur `document` ne doit pas voler Entrée à un bouton qui a le focus (#113) :
 // `preventDefault` sur keydown annule le clic synthétisé, et la touche visée ne s'active jamais.
+//
+// La décision vit dans des fonctions PURES (`keyAction`, `dropKey`) et non dans une garde écrite
+// au milieu du gestionnaire : une revue a montré qu'une telle garde pouvait être déplacée après
+// `preventDefault` — texte identique, effet nul — sans qu'aucun test ne bronche.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { onControl, CONTROLS } from '../js/core/ui/dom.js';
+import { keyAction, dropKey, onControl, CONTROLS } from '../js/core/ui/dom.js';
 
 // Faux élément : `closest` répond comme le DOM, sans jsdom (le projet n'a aucune dépendance).
-const el = (matches) => ({ closest: (sel) => (sel === CONTROLS && matches ? el(true) : null) });
+const control = { closest: (sel) => (sel === CONTROLS ? control : null) };
+const plain = { closest: () => null };
+const ev = (key, target = plain, extra = {}) => ({ key, target, ...extra });
 
-test('onControl reconnaît une commande focalisée', () => {
-  assert.equal(onControl({ target: el(true) }), true);
+test('Entrée sur une touche du composant n\'est pas détournée', () => {
+  assert.equal(keyAction(ev('Enter', control), { empty: false }), 'ignore');
+  assert.equal(onControl(ev('Enter', control)), true);
 });
 
-test('onControl laisse passer le reste', () => {
-  assert.equal(onControl({ target: el(false) }), false);
-  assert.equal(onControl({ target: null }), false);
-  assert.equal(onControl({}), false);
-  assert.equal(onControl(null), false);
+test('Entrée valide quand aucune commande n\'a le focus', () => {
+  assert.equal(keyAction(ev('Enter', plain), { empty: false }), 'validate');
 });
 
-// Garde-fou de régression : les trois composants qui écoutent au-dessus de leurs boutons doivent
-// tous renoncer quand la touche vient d'une commande. Sans cela, cinq jeux redeviennent injouables.
-test('les composants à raccourci clavier gardent leur garde-fou', () => {
-  for (const file of ['keypad', 'letters']) {
-    const src = readFileSync(new URL(`../js/core/ui/${file}.js`, import.meta.url), 'utf8');
-    assert.match(src, /if \(onControl\(e\)\) return;/,
-      `${file}.js doit renoncer à Entrée quand une commande a le focus`);
+test('Entrée ne valide jamais une saisie vide', () => {
+  assert.equal(keyAction(ev('Enter', plain), { empty: true }), 'ignore');
+  assert.equal(keyAction(ev('Enter', control), { empty: true }), 'ignore');
+});
+
+test('un composant verrouillé ou un raccourci système ne déclenche rien', () => {
+  assert.equal(keyAction(ev('Enter', plain), { empty: false, locked: true }), 'ignore');
+  for (const mod of ['altKey', 'ctrlKey', 'metaKey']) {
+    assert.equal(keyAction(ev('5', plain, { [mod]: true }), { empty: false }), 'ignore', mod);
   }
-  const drag = readFileSync(new URL('../js/core/ui/drag.js', import.meta.url), 'utf8');
-  assert.match(drag, /if \(e\.target !== e\.currentTarget\) return;/,
-    'drag.js : la zone ne doit traiter la touche que pour elle-même');
+});
+
+test('Retour arrière efface, le reste est de la saisie', () => {
+  assert.equal(keyAction(ev('Backspace', plain), { empty: false }), 'erase');
+  assert.equal(keyAction(ev('7', plain), { empty: true }), 'input');
+  assert.equal(keyAction(ev('é', plain), { empty: false }), 'input');
+});
+
+/* La zone de dépôt du glisser-déposer : elle ne doit répondre que pour elle-même. Si elle répond
+   pour un jeton, son `preventDefault` tue la sélection et cinq jeux redeviennent injouables. */
+test('la zone de dépôt ignore une touche venue d\'un jeton', () => {
+  const zone = {};
+  assert.equal(dropKey({ key: 'Enter', target: zone, currentTarget: zone }), true);
+  assert.equal(dropKey({ key: ' ', target: zone, currentTarget: zone }), true);
+  assert.equal(dropKey({ key: 'Enter', target: {}, currentTarget: zone }), false);
+  assert.equal(dropKey({ key: 'a', target: zone, currentTarget: zone }), false);
+  assert.equal(dropKey(null), false);
 });

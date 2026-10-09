@@ -115,18 +115,41 @@ export function onControl(e) {
   return typeof el?.closest === 'function' && !!el.closest(CONTROLS);
 }
 
-/* Quand on retire ou désactive l'élément qui avait le focus, le navigateur le rend à <body> et
-   l'utilisateur au clavier repart du haut de la page. On ne replace le focus que dans ce cas :
-   au doigt et à la souris, activeElement n'est pas <body> et rien ne bouge (#113). */
+/**
+ * Ce qu'une touche doit déclencher dans un composant de saisie (pavé, clavier de lettres).
+ * La décision est ici, pure et testée, et non dans le gestionnaire : une garde écrite sur place
+ * peut être déplacée après `preventDefault` sans qu'aucun test ne bronche (#113).
+ * → 'validate' | 'erase' | 'input' | 'ignore'
+ */
+export function keyAction(e, { empty = true, locked = false } = {}) {
+  if (!e || locked || e.altKey || e.ctrlKey || e.metaKey) return 'ignore';
+  if (e.key === 'Enter') {
+    if (empty) return 'ignore';
+    return onControl(e) ? 'ignore' : 'validate';
+  }
+  if (e.key === 'Backspace') return 'erase';
+  return 'input';
+}
+
+/**
+ * Vrai quand une touche de dépôt est pressée SUR la zone elle-même. Si l'événement remonte d'un
+ * jeton, la zone doit se taire : sinon son `preventDefault` annule l'activation du jeton et plus
+ * rien n'est sélectionnable au clavier (#113).
+ */
+export function dropKey(e) {
+  if (!e || e.target !== e.currentTarget) return false;
+  return e.key === 'Enter' || e.key === ' ';
+}
+
+/* Quand on retire ou désactive l'élément qui avait le focus, le navigateur le rend à <body> — ou,
+   sur Chrome, le garde accroché à un bouton désactivé. L'utilisateur au clavier repart alors du haut
+   de la page. On ne replace le focus que dans ce cas (#113). */
 export function focusedWithin(root) {
   if (typeof document === 'undefined' || !root) return false;
   const el = document.activeElement;
   return !!el && el !== document.body && root.contains(el);
 }
 
-/* Le focus est perdu quand il est revenu à <body>, mais aussi quand il reste accroché à un
-   élément qu'on vient de détacher ou de désactiver : Chrome garde un bouton `disabled` comme
-   activeElement, et tabuler depuis là est imprévisible. */
 function focusLost() {
   const el = document.activeElement;
   if (!el || el === document.body) return true;
@@ -135,11 +158,28 @@ function focusLost() {
 }
 
 export function keepFocus(el) {
-  if (!el || typeof document === 'undefined') return;
+  // Une cible désactivée n'accepte pas le focus : `focus()` échouerait en silence et l'enfant
+  // resterait sur <body> en croyant la question couverte (#113).
+  if (!el || el.disabled || typeof document === 'undefined') return;
   // Deuxième garde : si quelque chose de valide a le focus, on n'y touche pas.
   if (!focusLost()) return;
   if (!el.hasAttribute('tabindex') && !el.matches('a[href], button, input, select, textarea')) {
     el.setAttribute('tabindex', '-1');
   }
   el.focus({ preventScroll: true });
+}
+
+/**
+ * Relève si le focus est dans `root`, et rend une fonction à rappeler APRèS la mutation.
+ * Le relevé et la garde vivent ensemble ici : un appelant ne peut pas « oublier » la condition,
+ * ce qui était le cas quand chaque composant écrivait son propre `if (hadFocus)`.
+ */
+export function focusKeeper(root) {
+  const had = focusedWithin(root);
+  return (pick) => {
+    if (!had) return false;
+    const el = typeof pick === 'function' ? pick() : pick;
+    keepFocus(el);
+    return true;
+  };
 }

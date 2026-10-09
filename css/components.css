@@ -446,6 +446,12 @@
   align-items: start;
 }
 
+/* Cible de focus programmatique : à chaque nouvelle question on y renvoie le focus perdu, mais un
+   anneau de 4 px autour d'un bloc non interactif se lit comme une erreur. Le focus reste annoncé
+   au lecteur d'écran, et la tabulation suivante allume l'anneau du bouton « écouter » (#113). */
+.prompt[tabindex="-1"]:focus,
+.prompt[tabindex="-1"]:focus-visible { outline: none; }
+
 .prompt {
   display: flex;
   align-items: center;
@@ -611,6 +617,9 @@
 .amount__total-value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .amount__total.is-right { color: var(--success); }
 .amount__total.is-wrong { color: var(--retry); }
+/* Le total est une boîte à la largeur de son texte : une pastille en absolu y mordrait sur le
+   montant. Elle prend donc sa place dans la ligne, à côté de la somme. */
+.amount__total .badge { position: static; flex: none; }
 .amount__palette { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-3); width: 100%; }
 .amount__option, .amount__piece {
   display: inline-flex; align-items: center; justify-content: center;

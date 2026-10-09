@@ -8,7 +8,7 @@
 //   show?: { … }
 // }
 // answer : le mot attendu, en minuscules.
-import { h, onControl } from './dom.js';
+import { h, keyAction } from './dom.js';
 import { icon, badge } from './icons.js';
 import { LETTERS, ACCENTED, SYMBOLS } from '../alphabet.js';
 
@@ -73,15 +73,11 @@ export function create(question, ctx) {
   }
 
   function onKey(e) {
-    if (locked || e.altKey || e.ctrlKey || e.metaKey) return;
+    const action = keyAction(e, { empty: chars.length === 0, locked });
+    if (action === 'validate') { e.preventDefault(); validate(); return; }
+    if (action === 'erase') { erase(); return; }
     const key = e.key.length === 1 ? e.key.toLowerCase().replace('’', "'") : e.key;
-    if (allowed.has(key)) { e.preventDefault(); type(key); }
-    else if (key === 'Backspace') erase();
-    else if (key === 'Enter' && chars.length) {
-      // Voir keypad.js : Entrée sur une touche doit écrire cette lettre, pas valider (issue #113).
-      if (onControl(e)) return;
-      e.preventDefault(); validate();
-    }
+    if (action === 'input' && allowed.has(key)) { e.preventDefault(); type(key); }
   }
   document.addEventListener('keydown', onKey);
   render();

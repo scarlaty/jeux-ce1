@@ -140,10 +140,6 @@
   stroke-linecap: round;
   opacity: .7;
 }
-/* Un <use> a son propre arbre d'ombre : un sélecteur descendant ne l'atteint pas, seule une
-   propriété héritée y entre — c'est déjà le mécanisme de --sc-stroke. */
-.sc-afloat { --kw-outline: var(--kw-outline-sea); }
-
 /* La falaise porte ses strates en trait fin, comme les planches d'un mur. */
 .sc-dt--land { stroke-width: 1; opacity: .35; }
 

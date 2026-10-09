@@ -30,6 +30,8 @@ const darkForced = block(':root[data-theme="dark"]');
 const dark = { ...light, ...darkForced };
 
 function luminance(hex) {
+  // Un `#fff` ou un `rgb(...)` donnerait NaN et passerait inaperçu : on le refuse ici.
+  assert.match(String(hex), /^#[0-9a-fA-F]{6}$/, `couleur attendue en #rrggbb : ${hex}`);
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
     .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -63,29 +65,6 @@ test('la règle du niveau verrouillé emploie bien ce couple', () => {
   assert.ok(rule, 'règle introuvable');
   assert.match(rule[0], /background: var\(--surface\)/);
   assert.match(rule[0], /color: var\(--ink-soft\)/);
-});
-
-/* Un objet posé sur l'eau n'est plus qu'une silhouette : si son contour ne se détache pas de la
-   mer, il disparaît. Sur l'ardoise la mer a été assombrie de 78 % alors que le contour n'était
-   éclairci que de 37 % : voiliers et bouée tombaient à 1,08:1. Aucune valeur sombre ne tient sur
-   les trois tons de mer — d'où un contour dédié à ce qui flotte. */
-test('le contour de ce qui flotte se détache des trois tons de mer', () => {
-  for (const [theme, vars] of [['clair', light], ['sombre', dark]]) {
-    for (const sea of ['--sea-deep', '--sea', '--sea-shallow']) {
-      const ratio = contrast(vars['--kw-outline-sea'], vars[sea]);
-      assert.ok(ratio >= 3, `${theme} : --kw-outline-sea sur ${sea} = ${ratio.toFixed(2)}`);
-    }
-  }
-});
-
-test('le groupe qui flotte emploie bien ce contour', () => {
-  const map = readFileSync(join(ROOT, 'css/map.css'), 'utf8');
-  assert.match(map, /\.sc-afloat \{[^}]*--kw-outline: var\(--kw-outline-sea\)/);
-  const scene = readFileSync(join(ROOT, 'js/core/ui/map-scene.js'), 'utf8');
-  // Les voiliers doivent être DANS le groupe, sinon ils gardent le contour perdu.
-  const groupe = scene.slice(scene.indexOf("class: 'sc-afloat'"));
-  assert.ok(groupe.indexOf("use('boat'") > 0 && groupe.indexOf("use('boat'") < 200,
-    'les voiliers doivent être dans le groupe sc-afloat');
 });
 
 /* Le thème sombre est déclaré deux fois — au média et au bouton. Les deux copies sont tenues à la

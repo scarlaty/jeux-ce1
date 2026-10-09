@@ -7,7 +7,7 @@
 //   prizeText(draw, companion)            → { title, name, link } les mots du contenu (pure, testée)
 //   accessoryPreview(id, companion)       → le compagnon (ou un petit rond crème) qui porte l'accessoire
 // « Réduire les animations » : pas de secousse ni de lueur, le coffre s'ouvre d'un coup et montre son contenu.
-import { h, keepFocus } from './dom.js';
+import { h, focusKeeper } from './dom.js';
 import { s } from './svg.js';
 import { draw as drawKawaii } from './art/kawaii.js';
 import { companionSticker } from './companion.js';
@@ -100,6 +100,8 @@ export function chestScene(draw, { companion = {}, onOpen } = {}) {
   const result = h('div', { class: 'chest-prize', 'aria-live': 'polite' });
   const el = h('div', { class: `chest chest--${draw.tier}`, dataset: { state: 'closed' } }, button, hint, result);
 
+  let restoreFocus = () => false;
+
   function reveal() {
     const words = prizeText(draw, companion);
     el.dataset.state = 'open';
@@ -113,15 +115,17 @@ export function chestScene(draw, { companion = {}, onOpen } = {}) {
       words.hint && h('p', { class: 'chest-prize__hint', text: words.hint }),
       words.link && h('a', { class: 'btn btn--secondary btn--small chest-prize__link', href: words.link.href }, h('span', { text: words.link.text })));
     audio.playSound(draw.rarity === 'common' ? 'star' : 'finish');
-    // Le coffre a été désactivé à l'ouverture, alors qu'il pouvait avoir le focus : on le rend au
-    // lien de la récompense plutôt qu'à <body> (#113).
-    keepFocus(result.querySelector('.chest-prize__link') || result);
+    // Le coffre a été désactivé à l'ouverture alors qu'il pouvait avoir le focus. On vise le lien de
+    // la récompense, et à défaut la scène : jamais `result`, qui porte aria-live — y poser le focus
+    // ferait annoncer deux fois le lot (#113).
+    restoreFocus(() => result.querySelector('.chest-prize__link') || el);
     onOpen?.(draw);
   }
 
   function open() {
     if (opened) return;
     opened = true;
+    restoreFocus = focusKeeper(el);
     button.disabled = true;
     audio.playSound('tap');
     if (prefersReducedMotion()) { reveal(); return; }
