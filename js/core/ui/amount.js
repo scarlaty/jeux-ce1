@@ -11,7 +11,7 @@
 //   show?: { … }
 // }
 // answer : le total à composer (un nombre, dans la même unité que les `value`).
-import { h, content } from './dom.js';
+import { h, content, keepFocus, focusedWithin } from './dom.js';
 import { icon, badge } from './icons.js';
 
 const MAX_PIECES = 30;
@@ -41,6 +41,8 @@ export function create(question, ctx) {
   }
 
   function render() {
+    // Toutes les pièces sont recréées : celle qui avait le focus disparaît avec l'ancienne liste.
+    const hadFocus = focusedWithin(tray);
     total.textContent = `${sum()}${suffix}`;
     tray.replaceChildren(...placed.map((option, i) => h('button', {
       type: 'button',
@@ -51,6 +53,8 @@ export function create(question, ctx) {
     tray.classList.toggle('is-empty', placed.length === 0);
     okButton.disabled = placed.length === 0;
     for (const button of palette.children) button.disabled = locked || placed.length >= maxPieces;
+    // Retirer une pièce ne doit pas renvoyer l'enfant au clavier en haut de la page (#113).
+    if (hadFocus) keepFocus(tray.lastElementChild || okButton);
   }
 
   function add(option) {

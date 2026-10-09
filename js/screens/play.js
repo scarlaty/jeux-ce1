@@ -5,7 +5,7 @@
 // `createGameView` est aussi utilisé par l'écran du défi du jour (#/defi) : il rend l'en-tête
 // (progression + points en direct), les questions et les corrections, puis rend la main avec
 // `onEnd(result, { session })` — chaque écran dessine sa propre fin de partie.
-import { h, content } from '../core/ui/dom.js';
+import { h, content, keepFocus, focusedWithin } from '../core/ui/dom.js';
 import { icon, badge } from '../core/ui/icons.js';
 import { getQuestionUI } from '../core/ui/index.js';
 import { confetti } from '../core/ui/confetti.js';
@@ -299,6 +299,9 @@ export function createGameView(root, { app, game, onEnd }) {
       submit: (value) => onAnswer(value),
     });
 
+    // Relevé AVANT de remplacer la question : au premier rendu rien n'a le focus, et on ne doit
+    // surtout pas le voler à l'enfant qui joue au doigt.
+    const hadFocus = focusedWithin(stage);
     const show = question.display?.show;
     const lang = question.lang || 'fr-FR';
     const showContent = show && h('div', { class: `show__content${show.text && !show.emoji ? ' show__content--text' : ''}` }, content(show, { cursive: Boolean(show.cursive) }));
@@ -318,6 +321,9 @@ export function createGameView(root, { app, game, onEnd }) {
       answerEl,
       feedback,
     ].filter(Boolean));
+    // Le bouton qui avait le focus vient d'être retiré du DOM : sans cela, l'enfant au clavier
+    // repart de la barre du haut à chacune des dix questions (#113).
+    if (hadFocus) keepFocus(stage.querySelector('.prompt__text'));
 
     function onAnswer(value) {
       const fb = session.answer(value);

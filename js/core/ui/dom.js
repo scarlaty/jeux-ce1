@@ -114,3 +114,22 @@ export function onControl(e) {
   const el = e && e.target;
   return typeof el?.closest === 'function' && !!el.closest(CONTROLS);
 }
+
+/* Quand on retire ou désactive l'élément qui avait le focus, le navigateur le rend à <body> et
+   l'utilisateur au clavier repart du haut de la page. On ne replace le focus que dans ce cas :
+   au doigt et à la souris, activeElement n'est pas <body> et rien ne bouge (#113). */
+export function focusedWithin(root) {
+  if (typeof document === 'undefined' || !root) return false;
+  const el = document.activeElement;
+  return !!el && el !== document.body && root.contains(el);
+}
+
+export function keepFocus(el) {
+  if (!el || typeof document === 'undefined') return;
+  // Deuxième garde : si quelque chose a déjà le focus, on n'y touche pas.
+  if (document.activeElement && document.activeElement !== document.body) return;
+  if (!el.hasAttribute('tabindex') && !el.matches('a[href], button, input, select, textarea')) {
+    el.setAttribute('tabindex', '-1');
+  }
+  el.focus({ preventScroll: true });
+}

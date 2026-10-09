@@ -7,7 +7,7 @@
 //   prizeText(draw, companion)            → { title, name, link } les mots du contenu (pure, testée)
 //   accessoryPreview(id, companion)       → le compagnon (ou un petit rond crème) qui porte l'accessoire
 // « Réduire les animations » : pas de secousse ni de lueur, le coffre s'ouvre d'un coup et montre son contenu.
-import { h } from './dom.js';
+import { h, keepFocus } from './dom.js';
 import { s } from './svg.js';
 import { draw as drawKawaii } from './art/kawaii.js';
 import { companionSticker } from './companion.js';
@@ -113,6 +113,9 @@ export function chestScene(draw, { companion = {}, onOpen } = {}) {
       words.hint && h('p', { class: 'chest-prize__hint', text: words.hint }),
       words.link && h('a', { class: 'btn btn--secondary btn--small chest-prize__link', href: words.link.href }, h('span', { text: words.link.text })));
     audio.playSound(draw.rarity === 'common' ? 'star' : 'finish');
+    // Le coffre a été désactivé à l'ouverture, alors qu'il pouvait avoir le focus : on le rend au
+    // lien de la récompense plutôt qu'à <body> (#113).
+    keepFocus(result.querySelector('.chest-prize__link') || result);
     onOpen?.(draw);
   }
 
