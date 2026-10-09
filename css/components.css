@@ -391,7 +391,8 @@
   border-color: var(--border-strong);
   box-shadow: none;
 }
-.level-card.is-locked .level-card__number { background: var(--border-strong); color: var(--surface); }
+/* Éteint, mais lisible : --surface sur --border-strong ne donnait que 2,16:1 (#113). */
+.level-card.is-locked .level-card__number { background: var(--surface); color: var(--ink-soft); border-color: var(--border-strong); }
 .level-card.is-locked .level-card__label { color: var(--ink-soft); }
 .level-card:disabled { cursor: default; }
 

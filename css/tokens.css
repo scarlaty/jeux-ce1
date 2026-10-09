@@ -65,6 +65,9 @@
   --primary-edge: #1f3d96;
   --on-primary: #ffffff;
   --primary-soft: #e4ebfc;
+  /* Encre à poser SUR --primary-soft, comme chaque île a son --island-ink. Sans ce token on
+     recyclait --primary-edge, une couleur de bordure : 2,85:1 sur l'ardoise (#113). */
+  --primary-ink: #1f3d96;
   --secondary: #fffdf9;
   --secondary-edge: #c9bfa8;
   --on-secondary: #22305b;
@@ -242,6 +245,7 @@
     --primary-edge: #5f7fd6;
     --on-primary: #0f1a3a;
     --primary-soft: #2f3c5e;
+    --primary-ink: #c4dbff;
     --secondary: #374541;
     --secondary-edge: #222b29;
     --on-secondary: #f3f1e7;
@@ -368,6 +372,7 @@
   --primary-edge: #5f7fd6;
   --on-primary: #0f1a3a;
   --primary-soft: #2f3c5e;
+  --primary-ink: #c4dbff;
   --secondary: #374541;
   --secondary-edge: #222b29;
   --on-secondary: #f3f1e7;
