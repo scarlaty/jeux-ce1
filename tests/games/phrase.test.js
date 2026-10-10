@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import game, { orderStrategy } from '../../js/games/phrase.js';
 import {
-  SIMPLE, PONCT_SHORT, CONTEXTS, ORDER_2, ORDER_3, INTENTIONS, signOf, words, withoutSign,
+  SIMPLE, PONCT_SHORT, CONTEXTS, SPEAKERS, withSpeaker, ORDER_2, ORDER_3, INTENTIONS,
+  signOf, words, withoutSign,
 } from '../../js/data/phrases.js';
 import {
   checkGameShape, checkGenerator, checkNoSurfaceShortcut, checkCueCoverage, visibleOfQuestion,
@@ -94,7 +95,9 @@ test('CONTEXTS : forme de la banque, intention portée par la donnée, aide pré
   for (const sign of ['.', '?', '!']) assert.ok(CONTEXTS.filter((c) => c.sign === sign).length >= 12, sign);
   for (const c of CONTEXTS) {
     assert.equal(INTENTIONS[c.intention], c.sign, `intention et signe incohérents : ${c.text}`);
-    assert.match(c.context, /^[A-ZÀ-ÖÉ].*[.!?]$/, `situation mal ponctuée : ${c.context}`);
+    // Le gabarit porte `{qui}` : on contrôle le texte REND U, celui que l'enfant lit.
+    const rendu = withSpeaker(c.context, 'Zoé');
+    assert.match(rendu, /^[A-ZÀ-ÖÉ].*[.!?]$/, `situation mal ponctuée : ${rendu}`);
     assert.match(c.text, /^[A-ZÀ-ÖÉ]/, c.text);
     assert.equal(signOf(c.text), '', c.text);
     assert.ok(c.why && c.why.length > 20, `aide manquante : ${c.text}`);
@@ -404,9 +407,108 @@ test('explication en situation : elle cite ce qui tranche, jamais la règle seul
   const qs = signQuestions(3, 2000);
   assert.ok(qs.length > 0);
   for (const q of qs) {
-    const item = CONTEXTS.find((c) => q.prompt.startsWith(c.context)
+    // Le locuteur est tiré à part : on le retrouve dans la consigne, puis on compare à la
+    // situation rendue avec ce même locuteur.
+    const who = SPEAKERS.find((name) => q.prompt.startsWith(`${name} `));
+    assert.ok(who, `aucun locuteur dans la consigne : ${q.prompt}`);
+    const item = CONTEXTS.find((c) => q.prompt.startsWith(withSpeaker(c.context, who))
       && q.key.includes(withoutSign(c.text).toLowerCase()));
     assert.ok(item, q.key);
-    assert.ok(q.explain.includes(item.why), `l'aide de la situation manque : ${q.key}`);
+    assert.ok(q.explain.includes(withSpeaker(item.why, who)), `l'aide de la situation manque : ${q.key}`);
   }
+});
+
+// --- Le locuteur ne doit rien trahir (#109) ------------------------------------------------------
+
+/* Mesuré avant correction : un solveur qui ne lisait QUE le prénom tranchait à 86 % (hasard 33 %).
+   Onze locuteurs sur seize prédisaient le signe à 100 %, et les douze situations portées par un
+   adulte étaient toutes des points — le jeu enseignait au passage un cliché. La cause est la même
+   que pour les phrases : tant qu'une situation n'existe qu'avec UN prénom, la relation
+   prénom → signe est une fonction, donc apprenable. Le locuteur est désormais tiré à part. */
+test('un solveur qui ne lit que le locuteur ne fait pas mieux que le hasard', () => {
+  const draws = [];
+  for (let seed = 1; seed <= 4000; seed += 1) {
+    const q = game.makeQuestion(3, createRng(seed), new Set());
+    if (!q || !q.key.endsWith(':ctx')) continue;   // le niveau 3 pose aussi des remises en ordre
+    const who = SPEAKERS.find((name) => q.prompt.startsWith(`${name} `));
+    assert.ok(who, `aucun locuteur : ${q.prompt}`);
+    draws.push({ who, sign: q.answer });
+  }
+  assert.ok(draws.length > 500, 'trop peu de tirages pour conclure');
+
+  // Appris sur la première moitié, mesuré sur la seconde : un solveur qui mémorise ne triche pas.
+  const half = Math.floor(draws.length / 2);
+  const tally = {};
+  for (const d of draws.slice(0, half)) {
+    tally[d.who] = tally[d.who] || { '.': 0, '?': 0, '!': 0 };
+    tally[d.who][d.sign] += 1;
+  }
+  const guess = {};
+  for (const [who, signs] of Object.entries(tally)) {
+    guess[who] = Object.entries(signs).sort((a, b) => b[1] - a[1])[0][0];
+  }
+  const rest = draws.slice(half);
+  const right = rest.filter((d) => guess[d.who] === d.sign).length;
+  const rate = right / rest.length;
+  assert.ok(rate <= 0.5, `le locuteur trahit le signe : ${(100 * rate).toFixed(1)} %`);
+});
+
+test('chaque locuteur porte les trois signes', () => {
+  const seen = {};
+  for (let seed = 1; seed <= 6000; seed += 1) {
+    const q = game.makeQuestion(3, createRng(seed), new Set());
+    if (!q || !q.key.endsWith(':ctx')) continue;   // le niveau 3 pose aussi des remises en ordre
+    const who = SPEAKERS.find((name) => q.prompt.startsWith(`${name} `));
+    (seen[who] = seen[who] || new Set()).add(q.answer);
+  }
+  for (const who of SPEAKERS) {
+    assert.equal(seen[who] && seen[who].size, 3, `${who} ne porte pas les trois signes`);
+  }
+});
+
+/* La rotation n'est sûre que si AUCUN texte ne s'accorde avec le locuteur : « il attend »,
+   « elle est contente », « surpris » deviendraient faux dès qu'un autre prénom s'y met. */
+test('aucune situation ne s’accorde avec le locuteur', () => {
+  // On tokenise plutôt que d'écrire une expression : un antislash-b mal échappé devient un
+  // caractère retour arrière, et le contrôle ne mesure alors plus rien, en silence.
+  // Un nom précédé d'un déterminant (« une belle surprise ») n'est pas un accord.
+  const ACCORDS = new Set(['il', 'elle', 'lui', 'content', 'contente', 'sûr', 'sûre', 'surpris',
+    'surprise', 'fier', 'fière', 'prêt', 'prête', 'seul', 'seule', 'heureux', 'heureuse', 'déçu', 'déçue']);
+  const DETERMINANTS = new Set(['un', 'une', 'la', 'le', 'cette', 'ce', 'sa', 'son', 'ma', 'mon',
+    'ta', 'ton', 'des', 'les', 'belle', 'bonne', 'grande', 'vraie', 'joyeuse', 'excellente', 'petite', 'telle']);
+  const accordDe = (texte) => {
+    const mots = texte.toLowerCase().split(/[^a-zà-ÿ]+/).filter(Boolean);
+    return mots.find((m, k) => ACCORDS.has(m) && !DETERMINANTS.has(mots[k - 1]));
+  };
+  for (const c of CONTEXTS) {
+    for (const [champ, texte] of [['situation', c.context], ['aide', c.why]]) {
+      const faute = accordDe(texte.split('{qui}').join(' '));
+      assert.ok(!faute, `${champ} accordée au locuteur (« ${faute} ») : ${texte}`);
+    }
+  }
+});
+
+test('la banque du niveau 3 est assez large pour ne pas se répéter', () => {
+  const phrases = new Set(CONTEXTS.map((c) => c.text));
+  assert.ok(phrases.size >= 24, `${phrases.size} phrases seulement`);
+  assert.equal(CONTEXTS.length, phrases.size * 3, 'chaque phrase doit servir avec les trois signes');
+
+  // Répétition sur dix parties de dix questions : au niveau des autres niveaux (mesuré 21 à 25 %).
+  const vues = new Set();
+  let revues = 0;
+  let posees = 0;
+  for (let partie = 0; partie < 10; partie += 1) {
+    const seen = new Set();
+    for (let i = 0; i < 10; i += 1) {
+      let q = null;
+      for (let t = 0; !q && t < 60; t += 1) q = game.makeQuestion(3, createRng(partie * 1000 + i * 7 + t), seen);
+      if (!q) continue;
+      seen.add(q.key);
+      posees += 1;
+      if (vues.has(q.key)) revues += 1;
+      vues.add(q.key);
+    }
+  }
+  const taux = revues / posees;
+  assert.ok(taux <= 0.26, `répétition de ${(100 * taux).toFixed(1)} % après dix parties`);
 });

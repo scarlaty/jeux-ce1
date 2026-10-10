@@ -10,7 +10,7 @@
 //             déguisée en niveau 3.
 // Toutes les phrases sont écrites à la main (js/data/phrases.js) : jamais de phrase générée.
 import {
-  SIMPLE, PONCT_SHORT, CONTEXTS, ORDER_2, ORDER_3,
+  SIMPLE, PONCT_SHORT, CONTEXTS, SPEAKERS, withSpeaker, ORDER_2, ORDER_3,
   signOf, withoutSign, lowerFirst, shown, words, SIGN_NAMES,
 } from '../data/phrases.js';
 
@@ -142,7 +142,7 @@ function isSentence(rng, seen) {
 
 // --- Choisir le signe -----------------------------------------------------------------------------------
 
-function pickSign(item, { context = '' }) {
+function pickSign(item, { context = '', why = item.why }) {
   const intro = context ? `${context} ` : '';
   return {
     key: `phrase:signe|${baseOf(item.text)}|${item.sign}${context ? ':ctx' : ''}`,
@@ -156,7 +156,7 @@ function pickSign(item, { context = '' }) {
     // En situation, l'aide CITE ce qui tranche (le `why` de la banque : le verbe de la scène ou le mot
     // fort de la phrase). Sans situation, c'est l'indice de forme. Jamais « la règle puis la réponse » (#107).
     explain: `${SIGN_RULE[item.sign]} ${quote(`${item.text}${item.sign === '.' ? '.' : ` ${item.sign}`}`)}`
-      + (context ? ` ${item.why}` : cue(item.text, item.sign)),
+      + (context ? ` ${why}` : cue(item.text, item.sign)),
     skill: 'choisir le bon signe de ponctuation',
   };
 }
@@ -168,7 +168,15 @@ function punctuation(pool, rng, seen) {
 
 function inContext(rng, seen) {
   const item = rng.pick(CONTEXTS);
-  return used(seen, baseOf(item.text)) ? null : pickSign(item, { context: item.context });
+  if (used(seen, baseOf(item.text))) return null;
+  // Le locuteur est tiré à part : tant qu'une situation n'existait qu'avec UN prénom, lire le
+  // seul prénom suffisait à trancher dans 86 % des cas. En le croisant, la relation
+  // prénom → signe cesse d'être une fonction et redevient du hasard (#109).
+  const who = rng.pick(SPEAKERS);
+  return pickSign(item, {
+    context: withSpeaker(item.context, who),
+    why: withSpeaker(item.why, who),
+  });
 }
 
 // --- Remettre dans l'ordre --------------------------------------------------------------------------------
