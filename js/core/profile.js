@@ -4,6 +4,9 @@
 // Le prénom est saisi par l'enfant : il est nettoyé par `cleanName` et toujours affiché avec
 // `textContent`. Il n'est jamais mis dans une URL, un nom de fichier ni du HTML.
 import { defaultProfile } from './storage.js';
+import { defaultRewards } from './rewards.js';
+import { defaultCompanion } from './companion.js';
+import { defaultChest } from './chest.js';
 
 /** Longueur maximale d'un prénom (en caractères affichés, émojis compris). */
 export const MAX_NAME = 16;
@@ -126,9 +129,23 @@ export function removeProfile(store, id) {
   return true;
 }
 
-/** Efface la progression et l'historique d'un profil, mais garde son prénom et son avatar. */
+/**
+ * Remet le profil à zéro, en gardant son prénom et son avatar.
+ *
+ * Les points, le grade, les gommettes, le compagnon et le coffre repartent eux aussi de zéro :
+ * sans cela l'enfant gardait 200 points et ses gommettes pour des parties qui n'existaient plus,
+ * alors que l'écran promettait « Le profil repart de zéro ».
+ */
 export function resetProgress(store, id) {
-  return store.updateProfile(id, (profile) => ({ ...profile, progress: {}, history: [], weekly: [] }));
+  return store.updateProfile(id, (profile) => ({
+    ...profile,
+    progress: {},
+    history: [],
+    weekly: [],
+    rewards: defaultRewards(),
+    companion: defaultCompanion(),
+    chest: defaultChest(),
+  }));
 }
 
 /** Vrai au tout premier lancement : le profil actif n'a pas encore de prénom. */
