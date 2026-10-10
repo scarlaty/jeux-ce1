@@ -73,3 +73,12 @@ test('le thème sombre est identique qu\'il vienne du système ou du bouton', ()
   assert.deepEqual(darkAuto, darkForced);
   assert.ok(Object.keys(darkForced).length > 100);
 });
+
+/* `.confirm__list li` (0,1,1) l'emportait sur `.confirm__row` (0,1,0) : l'avatar restait centre
+   en face d'un corps de trois lignes, et deux declarations etaient mortes sans bruit (#114). */
+test('la ligne de profil de la carte d’import gagne sur la regle generique', () => {
+  const css = readFileSync(join(ROOT, 'css/profile.css'), 'utf8');
+  const rule = css.match(/\.confirm__list li\.confirm__row \{[^}]*\}/);
+  assert.ok(rule, 'la regle doit porter les deux selecteurs pour l’emporter');
+  assert.match(rule[0], /align-items:\s*flex-start/);
+});

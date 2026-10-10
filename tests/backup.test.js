@@ -151,9 +151,12 @@ test('une sauvegarde étrangère, cassée ou trop récente est refusée avec un 
     [JSON.stringify({ app: 'autre-appli', format: 1, profiles: [] }), /ne vient pas des Jeux CE1/],
     [JSON.stringify({ app: BACKUP_APP, profiles: [{ id: 'a' }] }), /n'indique pas sa version/],
     [JSON.stringify({ app: BACKUP_APP, format: 99, profiles: [{ id: 'a' }] }), /version plus récente/],
-    [JSON.stringify({ app: BACKUP_APP, format: 1, profiles: [] }), /aucun profil/],
-    [JSON.stringify({ app: BACKUP_APP, format: 1, profiles: [{ name: 'Léa' }] }), /incomplet/],
-    [JSON.stringify({ app: BACKUP_APP, format: 1, profiles: [{ id: 'a' }, { id: 'a' }] }), /deux fois le même profil/],
+    [JSON.stringify({ app: BACKUP_APP, format: 1, schemaVersion: SCHEMA_VERSION, profiles: [] }), /aucun profil/],
+    [JSON.stringify({ app: BACKUP_APP, format: 1, schemaVersion: SCHEMA_VERSION, profiles: [{ name: 'Léa' }] }), /incomplet/],
+    [JSON.stringify({ app: BACKUP_APP, format: 1, schemaVersion: SCHEMA_VERSION, profiles: [{ id: 'a' }, { id: 'a' }] }), /deux fois le même profil/],
+    // Le champ est écrit par `buildBackup` depuis la première version : son absence trahit un
+    // fichier bricolé, pas une vieille sauvegarde (#114).
+    [JSON.stringify({ app: BACKUP_APP, format: 1, profiles: [{ id: 'a' }] }), /version de ses profils/],
   ];
   for (const [text, pattern] of cases) {
     const out = parseBackup(text);
@@ -166,6 +169,7 @@ test('rien du fichier importé n\'est recopié tel quel', () => {
   const out = validateBackup({
     app: BACKUP_APP,
     format: 1,
+    schemaVersion: SCHEMA_VERSION,
     activeProfileId: 'absent',
     profiles: [{
       id: 'p1',
@@ -333,4 +337,96 @@ test("une sauvegarde d'un schéma plus récent est refusée", () => {
 
   // Un numéro abîmé n'est pas silencieusement ignoré.
   assert.equal(validateBackup({ ...asBackup([prof('a')]), schemaVersion: 'deux' }).ok, false);
+});
+
+/* Les trois critères de `losesProgress` étaient tous vrais dans le même cas de test : n'importe
+   lequel suffisait à le faire passer. Une revue a montré qu'on pouvait en supprimer deux sans
+   faire rougir un test. Un cas par critère, donc (#114). */
+test('chaque critère d’alerte est gardé séparément', () => {
+  const local = (over) => [prof('a', { plays: 4, points: 100, lastPlayed: 2000, ...over })];
+  const fichier = (over) => asBackup([prof('a', { plays: 4, points: 100, lastPlayed: 2000, ...over })]);
+
+  // Seules les parties diffèrent.
+  assert.equal(importPlan(fichier({ plays: 2 }), local()).overwrite[0].losesProgress, true, 'parties');
+  // Seuls les points diffèrent.
+  assert.equal(importPlan(fichier({ points: 40 }), local()).overwrite[0].losesProgress, true, 'points');
+  // Seule la date diffère.
+  assert.equal(importPlan(fichier({ lastPlayed: 500 }), local()).overwrite[0].losesProgress, true, 'date');
+  // Strictement identique : aucune alerte (c'est le cas le plus courant, un aller-retour).
+  assert.equal(importPlan(fichier(), local()).overwrite[0].losesProgress, false, 'identique');
+});
+
+/* Au-delà du plafond de 5000, les parties les plus anciennes sont agrégées par semaine. Les
+   compter est indispensable : sinon un profil ancien paraît moins avancé qu'il ne l'est, juste
+   avant qu'on décide de l'écraser. Mutation `plays: history.length` : la suite restait verte. */
+test('le compte des parties inclut les semaines agrégées', () => {
+  const ancien = {
+    ...prof('a', { plays: 3, points: 50 }),
+    weekly: [{ week: '2026-W01', games: 12 }, { week: '2026-W02', games: 7 }],
+  };
+  const plan = importPlan(asBackup([prof('a', { plays: 1 })]), [ancien]);
+  assert.equal(plan.overwrite[0].current.plays, 3 + 12 + 7);
+  assert.equal(plan.overwrite[0].losesProgress, true, 'une tablette à 22 parties perd face à un fichier à 1');
+});
+
+test('un profil présent deux fois dans le méta n’est listé qu’une fois', () => {
+  const plan = importPlan(asBackup([prof('z')]), [prof('a'), prof('a')]);
+  assert.deepEqual(plan.kept.map((p) => p.id), ['a']);
+});
+
+test('importPlan reste total devant une sauvegarde absente', () => {
+  assert.deepEqual(importPlan(null, [prof('a')]), { mode: 'merge', add: [], overwrite: [], remove: [], kept: [] });
+  assert.deepEqual(importPlan({}, [prof('a')]).kept, []);
+});
+
+/* La carte promet que les profils locaux sont « laissés intacts » en mode « ajouter ». Basculer
+   sur le profil actif du fichier démentait cette promesse en silence : l'écran continuait
+   d'afficher un enfant pendant qu'un autre devenait actif (#114). */
+test('« ajouter » ne change pas le profil actif de la tablette', () => {
+  const store = createStore(createStorage({ backend: createMemoryBackend() }));
+  const bob = ensureActiveProfile(store);
+  updateIdentity(store, bob, { name: 'Bob', avatar: 'chat' });
+
+  const backup = {
+    app: BACKUP_APP, format: BACKUP_FORMAT, schemaVersion: SCHEMA_VERSION, exportedAt: 1,
+    activeProfileId: 'ana',
+    profiles: [normalizeProfile({ id: 'ana', name: 'Ana', avatar: 'renard' })],
+  };
+  const info = applyBackup(store, backup, { mode: 'merge' });
+
+  assert.equal(info.activeProfileId, bob, 'le profil actif local doit être conservé');
+  assert.equal(store.getMeta().activeProfileId, bob);
+  assert.ok(store.getProfile('ana'), 'le profil du fichier est bien ajouté');
+
+  // En mode « remplacer », le profil local n'existe plus : on prend celui du fichier.
+  const apres = applyBackup(store, backup, { mode: 'replace' });
+  assert.equal(apres.activeProfileId, 'ana');
+});
+
+test('le plan distingue le prénom de la tablette de celui du fichier', () => {
+  const local = [{ ...prof('a', { plays: 2 }), name: 'Ana' }];
+  const plan = importPlan(asBackup([{ ...prof('a', { plays: 9 }), name: 'Anaïs' }]), local);
+  assert.equal(plan.overwrite[0].name, 'Ana', 'la carte nomme le profil tel qu’il est sur la tablette');
+  assert.equal(plan.overwrite[0].incomingName, 'Anaïs', 'et annonce le prénom que l’import écrira');
+});
+
+/* Le juge visuel a mesuré qu'une ligne promise à la suppression définitive était rendue
+   exactement comme une ligne qu'on ne touche pas : le signal était à l'inverse du risque.
+   Le niveau vit donc dans le plan, où un test peut le lire (#114). */
+test('le plan classe chaque profil par niveau de risque', () => {
+  const backup = asBackup([prof('a', { plays: 1 }), prof('neuf')]);
+  const locaux = [prof('a', { plays: 9, points: 500, lastPlayed: 9000 }), prof('autre', { plays: 3 })];
+
+  const ajout = importPlan(backup, locaux);
+  assert.equal(ajout.add[0].risk, 'none');
+  assert.equal(ajout.overwrite[0].risk, 'regression', 'la tablette est en avance');
+  assert.equal(ajout.kept[0].risk, 'none');
+
+  const remplace = importPlan(backup, locaux, { mode: 'replace' });
+  assert.equal(remplace.remove[0].risk, 'delete', 'supprimer est le risque le plus élevé');
+
+  // Un écrasement sans perte reste un écrasement : il se distingue d'un profil intact.
+  const aJour = importPlan(asBackup([prof('a', { plays: 20, points: 900, lastPlayed: 99999 })]), locaux);
+  assert.equal(aJour.overwrite[0].risk, 'overwrite');
+  assert.notEqual(aJour.overwrite[0].risk, aJour.kept[0].risk);
 });

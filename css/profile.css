@@ -205,7 +205,7 @@
 .danger__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: flex-end; }
 .danger__actions .btn { flex: 1 1 180px; }
 
-.confirm { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
+.confirm { display: grid; gap: var(--space-5); margin-top: var(--space-4); }
 .confirm__title { font-size: 1.25rem; }
 .confirm__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
 .confirm__list li { display: flex; align-items: center; gap: var(--space-2); }
@@ -213,14 +213,19 @@
 .confirm__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .confirm__actions .btn { flex: 1 1 180px; }
 
-/* Carte d'import (#114) : elle doit dire les DEUX cotes — ce que le fichier apporte et ce que la
+/* Carte d'import (#114) : elle doit dire les DEUX côtés — ce que le fichier apporte et ce que la
    tablette perd. Une ligne par profil, les chiffres en dessous, et l'alerte en toutes lettres
-   quand la tablette est plus avancee que la sauvegarde. */
+   quand la tablette est plus avancée que la sauvegarde. */
 .confirm__section { display: grid; gap: var(--space-2); }
-.confirm__subtitle { margin: 0; font-size: var(--text-s); color: var(--ink-soft); text-transform: none; }
-.confirm__row { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-m); }
+/* L'en-tête porte l'information décisive (ajouté / remplacé / intact) : il ne doit pas reculer
+   derrière les prénoms qu'il coiffe. */
+.confirm__subtitle { margin: 0; font-family: var(--font-title); font-weight: 600; color: var(--ink); text-transform: none; }
+/* Les sections où l'on perd quelque chose se voient sans être lues, même quand aucun profil
+   n'est en retard : écraser reste écraser. */
+.confirm__section--risk { background: var(--surface-sunk); border-radius: var(--radius-m); padding: var(--space-3); }
+.confirm__list li.confirm__row { align-items: flex-start; gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-m); }
 .confirm__row--warn { background: var(--surface-sunk); border: 2px solid var(--retry); }
-.confirm__body { display: grid; gap: 2px; min-width: 0; }
+.confirm__body { display: grid; gap: var(--space-1); min-width: 0; }
 .confirm__name { font-family: var(--font-title); font-weight: 600; }
 .confirm__detail { font-size: var(--text-s); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .confirm__warn { font-size: var(--text-s); color: var(--retry); }
