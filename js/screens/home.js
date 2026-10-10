@@ -149,14 +149,17 @@ export default {
           h('h1', { class: 'home__title', text: 'Jeux CE1' }),
           h('span', { class: 'home__deco home__deco--right', 'aria-hidden': 'true' }, drawDeco({ shape: 'heart', face: 'joyful' }))),
         h('p', { class: 'home__subtitle cursive', text: 'Choisis une île et joue !' })),
-      rewardBar(rewards),
-      !isTrial() && companionCard(withAccessory(readCompanion(profile), profile)),
-      dailyCard(rewards, realGames.length > 0),
+      // La carte d'abord : c'est la raison d'être de l'écran. Les trois tuiles sont le bilan, et
+      // elles occupaient toute la première hauteur — aucune île n'était visible sans défiler, à
+      // 390 px comme à 1366 px, sous un sous-titre qui dit « Choisis une île et joue ! » (#115).
       h('section', { class: 'map-page', 'aria-labelledby': 'archipel' },
         h('h2', { class: 'visually-hidden', id: 'archipel', text: 'L\'archipel' }),
         archipelagoScene(entries),
         h('ul', { class: 'map-list' }, ISLANDS.map((island) => islandRow(byId.get(island.id)))),
         h('p', { class: 'map-hint', text: 'Touche une île pour y entrer.' })),
+      rewardBar(rewards),
+      !isTrial() && companionCard(withAccessory(readCompanion(profile), profile)),
+      dailyCard(rewards, realGames.length > 0),
       demos.length > 0 && h('section', { class: 'workshop', 'aria-labelledby': 'atelier' },
         h('h2', { class: 'workshop__title', id: 'atelier', text: 'Atelier' }),
         h('ul', { class: 'game-list' }, demos.map((g) => gameCard(g, profile))))));

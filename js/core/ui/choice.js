@@ -14,16 +14,27 @@ import { badge } from './icons.js';
 import { toChoice } from '../validate.js';
 import { sameAnswer } from '../engine.js';
 
+/** Au-delà de cette longueur, un choix est une phrase : il lui faut toute la largeur (#115). */
+export const LONG_CHOICE = 24;
+
+/** Vrai quand au moins un choix est une phrase : la grille passe alors à une seule colonne. */
+export function hasLongChoice(choices = []) {
+  return choices.some((c) => c && typeof c.text === 'string' && [...c.text].length > LONG_CHOICE);
+}
+
 export function create(question, ctx) {
   const { display } = question;
   const choices = display.choices.map(toChoice);
   const withImages = choices.some((c) => c.emoji);
   const many = choices.length > 4;
+  // Un choix qui est une phrase ne tient pas dans une colonne de 158 px : il s'y casse en cinq
+  // lignes de deux mots, sans jamais déborder. Au-delà de 24 caractères, une seule colonne (#115).
+  const long = hasLongChoice(choices);
   let locked = false;
   let picked = null;
 
   const list = h('div', {
-    class: ['choices', withImages && 'choices--images', many && 'choices--many', display.large && 'choices--large', display.row && 'choices--row'].filter(Boolean).join(' '),
+    class: ['choices', withImages && 'choices--images', many && 'choices--many', long && !withImages && 'choices--long', display.large && 'choices--large', display.row && 'choices--row'].filter(Boolean).join(' '),
     role: 'group',
     'aria-label': 'Réponses possibles',
   });
