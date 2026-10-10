@@ -49,8 +49,9 @@
 }
 
 @media (max-width: 420px) {
-  /* Sur téléphone, l'avatar suffit : le prénom reste lisible dans l'écran des profils. */
-  .profile-pill { max-width: none; padding: 0 var(--space-1); }
+  /* Sur téléphone, l'avatar suffit : le prénom reste lisible dans l'écran des profils. La cible,
+     elle, doit rester touchable : elle tombait à 46 px, seule cible sous 56 px du produit (#115). */
+  .profile-pill { max-width: none; padding: 0 var(--space-1); min-width: var(--tap); justify-content: center; }
   .profile-pill__name { display: none; }
 }
 

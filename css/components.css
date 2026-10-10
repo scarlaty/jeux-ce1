@@ -724,7 +724,9 @@
 .bubble__value { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--ink); }
 .bubble__value .emoji { font-size: 1.6em; }
 .bubble__value .cursive { font-weight: 400; line-height: 1.6; }
-.bubble__explain { font-size: 1.2rem; }
+/* Le seul texte de l'écran de jeu qui était sous les 22 px exigés sur tablette (19,2 px) — et
+   c'est celui que l'enfant doit lire après s'être trompé. Même marche que la consigne (#115). */
+.bubble__explain { font-size: var(--text-prompt); }
 .bubble__actions { display: flex; justify-content: flex-end; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
 
 /* ---------- Fin de partie ---------- */
@@ -771,6 +773,10 @@
   max-width: 640px;
 }
 .choices--images { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 460px; }
+/* Un choix qui est une phrase entière était écrasé dans deux colonnes de 158 px : trois choix de
+   46 à 61 caractères donnaient cinq lignes de deux mots, sans jamais déborder ni tronquer — donc
+   sans qu'aucun test ne s'en aperçoive. Une seule colonne, et la phrase redevient une phrase. */
+.choices--long { grid-template-columns: 1fr; max-width: 520px; }
 
 .choice {
   position: relative;

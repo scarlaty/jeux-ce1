@@ -62,14 +62,23 @@ export function content(item, { cursive = false } = {}) {
 }
 
 /**
- * Longueur d'un titre de la barre du haut, pour l'ajuster sur téléphone sans le tronquer :
- * 'short' (tient sur une ligne), 'long' (deux lignes, plus petit), 'xlong' (sa propre ligne
- * sous les boutons). Compte les caractères, pas les octets. Pure.
+ * Classe de longueur d'un titre, pour la barre du haut. Sous 520 px la boîte du titre ne fait que
+ * **72 px** (mesuré sur un écran de jeu, pastille de profil à 56 px comprise) et le texte y est
+ * limité à deux lignes. Deux défauts distincts s'y produisaient :
+ *  - un mot plus large que la boîte était coupé en plein milieu (« Devinette / s ») ;
+ *  - un titre trop long perdait son dernier mot (« Besoins du… », « Colors and… »).
+ * Les deux passent en `xlong`, qui donne au titre sa propre ligne, pleine largeur.
+ *
+ * Seuils vérifiés à 360 px sur les 37 titres du produit (jeux, écrans et îles) : aucun mot de plus
+ * de 8 caractères ne tient dans 72 px, et aucun titre de plus de 14 caractères n'y tient en deux
+ * lignes. Voir tests/title.test.js (#115).
  */
 export function titleLength(text) {
-  const n = [...String(text ?? '').trim()].length;
+  const s = String(text ?? '').trim();
+  const n = [...s].length;
+  const longest = s.split(/\s+/).reduce((max, word) => Math.max(max, [...word].length), 0);
   if (n <= 8) return 'short';
-  if (n <= 18) return 'long';
+  if (n <= 14 && longest <= 8) return 'long';
   return 'xlong';
 }
 
