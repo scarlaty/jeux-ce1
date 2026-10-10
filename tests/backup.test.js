@@ -6,7 +6,7 @@ import { recordResult } from '../js/core/history.js';
 import { normalizeRewards } from '../js/core/rewards.js';
 import {
   BACKUP_APP, BACKUP_FORMAT, buildBackup, serializeBackup, backupFilename, parseBackup,
-  validateBackup, describeBackup, applyBackup, normalizeProfile,
+  validateBackup, describeBackup, applyBackup, normalizeProfile, importPlan,
 } from '../js/core/backup.js';
 
 const newStore = () => createStore(createStorage({ backend: createMemoryBackend() }));
@@ -264,4 +264,73 @@ test('un compagnon d’une sauvegarde v2 est recalculé sans rapetisser, et l’
   assert.equal(again.ok, true, again.error);
   assert.deepEqual(again.backup.profiles[0].companion, companion);
   assert.deepEqual(normalizeProfile(again.backup.profiles[0]).companion, companion);
+});
+
+// --- Ce que l'import va vraiment faire (#114) ---------------------------------------------------
+
+/* L'ancienne carte de confirmation ne décrivait que le contenu du FICHIER : elle ne disait jamais
+   ce que la TABLETTE allait perdre. « Ajouter aux profils » écrasait donc une progression plus
+   récente sans un mot, et « Tout remplacer » supprimait des profils qu'il ne nommait pas. */
+
+const prof = (id, { name = id, plays = 0, points = 0, lastPlayed = 0 } = {}) => ({
+  id,
+  name,
+  avatar: 'chat',
+  progress: {},
+  history: Array.from({ length: plays }, (_, i) => ({ t: i === plays - 1 ? lastPlayed : 1, game: 'sons', level: 1, score: 10, total: 10, durationMs: 1, missed: [] })),
+  weekly: [],
+  rewards: { points, stickers: {}, daily: null },
+  companion: undefined,
+  chest: undefined,
+});
+
+const asBackup = (profiles) => ({ app: BACKUP_APP, format: BACKUP_FORMAT, schemaVersion: SCHEMA_VERSION, exportedAt: 1, activeProfileId: profiles[0].id, profiles });
+
+test("le plan d'import distingue ce qu'on ajoute de ce qu'on écrase", () => {
+  const backup = asBackup([prof('a', { plays: 3, points: 100 }), prof('neuf', { plays: 1 })]);
+  const plan = importPlan(backup, [prof('a', { plays: 5, points: 200 }), prof('autre', { plays: 2 })]);
+
+  assert.deepEqual(plan.add.map((p) => p.id), ['neuf']);
+  assert.deepEqual(plan.overwrite.map((p) => p.id), ['a']);
+  assert.deepEqual(plan.kept.map((p) => p.id), ['autre'], 'un profil absent du fichier reste intact');
+  assert.deepEqual(plan.remove, [], 'le mode « ajouter » ne supprime rien');
+
+  const [ecrase] = plan.overwrite;
+  assert.equal(ecrase.current.plays, 5);
+  assert.equal(ecrase.incoming.plays, 3);
+  assert.equal(ecrase.current.points, 200);
+  assert.equal(ecrase.incoming.points, 100);
+});
+
+test("le plan signale quand la tablette est en avance sur le fichier", () => {
+  const recent = [prof('a', { plays: 5, points: 200, lastPlayed: 2000 })];
+  const vieux = asBackup([prof('a', { plays: 3, points: 100, lastPlayed: 1000 })]);
+  assert.equal(importPlan(vieux, recent).overwrite[0].losesProgress, true);
+
+  // ... et qu'il ne crie pas au loup quand le fichier est le plus récent.
+  const neuf = asBackup([prof('a', { plays: 9, points: 400, lastPlayed: 3000 })]);
+  assert.equal(importPlan(neuf, recent).overwrite[0].losesProgress, false);
+});
+
+test("« Tout remplacer » nomme les profils locaux qui vont disparaître", () => {
+  const backup = asBackup([prof('a', { plays: 1 })]);
+  const plan = importPlan(backup, [prof('a'), prof('b', { name: 'Lou', plays: 7 })], { mode: 'replace' });
+
+  assert.deepEqual(plan.remove.map((p) => p.name), ['Lou']);
+  assert.equal(plan.remove[0].current.plays, 7, 'on dit ce qui est perdu, pas seulement le nom');
+  assert.deepEqual(plan.kept, [], 'en mode « remplacer », rien n’est conservé à côté');
+});
+
+test("une sauvegarde d'un schéma plus récent est refusée", () => {
+  const trop = { ...asBackup([prof('a')]), schemaVersion: SCHEMA_VERSION + 1 };
+  const read = validateBackup(trop);
+  assert.equal(read.ok, false);
+  assert.match(read.error, /plus récente/);
+
+  // Une sauvegarde ancienne reste importable : les migrations la rejouent.
+  const vieille = { ...asBackup([prof('a')]), schemaVersion: 1 };
+  assert.equal(validateBackup(vieille).ok, true);
+
+  // Un numéro abîmé n'est pas silencieusement ignoré.
+  assert.equal(validateBackup({ ...asBackup([prof('a')]), schemaVersion: 'deux' }).ok, false);
 });

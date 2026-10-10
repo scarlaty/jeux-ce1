@@ -18,7 +18,7 @@ import {
 import { makeGateChallenge, checkGate, GATE_MAX_TRIES } from '../core/gate.js';
 import { isTrial, enterTrial, exitTrial } from '../core/trial.js';
 import {
-  applyBackup, backupFilename, buildBackup, describeBackup, parseBackup, serializeBackup,
+  applyBackup, backupFilename, buildBackup, importPlan, parseBackup, serializeBackup,
 } from '../core/backup.js';
 
 /** Porte ouverte pour la durée de la page (jamais écrite dans le stockage). */
@@ -314,6 +314,7 @@ function chartPanel(profile) {
 function backupPanel(profile, app, redraw) {
   const message = h('p', { class: 'parents__message', role: 'status' });
   const confirmBox = h('div', {});
+  let lastText = '';
 
   function say(text, kind = 'info') {
     message.className = `parents__message parents__message--${kind}`;
@@ -352,32 +353,110 @@ function backupPanel(profile, app, redraw) {
   const pasted = h('textarea', { class: 'code-area', id: 'code-import', rows: '6', spellcheck: 'false', placeholder: 'Collez ici le code de la sauvegarde…' });
   const file = h('input', { type: 'file', class: 'file-input', id: 'fichier', accept: 'application/json,.json' });
 
+  /** Les profils reellement presents sur cette tablette, pour les comparer a ceux du fichier. */
+  function localProfiles() {
+    return listProfiles(app.store).map((row) => app.store.getProfile(row.id)).filter(Boolean);
+  }
+
+  const tally = (t) => `${plural(t.plays, 'partie')}, ${plural(t.points, 'point')}`;
+
+  /** Une ligne de profil qui dit les DEUX cotes : ce que contient la tablette et ce que le fichier apporte. */
+  function profileLine(entry, kind) {
+    const details = [];
+    if (kind === 'add') details.push(`${tally(entry.incoming)} — nouveau profil`);
+    if (kind === 'overwrite') {
+      details.push(`sur la tablette : ${tally(entry.current)}`);
+      details.push(`dans le fichier : ${tally(entry.incoming)}`);
+    }
+    if (kind === 'remove' || kind === 'kept') details.push(`sur la tablette : ${tally(entry.current)}`);
+    const body = [h('span', { class: 'confirm__name', text: entry.name || 'Sans prénom' })];
+    for (const text of details) body.push(h('span', { class: 'confirm__detail', text }));
+    if (entry.losesProgress) {
+      body.push(h('strong', { class: 'confirm__warn', text: 'La tablette est plus avancée que le fichier : cette progression sera perdue.' }));
+    }
+    return h('li', { class: `confirm__row${entry.losesProgress ? ' confirm__row--warn' : ''}` },
+      avatarBubble(entry.avatar, { size: 's', decorative: true }),
+      h('div', { class: 'confirm__body' }, body));
+  }
+
+  function section(title, entries, kind) {
+    if (!entries.length) return null;
+    return h('div', { class: 'confirm__section' },
+      h('h4', { class: 'confirm__subtitle', text: title }),
+      h('ul', { class: 'confirm__list' }, entries.map((e) => profileLine(e, kind))));
+  }
+
+  /* La carte de confirmation decrivait le FICHIER, jamais la TABLETTE : elle ne disait donc pas
+     ce qui allait etre ecrase ou supprime. Elle decrit maintenant les deux cotes (#114). */
   function review(text) {
     const read = parseBackup(text);
     if (!read.ok) { confirmBox.replaceChildren(); say(read.error, 'error'); return; }
-    const info = describeBackup(read.backup);
-    say('Sauvegarde lue. Choisissez comment l\'installer.', 'ok');
+    lastText = text;
+    const backup = read.backup;
+    const plan = importPlan(backup, localProfiles(), { mode: 'merge' });
+    const risky = plan.overwrite.some((p) => p.losesProgress);
+    say('Sauvegarde lue. Rien n’est encore écrit.', 'ok');
+
     confirmBox.replaceChildren(h('div', { class: 'card confirm' },
-      h('h3', { class: 'confirm__title', text: 'Cette sauvegarde contient' }),
-      h('ul', { class: 'confirm__list' }, info.profiles.map((p) => h('li', {},
-        avatarBubble(p.avatar, { size: 's', decorative: true }),
-        h('span', { text: `${p.name || 'Sans prénom'} — ${plural(p.plays, 'partie')}` })))),
-      h('p', { class: 'confirm__note', text: `Exportée le ${dateTimeLabel(info.exportedAt)}.` }),
+      h('h3', { class: 'confirm__title', text: 'Ce que l’import va faire' }),
+      h('p', { class: 'confirm__note', text: `Sauvegarde exportée le ${dateTimeLabel(backup.exportedAt)}.` }),
+      section('Profils ajoutés', plan.add, 'add'),
+      section('Profils remplacés par ceux du fichier', plan.overwrite, 'overwrite'),
+      section('Profils de la tablette laissés intacts', plan.kept, 'kept'),
       h('div', { class: 'confirm__actions' },
-        h('button', { type: 'button', class: 'btn btn--secondary', onclick: () => install(read.backup, 'merge') },
-          h('span', { text: 'Ajouter aux profils' })),
-        h('button', { type: 'button', class: 'btn btn--danger', onclick: () => install(read.backup, 'replace') },
-          h('span', { text: 'Tout remplacer' }))),
-      h('p', { class: 'confirm__note', text: '« Ajouter » conserve les profils de cette tablette ; un profil de même identifiant est mis à jour. « Tout remplacer » efface d\'abord les profils présents.' })));
+        h('button', {
+          type: 'button',
+          class: risky ? 'btn btn--danger' : 'btn btn--primary',
+          onclick: () => (risky ? askMerge(backup, plan) : install(backup, 'merge')),
+        }, h('span', { text: plan.overwrite.length ? 'Ajouter et remplacer' : 'Ajouter aux profils' })),
+        h('button', { type: 'button', class: 'btn btn--danger', onclick: () => askReplace(backup) },
+          h('span', { text: 'Tout remplacer' })))));
+  }
+
+  /** « Ajouter » quand la tablette est en avance : on nomme ce qui disparait, puis on demande. */
+  function askMerge(backup, plan) {
+    const lost = plan.overwrite.filter((p) => p.losesProgress);
+    const cancel = h('button', { type: 'button', class: 'btn btn--secondary', onclick: () => review(lastText) },
+      h('span', { text: 'Annuler' }));
+    confirmBox.replaceChildren(h('div', { class: 'card danger' },
+      h('h3', { class: 'confirm__title', text: 'Cette tablette est plus avancée que la sauvegarde' }),
+      h('ul', { class: 'confirm__list' }, lost.map((e) => profileLine(e, 'overwrite'))),
+      h('p', { class: 'danger__text', text: 'La progression ci-dessus sera remplacée par celle du fichier, plus ancienne. Exportez d’abord une sauvegarde si vous voulez pouvoir revenir en arrière.' }),
+      h('div', { class: 'danger__actions' }, cancel,
+        h('button', { type: 'button', class: 'btn btn--danger', onclick: () => install(backup, 'merge') },
+          h('span', { text: 'Oui, remplacer' })))));
+    cancel.focus({ preventScroll: true });
+  }
+
+  /** « Tout remplacer » : on nomme les profils locaux qui vont etre supprimes. */
+  function askReplace(backup) {
+    const plan = importPlan(backup, localProfiles(), { mode: 'replace' });
+    const cancel = h('button', { type: 'button', class: 'btn btn--secondary', onclick: () => review(lastText) },
+      h('span', { text: 'Annuler' }));
+    confirmBox.replaceChildren(h('div', { class: 'card danger' },
+      h('h3', { class: 'confirm__title', text: 'Effacer tous les profils de cette tablette ?' }),
+      plan.remove.length
+        ? h('ul', { class: 'confirm__list' }, plan.remove.map((e) => profileLine(e, 'remove')))
+        : null,
+      h('p', { class: 'danger__text', text: plan.remove.length
+        ? 'Ces profils ne sont pas dans la sauvegarde : ils seront définitivement supprimés.'
+        : 'Les profils présents seront remplacés par ceux de la sauvegarde.' }),
+      h('div', { class: 'danger__actions' }, cancel,
+        h('button', { type: 'button', class: 'btn btn--danger', onclick: () => install(backup, 'replace') },
+          h('span', { text: 'Oui, tout remplacer' })))));
+    cancel.focus({ preventScroll: true });
   }
 
   function install(backup, mode) {
+    const plan = importPlan(backup, localProfiles(), { mode });
     const info = applyBackup(app.store, backup, { mode });
     app.switchProfile(info.activeProfileId);
-    notice = {
-      text: `${info.imported} profil${info.imported > 1 ? 's' : ''} importé${info.imported > 1 ? 's' : ''} : progression, étoiles et historique sont restaurés.`,
-      kind: 'ok',
-    };
+    const parts = [];
+    const s = (n) => (n > 1 ? 's' : '');
+    if (plan.add.length) parts.push(`${plural(plan.add.length, 'profil')} ajouté${s(plan.add.length)}`);
+    if (plan.overwrite.length) parts.push(`${plural(plan.overwrite.length, 'profil')} remplacé${s(plan.overwrite.length)}`);
+    if (plan.remove.length) parts.push(`${plural(plan.remove.length, 'profil')} supprimé${s(plan.remove.length)}`);
+    notice = { text: `${parts.join(', ')}.`, kind: 'ok' };
     redraw();
   }
 
@@ -397,7 +476,7 @@ function backupPanel(profile, app, redraw) {
     const cancel = h('button', { type: 'button', class: 'btn btn--secondary', onclick: redraw }, h('span', { text: 'Annuler' }));
     confirmBox.replaceChildren(h('div', { class: 'card danger' },
       h('h3', { class: 'confirm__title', text: `Effacer la progression de ${profile?.name || 'ce profil'} ?` }),
-      h('p', { class: 'danger__text', text: 'Les étoiles, les niveaux ouverts et tout l\'historique seront perdus. Le prénom et l\'avatar sont conservés.' }),
+      h('p', { class: 'danger__text', text: "Tout repart de zéro : les étoiles, les niveaux ouverts, l’historique, mais aussi les points, le grade, les gommettes, le compagnon et les accessoires du coffre. Seuls le prénom et l’avatar sont conservés." }),
       h('p', { class: 'danger__text', text: 'Exportez une sauvegarde avant, si vous voulez pouvoir revenir en arrière.' }),
       h('div', { class: 'danger__actions' },
         cancel,
