@@ -383,7 +383,10 @@ export function createGameView(root, { app, game, onEnd }) {
           listenButton(spoken, { label: 'Écouter l\'explication' }),
           continueButton)));
       continueButton.focus({ preventScroll: true });
-      box.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      // Sans `behavior`, le défilement est immédiat et garanti : mesuré, `smooth` n'est honoré
+      // nulle part dans certains contextes, et la correction restait alors entièrement sous le
+      // pli à 360 px. `start` plutôt que `nearest` : il amène aussi « Continuer » à l'écran (#115).
+      box.scrollIntoView({ block: 'start' });
     }
   }
 

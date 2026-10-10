@@ -62,27 +62,23 @@ export function content(item, { cursive = false } = {}) {
 }
 
 /**
- * Longueur d'un titre de la barre du haut, pour l'ajuster sur téléphone sans le tronquer :
- * 'short' (tient sur une ligne), 'long' (deux lignes, plus petit), 'xlong' (sa propre ligne
- * sous les boutons). Compte les caractères, pas les octets. Pure.
- */
-/**
- * Classe de longueur d'un titre, pour la barre du haut. On regarde le TITRE ENTIER et le MOT LE
- * PLUS LONG : sous 520 px la boîte ne fait que 83 px, et `overflow-wrap: break-word` coupait en
- * plein milieu d'un mot (« Devinette / s », « Démonstr / ation ») ou tronquait en perdant un mot
- * (« Colors and… »). Un titre trop long, ou dont un mot dépasse, bascule donc en `xlong` : il prend
- * sa propre ligne, pleine largeur, où rien n'est ni coupé ni tronqué.
+ * Classe de longueur d'un titre, pour la barre du haut. Sous 520 px la boîte du titre ne fait que
+ * **72 px** (mesuré sur un écran de jeu, pastille de profil à 56 px comprise) et le texte y est
+ * limité à deux lignes. Deux défauts distincts s'y produisaient :
+ *  - un mot plus large que la boîte était coupé en plein milieu (« Devinette / s ») ;
+ *  - un titre trop long perdait son dernier mot (« Besoins du… », « Colors and… »).
+ * Les deux passent en `xlong`, qui donne au titre sa propre ligne, pleine largeur.
  *
- * Seuils mesurés à 360 px dans la boîte de 82 px : un mot de plus de 8 caractères dépasse
- * toujours la ligne (4,23 em contre 4,88 em de boîte), et au-delà de 17 caractères le titre
- * ne tient plus en deux lignes. Voir tests/title.test.js (#115).
+ * Seuils vérifiés à 360 px sur les 37 titres du produit (jeux, écrans et îles) : aucun mot de plus
+ * de 8 caractères ne tient dans 72 px, et aucun titre de plus de 14 caractères n'y tient en deux
+ * lignes. Voir tests/title.test.js (#115).
  */
 export function titleLength(text) {
   const s = String(text ?? '').trim();
   const n = [...s].length;
   const longest = s.split(/\s+/).reduce((max, word) => Math.max(max, [...word].length), 0);
   if (n <= 8) return 'short';
-  if (n <= 17 && longest <= 8) return 'long';
+  if (n <= 14 && longest <= 8) return 'long';
   return 'xlong';
 }
 

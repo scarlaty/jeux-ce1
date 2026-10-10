@@ -157,9 +157,11 @@ export default {
         archipelagoScene(entries),
         h('ul', { class: 'map-list' }, ISLANDS.map((island) => islandRow(byId.get(island.id)))),
         h('p', { class: 'map-hint', text: 'Touche une île pour y entrer.' })),
+      // Le défi du jour est le seul point d'entrée vers #/defi dans tout le produit : il reste
+      // juste sous la carte, et non au bas d'une page de deux écrans et demi.
+      dailyCard(rewards, realGames.length > 0),
       rewardBar(rewards),
       !isTrial() && companionCard(withAccessory(readCompanion(profile), profile)),
-      dailyCard(rewards, realGames.length > 0),
       demos.length > 0 && h('section', { class: 'workshop', 'aria-labelledby': 'atelier' },
         h('h2', { class: 'workshop__title', id: 'atelier', text: 'Atelier' }),
         h('ul', { class: 'game-list' }, demos.map((g) => gameCard(g, profile))))));
