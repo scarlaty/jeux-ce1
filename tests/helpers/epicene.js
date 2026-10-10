@@ -25,6 +25,9 @@ export const GENDERED = [
   'appliqué', 'appliquée', 'distrait', 'distraite', 'rêveur', 'rêveuse',
   'inquiet', 'inquiète', 'triste', 'surpris', 'surprise', 'étonné', 'étonnée',
   'grandi', 'grandie', 'arrivé', 'arrivée', 'resté', 'restée', 'tombé', 'tombée',
+  // Deuxième relecture (#109) : six sondes sur dix-huit passaient encore.
+  'débrouillé', 'débrouillée', 'pressé', 'pressée', 'déçu', 'déçue', 'vexé', 'vexée',
+  'perdu', 'perdue', 'endormi', 'endormie', 'concentré', 'concentrée', 'motivé', 'motivée',
 ].filter((w) => !['calme', 'rapide', 'triste'].includes(w)); // épicènes : ne jamais les signaler
 
 const SET = new Set(GENDERED);
@@ -39,10 +42,24 @@ const ADDRESS = new RegExp([
   'tu\\s+as\\s+été', 'tu\\s+avais\\s+été', 'tu\\s+as\\s+l\'air', 'tu\\s+te\\s+sens',
   'tu\\s+sembles', 'tu\\s+parais', 'tu\\s+deviens', 'tu\\s+restes', 'tu\\s+resteras',
   'te\\s+voilà', 'sois', 'soyez', 'tu\\s+me\\s+parais', 'tu\\s+as\\s+l\'air\\s+d\'être',
+  // Manquées à la deuxième relecture (#109) : « Tu dois être fatigué », « Tu t'es bien
+  // débrouillé », « Je te trouve très courageuse », et tout « tu » + futur (« Tu reviendras
+  // plus fort »), qui n'était couvert que pour le seul verbe « être ».
+  'tu\\s+dois\\s+être', 'tu\\s+peux\\s+être', 'tu\\s+vas\\s+être', 'tu\\s+t\'es',
+  'je\\s+te\\s+trouve', 'je\\s+te\\s+vois', 'on\\s+te\\s+trouve',
+  'tu\\s+\\w+ras', 'tu\\s+\\w+rais',
 ].join('|'), 'gi');
 
 /** Le « je » de l'enfant — mais dans une devinette c'est l'objet qui parle, d'où l'option. */
 const FIRST_PERSON = /\b(je\s+suis|je\s+serai|j'étais|j'ai\s+été|je\s+me\s+sens|je\s+deviens)\b/gi;
+
+/* Un participe en -é / -ée s'accorde, qu'il soit listé ou non : les lister tous est perdu d'avance.
+   On ne l'applique que si le mot n'est pas précédé d'un déterminant, sinon c'est un nom (« la
+   journée », « une idée ») et non un attribut de l'enfant. */
+const PARTICIPLE = /^[a-zà-ÿ-]{4,}(é|ée)$/i;
+const DETERMINER = /^(le|la|les|un|une|des|mon|ma|mes|ton|ta|tes|son|sa|ses|cette|ce|ces|du|de)$/i;
+// `été` est l'auxiliaire (« tu as été ») ou la saison : jamais un accord.
+const NOT_AGREEMENT = /^(été|côté|café|bébé|thé|blé|pré|clé|musée|poupée|fée)$/i;
 
 // Mots qu'on traverse sans décider : intensifs, articles, coordinations.
 const SKIP = /^(très|si|trop|bien|vraiment|tout|toute|plus|moins|assez|le|la|les|un|une|et|ou|aussi|déjà|encore|toujours|vite)$/i;
@@ -50,25 +67,42 @@ const SKIP = /^(très|si|trop|bien|vraiment|tout|toute|plus|moins|assez|le|la|le
 const STOP = /^(dans|sur|sous|avec|chez|pour|par|en|vers|depuis|pendant|comme|que|qui|quand|car|mais|à|au|aux|de|du|des)$/i;
 
 /**
+/** Premier accord genré d'une suite de mots, ou null. */
+function scan(words) {
+  for (let i = 0; i < words.length; i += 1) {
+    const w = words[i];
+    if (SKIP.test(w)) continue;
+    if (STOP.test(w)) break;
+    const low = w.toLowerCase();
+    if (SET.has(low)) return w;
+    if (NOT_AGREEMENT.test(low)) continue;
+    if (PARTICIPLE.test(low) && !DETERMINER.test((words[i - 1] || '').toLowerCase())) return w;
+  }
+  return null;
+}
+
+/**
  * Accords genrés trouvés dans un texte adressé à l'enfant. Renvoie la liste des formulations fautives.
  * On lit plusieurs mots après la formule (et pas seulement le premier : « Tu es rapide et fort » cache
  * l'accord en deuxième position), en s'arrêtant à une préposition ou à la fin de la proposition.
  */
 export function genderedAgreements(text, { firstPerson = false } = {}) {
-  const s = String(text || '');
+  // Les deux apostrophes circulent dans les banques : « tu t'es » et « tu t’es » doivent être
+  // vus pareillement, sinon le helper dépend de la touche utilisée en écrivant la phrase.
+  const s = String(text || '').split('’').join("'");
   const found = [];
   const patterns = firstPerson ? [ADDRESS, FIRST_PERSON] : [ADDRESS];
   for (const re of patterns) {
     re.lastIndex = 0;
     for (const m of [...s.matchAll(re)]) {
-      const after = s.slice(m.index + m[0].length);
-      const clause = after.split(/[.!?;:«»]/)[0];
-      const next = clause.split(/[^A-Za-zÀ-ÿ'-]+/).filter(Boolean);
-      for (const w of next.slice(0, 8)) {
-        if (SKIP.test(w)) continue;
-        if (STOP.test(w)) break;
-        if (SET.has(w.toLowerCase())) { found.push(`${m[0].trim()} … ${w}`); break; }
-      }
+      // En avant : « Tu es rapide et fort » cache l'accord en deuxième position.
+      const after = s.slice(m.index + m[0].length).split(/[.!?;:«»]/)[0];
+      const forward = after.split(/[^A-Za-zÀ-ÿ'-]+/).filter(Boolean).slice(0, 8);
+      // En arrière : « Quel champion tu es ! » place l'accord AVANT la formule (#109).
+      const before = s.slice(0, m.index).split(/[.!?;:«»]/).pop();
+      const backward = before.split(/[^A-Za-zÀ-ÿ'-]+/).filter(Boolean).slice(-4).reverse();
+      const hit = scan(forward) || scan(backward);
+      if (hit) found.push(`${m[0].trim()} … ${hit}`);
     }
   }
   return found;

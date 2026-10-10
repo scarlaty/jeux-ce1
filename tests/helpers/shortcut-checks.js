@@ -64,10 +64,41 @@ export function visibleOfQuestion(q) {
  * `questions` sont les questions RÉELLEMENT tirées par le générateur (`buildQuestions`), pas une banque
  * reconstruite : c'est ce que l'enfant a sous les yeux, pondéré par la fréquence réelle de chaque famille.
  * Seuil de la grille du juge pédagogie (§2 bis) : ≤ 50 %.
+ *
+ * Deux gardes protègent la MESURE elle-même (#109) : le solveur doit renvoyer `null` quand son
+ * indice est absent, et il doit couvrir au moins `minCoverage` des questions ; il ne doit pas non
+ * plus répondre toujours la même chose. Sans elles, un solveur devenu aveugle passe au vert et
+ * certifie une banque qu'il n'a pas regardée — c'est arrivé sur #107, couverture 0 sur 4 202.
  */
-export function checkNoSurfaceShortcut(questions, solver, { max = 0.5, label = 'questions' } = {}) {
+export function checkNoSurfaceShortcut(questions, solver, {
+  max = 0.5, label = 'questions', minCoverage = 0.3, constant = false,
+} = {}) {
   const views = questions.map(visibleOfQuestion);
-  const hits = views.filter((v) => solver(v) === v.answer);
+  const guesses = views.map((v) => solver(v));
+
+  // Garde 1 : un solveur qui ne reconnaît plus rien ne mesure plus rien. Il doit renvoyer `null`
+  // quand son indice est absent — c'est à cela que sert la couverture.
+  const carried = guesses.filter((g) => g !== null && g !== undefined && g !== '');
+  const coverage = carried.length / views.length;
+  assert.ok(coverage >= minCoverage,
+    `${label} : ce solveur ne répond que sur ${carried.length}/${views.length} = `
+    + `${(100 * coverage).toFixed(1)} % des questions — il ne mesure plus la banque, `
+    + `son score est un faux négatif (< ${100 * minCoverage} % de couverture)`);
+
+  // Garde 2 : un solveur qui répond toujours la même chose a dégénéré en « parier sur la classe
+  // majoritaire ». Il passe alors sous le seuil sans rien démontrer. C'est exactement ce qui est
+  // arrivé au solveur « verbe de la situation » de #107 : couverture tombée à 0, repli sur « . »,
+  // 32,9 % — vert, et aveugle. Un solveur volontairement constant le déclare.
+  if (!constant && carried.length) {
+    const tally = new Map();
+    for (const g of carried) tally.set(g, (tally.get(g) || 0) + 1);
+    const top = Math.max(...tally.values()) / carried.length;
+    assert.ok(top < 0.9,
+      `${label} : ce solveur répond ${(100 * top).toFixed(1)} % du temps la même chose — `
+      + 'il a dégénéré en pari sur la classe majoritaire et ne mesure aucun raccourci');
+  }
+
+  const hits = views.filter((v, i) => guesses[i] === v.answer);
   const share = hits.length / views.length;
   assert.ok(share <= max,
     `${label} : un solveur de surface résout ${hits.length}/${views.length} = `

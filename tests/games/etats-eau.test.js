@@ -290,7 +290,7 @@ test('situations : le seul mot « chaud / froid » ne suffit pas (≤ 50 %), et 
 
 test('situations : « rien ne change » n\'est pas un mot-clé (présent parmi les choix, juste ≤ 50 %)', () => {
   const qs = family(2, 'scene');
-  const share = checkNoSurfaceShortcut(qs, () => 'L\'état ne change pas.', { max: 0.5, label: 'niveau 2, toujours « état inchangé »' });
+  const share = checkNoSurfaceShortcut(qs, () => 'L\'état ne change pas.', { max: 0.5, constant: true, label: 'niveau 2, toujours « état inchangé »' });
   assert.ok(share > 0.2);
 });
 

@@ -198,14 +198,24 @@ test('niveau 3 : les deux solveurs de la 1re relecture restent sous le seuil', (
     if (/^(Quel|Comme)$/.test(first)) return '!';
     return '.';
   };
-  const ASK = /demande|interroge|questionne|savoir|curieu|intrigu|perplex|dubitatif|hésite|question/i;
-  const EXCL = /écrie|crie|exclame|bondit|applaudit|saute|sursaute|rayonne|joie|excité|ravi|content|heureu|émerveill/i;
-  const TELL = /raconte|explique|annonce|\bdit\b|décrit|précise|indique|commente|énumère|montre|note|présente|répond/i;
+  // Marqueur écrit sur le vocabulaire RÉEL de la banque, pas sur celui d'une version précédente :
+  // l'ancien ne couvrait plus que 0 question sur 4 202, et son repli « . » lui donnait 32,9 % — vert,
+  // et aveugle. Il rend `null` quand aucun mot ne nomme l'intention : c'est ce qui permet à
+  // `checkNoSurfaceShortcut` de refuser un solveur qui ne mesure plus rien (#109).
+  const ASK = /cherche|veut|ne sait pas|ne voit pas|hésite|vérifier|savoir|demande|interroge|questionne/i;
+  const EXCL = /découvre|croyait|pensait|espérait|attend ce|écrie|exclame|applaudit|émerveill/i;
+  const TELL = /annonce|note|constate|informe|raconte|explique|dit|décrit|précise|indique|commente/i;
   const marker = ({ prompt }) => (ASK.test(prompt) ? '?' : EXCL.test(prompt) ? '!' : TELL.test(prompt) ? '.' : null);
   const qs = signQuestions(3, 6000);
-  checkNoSurfaceShortcut(qs, blind(typographySolver), { label: 'niveau 3, typographie' });
-  checkNoSurfaceShortcut(qs, (v) => marker(v) || '.', { label: 'niveau 3, verbe de la situation' });
-  checkCueCoverage(qs, marker, { maxCoverage: 0.5, label: 'niveau 3, situations qui nomment l\'intention' });
+
+  // La typographie ne peut rien dire au niveau 3 : toutes les phrases de CONTEXTS sont des
+  // déclaratives ordinaires, par construction. Le solveur répond donc toujours « . », et c'est
+  // l'invariant qu'on fige ici — d'où `constant`.
+  checkNoSurfaceShortcut(qs, blind(typographySolver), { label: 'niveau 3, typographie', constant: true });
+
+  // Sans repli : un solveur qui ne reconnaît rien doit le dire, pas parier sur la classe majoritaire.
+  checkNoSurfaceShortcut(qs, marker, { label: 'niveau 3, verbe de la situation', minCoverage: 0.3 });
+  checkCueCoverage(qs, marker, { maxCoverage: 0.5, label: "niveau 3, situations qui nomment l’intention" });
 });
 
 test('niveau 3 : répondre toujours le même signe ne mène nulle part', () => {

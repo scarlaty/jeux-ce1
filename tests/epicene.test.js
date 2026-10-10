@@ -63,3 +63,41 @@ test('checkEpicene échoue bien, et nomme le texte fautif', () => {
   assert.throws(() => checkEpicene(['Comme tu es grand !'], { label: 'sonde' }), /tu es.*grand/s);
   checkEpicene(CORRECTS, { label: 'sondes correctes' });
 });
+
+/* Deuxième relecture (#109) : six sondes sur dix-huit passaient encore au travers, pour quatre
+   raisons distinctes — une formule d'adresse absente, un participe hors liste, un accord placé
+   AVANT la formule, et « tu » suivi d'un futur autre que « seras ». Un helper qui promet plus
+   qu'il ne tient est pire que pas de helper : chaque jeu qui « passe » donne une fausse assurance. */
+test('les six contournements relevés par le juge sont attrapés', () => {
+  const probes = [
+    'Tu dois être fatigué.',
+    'Quel champion tu es !',
+    'Tu t’es bien débrouillé.',
+    'On dirait que tu es pressé.',
+    'Je te trouve très courageuse.',
+    'Tu reviendras plus fort.',
+  ];
+  for (const text of probes) {
+    assert.ok(genderedAgreements(text).length > 0, `passe au travers : ${text}`);
+  }
+});
+
+test('un participe en -é ou -ée est vu même hors de la liste', () => {
+  assert.ok(genderedAgreements('Tu es vraiment appliqué.').length > 0);
+  assert.ok(genderedAgreements('Tu seras récompensée.').length > 0, 'participe non listé');
+  // Mais un nom précédé d’un déterminant n’est pas un accord.
+  assert.deepEqual(genderedAgreements('Tu es dans la journée la plus longue.'), []);
+  assert.deepEqual(genderedAgreements('Tu as été content de la soirée.').length > 0, true, '« content » reste un accord');
+});
+
+test('rien n’est signalé dans un texte épicène', () => {
+  for (const text of [
+    'Tu es rapide !',
+    'Bravo, continue comme ça !',
+    'Touche le mot qui a une majuscule.',
+    'Tu verras le chat dans la cour.',
+    'Range les mots dans l’ordre.',
+  ]) {
+    assert.deepEqual(genderedAgreements(text), [], text);
+  }
+});
