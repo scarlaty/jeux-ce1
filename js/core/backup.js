@@ -141,6 +141,15 @@ export function validateBackup(data, { now = Date.now() } = {}) {
   if (data.format > BACKUP_FORMAT) {
     return fail('Cette sauvegarde vient d\'une version plus récente des jeux. Mettez l\'application à jour, puis réessayez.');
   }
+  // Deux numéros de version, deux contrôles : l'enveloppe ET les documents de profil. Sans
+  // celui-ci, un profil d'une version plus récente était accepté puis rétrogradé en silence.
+  if (!Number.isInteger(data.schemaVersion)) {
+    return fail("Cette sauvegarde n’indique pas la version de ses profils : elle est inutilisable.");
+  }
+  if (data.schemaVersion > SCHEMA_VERSION) {
+    return fail("Les profils de cette sauvegarde viennent d’une version plus récente des jeux. "
+      + "Mettez l’application à jour sur cette tablette, puis réessayez.");
+  }
   if (!Array.isArray(data.profiles) || data.profiles.length === 0) {
     return fail('Cette sauvegarde ne contient aucun profil.');
   }
@@ -151,6 +160,12 @@ export function validateBackup(data, { now = Date.now() } = {}) {
       return fail('Un profil de cette sauvegarde est incomplet : rien n\'a été importé.');
     }
     if (seen.has(raw.id)) return fail('Cette sauvegarde contient deux fois le même profil.');
+    // Chaque document porte sa propre version : `migrate` rend tel quel un document déjà à jour,
+    // donc un profil plus récent que l'application serait simplement réestampillé et appauvri.
+    if (Number.isInteger(raw.schemaVersion) && raw.schemaVersion > SCHEMA_VERSION) {
+      return fail("Un profil de cette sauvegarde vient d’une version plus récente des jeux. "
+        + "Mettez l’application à jour sur cette tablette, puis réessayez.");
+    }
     seen.add(raw.id);
     let profile;
     try {
@@ -185,6 +200,70 @@ export function parseBackup(text, options = {}) {
   return validateBackup(data, options);
 }
 
+const identity = (p) => ({ id: p.id, name: p.name, avatar: p.avatar });
+
+/** Ce qu'un profil représente de travail : des parties, des points, une dernière fois. */
+function tally(profile) {
+  const history = Array.isArray(profile.history) ? profile.history : [];
+  const weekly = Array.isArray(profile.weekly) ? profile.weekly : [];
+  return {
+    plays: history.length + weekly.reduce((sum, w) => sum + num(w && w.games, 0), 0),
+    points: normalizeRewards(profile.rewards).points,
+    lastPlayed: history.reduce((max, row) => Math.max(max, num(row && row.t, 0)), 0),
+  };
+}
+
+/**
+ * Ce que l'import va VRAIMENT faire, profil par profil, AVANT d'écrire quoi que ce soit.
+ * Fonction pure : on lui passe les profils de la tablette, elle ne lit pas le stockage.
+ *
+ * L'ancienne carte de confirmation ne décrivait que le contenu du FICHIER. Elle ne disait donc
+ * jamais ce que la tablette allait perdre, alors que c'est la tablette qui disparaît.
+ *  - `overwrite[].losesProgress` : la tablette est en avance sur le fichier ;
+ *  - `remove` : en mode « remplacer », les profils locaux absents du fichier, donc effacés ;
+ *  - `kept`   : en mode « ajouter », ceux auxquels on ne touche pas.
+ */
+export function importPlan(backup, currentProfiles = [], { mode = 'merge' } = {}) {
+  if (!backup || !Array.isArray(backup.profiles)) return { mode, add: [], overwrite: [], remove: [], kept: [] };
+  const locals = (currentProfiles || []).filter(isObject);
+  const incoming = new Set(backup.profiles.map((p) => p.id));
+  const byId = new Map(locals.map((p) => [p.id, p]));
+  const add = [];
+  const overwrite = [];
+  for (const profile of backup.profiles) {
+    const local = byId.get(profile.id);
+    if (!local) { add.push({ ...identity(profile), risk: 'none', incoming: tally(profile) }); continue; }
+    const before = tally(local);
+    const after = tally(profile);
+    overwrite.push({
+      ...identity(profile),
+      // Affiché : le prénom tel qu'il est sur la tablette. Porté à part : celui que l'import
+      // écrira, pour que la carte puisse annoncer un renommage (#114).
+      name: local.name || profile.name,
+      incomingName: profile.name,
+      current: before,
+      incoming: after,
+      losesProgress: before.lastPlayed > after.lastPlayed
+        || before.plays > after.plays
+        || before.points > after.points,
+    });
+    // Le niveau de risque vit dans le plan : l'écran ne doit pas avoir à le déduire, et un test
+    // peut vérifier qu'un profil supprimé est toujours plus alarmant qu'un profil écrasé (#114).
+    const last = overwrite[overwrite.length - 1];
+    last.risk = last.losesProgress ? 'regression' : 'overwrite';
+  }
+  const untouched = [...byId.values()].filter((p) => !incoming.has(p.id));
+  const listed = (risk) => untouched.map((p) => ({ ...identity(p), risk, current: tally(p) }));
+  return {
+    mode,
+    add,
+    overwrite,
+    remove: mode === 'replace' ? listed('delete') : [],
+    kept: mode === 'replace' ? [] : listed('none'),
+  };
+}
+
+
 /** Résumé affiché AVANT d'écrire quoi que ce soit : on ne remplace jamais sans confirmation. */
 export function describeBackup(backup) {
   return {
@@ -217,7 +296,12 @@ export function applyBackup(store, backup, { mode = 'merge' } = {}) {
     const i = rows.findIndex((p) => p.id === profile.id);
     if (i >= 0) rows[i] = row; else rows.push(row);
   }
-  const activeProfileId = rows.some((p) => p.id === backup.activeProfileId) ? backup.activeProfileId : rows[0].id;
+  // En mode « ajouter », l'enfant qui joue sur cette tablette garde son profil actif : la carte
+  // promet que les profils locaux sont laissés intacts, et basculer sur celui du fichier
+  // démentait cette promesse en silence (#114). En mode « remplacer », il n'existe plus.
+  const keep = mode === 'replace' ? null : meta.activeProfileId;
+  const prefer = [keep, backup.activeProfileId].find((id) => rows.some((p) => p.id === id));
+  const activeProfileId = prefer || rows[0].id;
   store.setMeta({ ...meta, profiles: rows, activeProfileId });
   return { imported: backup.profiles.length, profiles: rows, activeProfileId };
 }

@@ -94,3 +94,27 @@ test('la remise à zéro efface la progression mais garde le prénom', () => {
   assert.equal(profile.name, 'Léa');
   assert.equal(profile.avatar, 'panda');
 });
+
+/* L'écran promet « Le profil repart de zéro ». Avant #114, les points, le grade, les gommettes,
+   le compagnon et le coffre survivaient : l'enfant gardait 200 points pour des parties qui
+   n'existaient plus. */
+test('la remise à zéro efface aussi les points, le compagnon et le coffre', () => {
+  const store = newStore();
+  const id = ensureActiveProfile(store);
+  store.updateProfile(id, (p) => ({
+    ...p,
+    rewards: { points: 2000, stickers: { mots: ['livre', 'plume'] }, daily: { key: 'x', stars: 3, points: 20 } },
+    companion: { animal: 'bear', name: 'Nougat', hatched: true, games: 40, stars: 60 },
+    chest: { accessories: ['bow', 'crown'], equipped: 'crown', opened: 12 },
+  }));
+  resetProgress(store, id);
+  const profile = store.getProfile(id);
+
+  assert.equal(profile.rewards.points, 0, 'les points doivent repartir de zéro');
+  assert.deepEqual(profile.rewards.stickers, {}, 'les gommettes aussi');
+  assert.equal(profile.rewards.daily, null);
+  assert.equal(profile.companion.hatched, false, 'le compagnon redevient un oeuf');
+  assert.equal(profile.companion.games, 0);
+  assert.deepEqual(profile.chest.accessories, []);
+  assert.equal(profile.chest.equipped, null);
+});
