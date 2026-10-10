@@ -551,15 +551,19 @@ const MILL = () => [
   circ(1.4, -3.2, 0.5, 'sc-gold'),
   path('M-3.4 -15.4h2.8v3h-2.8Z', 'sc-window'),
   ln('M-3.4 -15.4h2.8v3h-2.8Z'),
-  // Les ailes : quatre pales, chacune avec sa toile
-  n('g', { class: 'sc-mill-sails', transform: 'translate(0 -23)' },
-    [0, 90, 180, 270].map((a) => n('g', { transform: `rotate(${a})` },
-      path('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z', 'sc-sail'),
-      path('M-1.4 -2.4L-2.4 -14h2L0 -2.4Z', 'sc-wall-lt'),
-      ln('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z'),
-      dt('M0 -2.8V-13.6M-2 -6h4M-2.2 -9.6h4.4'))),
-    circ(0, 0, 1.8, 'sc-gold'),
-    ln('M0 0a1.8 1.8 0 1 0 .01 0')),
+  // Les ailes : quatre pales, chacune avec sa toile.
+  // Le groupe qui TOURNE ne porte aucun attribut `transform` : en SVG 2 la propriété CSS
+  // `transform` écrase l'attribut, et l'animation interpolait de translate(0 -23) vers
+  // rotate(360deg) — les ailes descendaient le long du moulin au lieu de tourner.
+  n('g', { transform: 'translate(0 -23)' },
+    n('g', { class: 'sc-mill-sails' },
+      [0, 90, 180, 270].map((a) => n('g', { transform: `rotate(${a})` },
+        path('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z', 'sc-sail'),
+        path('M-1.4 -2.4L-2.4 -14h2L0 -2.4Z', 'sc-wall-lt'),
+        ln('M-1.4 -2.4L-2.4 -14h4.8L1.4 -2.4Z'),
+        dt('M0 -2.8V-13.6M-2 -6h4M-2.2 -9.6h4.4'))),
+      circ(0, 0, 1.8, 'sc-gold'),
+      ln('M0 0a1.8 1.8 0 1 0 .01 0'))),
 ];
 
 const TWIN_ROCKS = () => [

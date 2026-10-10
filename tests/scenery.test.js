@@ -145,3 +145,46 @@ test('un objet est bien un arbre SVG utilisable (aucun DOM nécessaire)', () => 
   assert.match(markup, /^<g>/);
   assert.ok(markup.length > 200, 'le palmier devrait être un vrai dessin');
 });
+
+/* En SVG 2, la propriété CSS `transform` écrase l'attribut `transform`. Un élément animé en
+   rotation qui porte AUSSI un attribut de placement voit donc sa position fondre vers zéro
+   pendant l'animation : les ailes du moulin descendaient le long de la tour au lieu de tourner,
+   pendant dix-huit secondes, et six audits ne l'ont pas vu. Le placement va sur un groupe parent. */
+test('aucun élément animé en transform ne porte d’attribut transform', () => {
+  const css = readFileSync(join(ROOT, 'css/map.css'), 'utf8');
+
+  // 1. Les keyframes qui touchent à `transform`.
+  const movers = new Set();
+  for (const [, name, body] of css.matchAll(/@keyframes\s+([\w-]+)\s*\{([\s\S]*?)\n\}/g)) {
+    if (/\btransform\s*:/.test(body)) movers.add(name);
+  }
+  assert.ok(movers.size > 0, 'aucune animation de transform trouvée : le test ne mesure rien');
+
+  // 2. Les classes qui s’en servent.
+  const animated = new Set();
+  for (const [, selector, name] of css.matchAll(/([^{}]+)\{[^{}]*animation:\s*([\w-]+)/g)) {
+    if (!movers.has(name)) continue;
+    for (const [, cls] of selector.matchAll(/\.([\w-]+)/g)) animated.add(cls);
+  }
+  assert.ok(animated.size > 0, 'aucune classe animée trouvée : le test ne mesure rien');
+
+  // 3. Aucune de ces classes ne doit etre posee sur un noeud qui porte un attribut transform.
+  //    Balayage de chaines plutot qu'une regex : une regex mal echappee ne mesure rien en silence.
+  let verifies = 0;
+  for (const file of ['js/core/ui/art/scenery.js', 'js/core/ui/map-scene.js']) {
+    const src = readFileSync(join(ROOT, file), 'utf8');
+    for (const cls of animated) {
+      const needle = `class: '${cls}'`;
+      for (let i = src.indexOf(needle); i >= 0; i = src.indexOf(needle, i + 1)) {
+        const open = src.lastIndexOf('{', i);
+        const close = src.indexOf('}', i);
+        assert.ok(open >= 0 && close > i, `${file} : accolades introuvables autour de ${needle}`);
+        const attrs = src.slice(open, close + 1);
+        verifies += 1;
+        assert.ok(!attrs.includes('transform:'),
+          `${file} : .${cls} est anime en transform et porte un attribut transform - ${attrs}`);
+      }
+    }
+  }
+  assert.ok(verifies > 0, 'aucun noeud anime trouve dans les sources : le test ne mesure rien');
+});
